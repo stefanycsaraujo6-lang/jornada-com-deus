@@ -1,0 +1,225 @@
+# 🤖 REGRAS DA IA — Jornada com Deus
+# Arquivo: .cursorrules (cole na raiz do projeto)
+# Versão: 1.0 | Abril 2026
+
+---
+
+## 📌 CONTEXTO DO PROJETO
+
+Você está trabalhando no projeto **Jornada com Deus** — um PWA de devocional diário gerado por IA para cristãos brasileiros.
+
+Antes de qualquer resposta, leia os documentos de contexto:
+- `docs/01-project-brief.md` — visão do produto
+- `docs/02-prd.md` — requisitos completos
+- `docs/03-architecture.md` — arquitetura técnica
+- `docs/04-stories.md` — user stories
+- `docs/05-tasks.md` — tasks e checklist
+
+Stack: **React + Vite + localStorage + Claude API (claude-opus-4-5)**
+Arquivo principal: `src/App.jsx`
+
+---
+
+## 🧠 DIRETIVAS GERAIS DE COMPORTAMENTO
+
+### REGRA 1 — Pense antes de agir (Think Before Acting)
+Antes de sugerir ou gerar qualquer código:
+- Analise o contexto do arquivo existente
+- Verifique dependências e estado atual
+- Nunca faça suposições — se faltar contexto, pergunte
+- Nunca reescreva o que já funciona sem necessidade clara
+
+### REGRA 2 — Backlog obrigatório de sugestões
+Toda vez que identificar uma oportunidade de melhoria, segurança ou nova funcionalidade, você DEVE incluir no final da resposta uma seção chamada:
+
+**💡 Backlog de Sugestões da IA**
+
+Formato obrigatório (checklist Markdown estrito):
+```
+## 💡 Backlog de Sugestões da IA
+
+- [ ] #01 — [CATEGORIA] Descrição clara da sugestão
+- [ ] #02 — [CATEGORIA] Descrição clara da sugestão
+```
+
+Categorias possíveis: `[UX]`, `[PERFORMANCE]`, `[SEGURANÇA]`, `[FEATURE]`, `[BUG]`, `[REFACTOR]`, `[ACESSIBILIDADE]`, `[PWA]`, `[MONETIZAÇÃO]`
+
+Nunca deixe sugestões espalhadas no meio do texto. Todas vão no backlog.
+
+### REGRA 3 — Cabeçalho de modificação
+Todo código gerado ou modificado deve começar com:
+```javascript
+// ── MODIFICAÇÃO: [descrição do que foi alterado]
+// ── DATA: [data]
+// ── TASK: [referência à task do docs/05-tasks.md]
+```
+
+### REGRA 4 — Economia de tokens
+- Não repita código que não foi modificado
+- Use `str_replace` ou edições cirúrgicas quando possível
+- Não reescreva o arquivo inteiro se só mudou uma função
+- Seja direto nas explicações — sem rodeios desnecessários
+
+---
+
+## 🔒 REGRAS DE ENGENHARIA E QUALIDADE
+
+### REGRA 5 — localStorage como banco de dados (Padrão Safe-Write)
+Antes de qualquer `localStorage.setItem`:
+- Nunca sobrescreva dados sem merge explícito
+- Use o padrão: `ls.get(key, fallback)` antes de `ls.set(key, value)`
+- Nunca use `localStorage` diretamente — use sempre o helper `ls`
+- Formato das chaves: sempre `jcd_` como prefixo
+
+```javascript
+// ✅ CORRETO
+const history = ls.get("jcd_history", {});
+const updated = { ...history, [todayKey]: true };
+ls.set("jcd_history", updated);
+
+// ❌ ERRADO
+localStorage.setItem("history", JSON.stringify(data));
+```
+
+### REGRA 6 — Chamadas à Claude API (Padrão Safe-Call)
+Toda chamada à Claude API deve:
+- Ter `try-catch` obrigatório
+- Ter feedback visual de loading para o usuário
+- Nunca travar a interface em caso de erro
+- Limpar o JSON da resposta antes de parsear (`replace(/```json|```/g, "")`)
+- Ter timeout implícito (o usuário não pode esperar para sempre)
+
+```javascript
+// ✅ PADRÃO OBRIGATÓRIO
+try {
+  const data = await callClaude(prompt);
+  if (!data?.campoObrigatorio) throw new Error("Resposta inválida");
+  setEstado(data);
+} catch (e) {
+  showToast("Erro ao conectar. Verifique sua conexão.");
+  console.error("[callClaude]", e);
+} finally {
+  setLoading(false);
+}
+```
+
+### REGRA 7 — Graceful Degradation (Sem tela quebrada)
+Erros nunca devem estourar a tela do usuário. Regras:
+- Sempre use `try-catch` em funções assíncronas
+- Sempre exiba um toast de erro amigável
+- Sempre tenha um estado de fallback
+- Componentes com dados opcionais devem usar `?.` (optional chaining)
+- Arrays mapeados devem ter fallback: `(array || []).map(...)`
+
+### REGRA 8 — Proteção de dados do usuário
+- Nunca exiba email do usuário publicamente
+- Nunca exponha a API key no código — use `import.meta.env.VITE_ANTHROPIC_KEY`
+- O arquivo `.env.local` NUNCA deve ser commitado no Git
+- Sempre valide dados vindos do localStorage antes de usar
+
+### REGRA 9 — Cache inteligente (Anti-API-Abuse)
+Antes de qualquer chamada à Claude API, sempre verificar:
+```javascript
+const cached = ls.get(cacheKey);
+if (cached) { setData(cached); return; } // Retorna do cache
+// Só então chama a API
+```
+Cache keys devem incluir: data + plano + parâmetros variáveis
+
+---
+
+## 🎨 REGRAS DE INTERFACE E DESIGN
+
+### REGRA 10 — Design System do projeto
+O projeto usa um design system próprio definido em `makeCSS()`. Regras:
+- Nunca adicione CSS externo sem verificar se já existe no makeCSS
+- Use sempre as variáveis CSS: `var(--gold)`, `var(--txt)`, `var(--card)`, etc.
+- Novos componentes devem funcionar em modo claro E escuro
+- Fonte display: `Cormorant Garamond, serif`
+- Fonte corpo: `Lato, sans-serif`
+- Fonte mínima: 11px
+- Área de toque mínima: 44px (mobile-first)
+
+### REGRA 11 — Mobile-first obrigatório
+- Max-width do app: 430px (nunca ultrapassar)
+- Todo layout deve funcionar em tela de 375px (iPhone SE)
+- Sempre testar mentalmente em tela pequena antes de sugerir UI
+- Bottom nav fixa não pode cobrir conteúdo importante
+- Padding bottom mínimo de 100px nas páginas (acima do nav)
+
+### REGRA 12 — Feedback visual em toda ação
+Toda ação do usuário deve ter resposta visual imediata:
+- Ações assíncronas → spinner/loading
+- Ações concluídas → toast de sucesso
+- Erros → toast de erro (nunca silencioso)
+- Botões → estado visual de hover/active
+- Dados carregando → nunca tela em branco
+
+---
+
+## 🔐 REGRAS DE PLANOS E ACESSO
+
+### REGRA 13 — Proteção de features por plano (Plan Gate)
+Antes de renderizar qualquer feature premium:
+```javascript
+// ✅ PADRÃO OBRIGATÓRIO
+{plan !== "bronze" ? (
+  <FeaturePremium />
+) : (
+  <BannerUpgrade planoNecessario="prata" />
+)}
+```
+- Nunca mostrar conteúdo premium sem verificar o plano
+- Bronze não deve conseguir usar Prata/Ouro mesmo via DevTools
+- Sempre mostrar o que o usuário está perdendo (incentivo ao upgrade)
+
+### REGRA 14 — Simulação de planos no MVP
+- Plano é selecionado e salvo em `localStorage` (`jcd_plan`)
+- Não há verificação de pagamento real no MVP
+- Ao mudar de plano, cache de devocional do dia é invalidado
+- Exibir sempre o plano ativo no header
+
+---
+
+## 📱 REGRAS DE PWA
+
+### REGRA 15 — Service Worker e cache offline
+- Devocionais cacheados devem estar disponíveis offline
+- App shell (HTML/CSS/JS) deve carregar offline
+- Fontes do Google devem ser cacheadas (CacheFirst)
+- Imagens geradas pelo Canvas não precisam de cache
+
+### REGRA 16 — Instalabilidade
+- manifest.json deve sempre ter: name, short_name, icons, display: standalone, start_url
+- theme_color deve bater com a cor de fundo do app
+- Ícones devem existir em 192x192 e 512x512 (maskable)
+
+---
+
+## 🚫 PROIBIÇÕES ABSOLUTAS
+
+Nunca faça isso sem permissão explícita:
+- ❌ Reescrever o App.jsx inteiro quando só precisa mudar uma função
+- ❌ Instalar novas dependências npm sem avisar e justificar
+- ❌ Mudar a estrutura de dados do localStorage sem migração
+- ❌ Alterar o design system (makeCSS) globalmente
+- ❌ Remover funcionalidades existentes para adicionar novas
+- ❌ Usar `any` ou ignorar erros de TypeScript/JSX
+- ❌ Fazer chamadas à API sem loading state
+- ❌ Deixar a API key hardcoded no código
+- ❌ Criar novos arquivos sem justificar por que não cabe no App.jsx
+
+---
+
+## ✅ CHECKLIST PRÉ-ENTREGA (para cada resposta)
+
+Antes de entregar qualquer código, verifique mentalmente:
+- [ ] O código quebra alguma funcionalidade existente?
+- [ ] Tem try-catch em todas as chamadas assíncronas?
+- [ ] Tem loading state visível para o usuário?
+- [ ] Funciona em modo claro E escuro?
+- [ ] Funciona em tela de 375px (mobile)?
+- [ ] Tem cabeçalho de modificação?
+- [ ] Sugestões extras estão no Backlog (não no meio do texto)?
+- [ ] Cache da API foi considerado?
+- [ ] Plano do usuário foi verificado antes de mostrar feature premium?

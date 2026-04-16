@@ -1,0 +1,72 @@
+# Project Brief — Jornada com Deus
+
+## Visão Geral
+
+**Nome do produto:** Jornada com Deus  
+**Tipo:** Progressive Web App (PWA) — instalável no celular  
+**Versão atual:** MVP 1.0  
+**Data:** Abril 2026  
+
+## Problema que resolve
+
+Cristãos brasileiros querem manter uma vida devocional consistente, mas faltam ferramentas acessíveis, bonitas e engajantes. Apps existentes são complexos, caros ou em inglês. O Jornada com Deus resolve isso com um devocional diário gerado por IA, visual elegante e sistema de engajamento espiritual.
+
+## Proposta de valor
+
+> "Seu devocional diário. Consistência que transforma."
+
+- Devocional personalizado por IA todos os dias
+- Design sacro moderno, modo claro e escuro
+- Sistema de progresso que motiva o hábito espiritual
+- Comunidade com ranking e propósitos compartilhados
+- Funciona como app nativo no celular (PWA)
+
+## Público-alvo
+
+- **Primário:** Cristãos evangélicos brasileiros, todas as idades
+- **Secundário:** Cristãos de outras denominações
+- **Contexto:** Pessoas que querem consistência espiritual mas não têm tempo ou disciplina para devocionais longos
+
+## Modelo de negócio
+
+Assinatura mensal em 3 planos:
+
+| Plano | Preço | Posicionamento |
+|-------|-------|----------------|
+| 🥉 Bronze | R$ 9,90/mês | Entrada — hábito básico |
+| 🥈 Prata | R$ 19,90/mês | Principal — engajamento + rotina |
+| 🥇 Ouro | R$ 39,90/mês | Premium — transformação + retenção |
+
+## Objetivos do MVP
+
+1. Usuário consegue fazer login simples (nome + email)
+2. Recebe devocional diário gerado por IA conforme seu plano
+3. Marca o dia como concluído e acompanha streak
+4. Compartilha versículo nas redes sociais
+5. Acessa ranking e propósitos na aba Comunidade
+6. Instala o app no celular via PWA
+
+## Fora do escopo (MVP)
+
+- Pagamento real (gateway integrado)
+- Backend/banco de dados na nuvem
+- Notificações push reais
+- App nativo (iOS/Android via React Native)
+- Autenticação com senha
+- Áudios de devocionais
+
+## Stack técnica
+
+- **Frontend:** React + Vite
+- **Estilo:** CSS-in-JS (makeCSS interno)
+- **IA:** Claude API (claude-opus-4-5)
+- **Armazenamento:** localStorage (MVP)
+- **Deploy:** Netlify ou Vercel
+- **PWA:** vite-plugin-pwa
+
+## Métricas de sucesso
+
+- DAU (usuários ativos diários) com streak ≥ 3 dias
+- Taxa de conclusão do devocional diário ≥ 60%
+- Conversão de Bronze → Prata ≥ 15%
+- Tempo médio no app por sessão ≥ 3 minutos

@@ -1,0 +1,259 @@
+# Arquitetura Técnica — Jornada com Deus
+
+**Versão:** 1.1  
+**Autor:** Agente Architect (BMAD)  
+
+---
+
+## 1. Visão geral da arquitetura
+
+```
+┌─────────────────────────────────────────┐
+│           USUÁRIO (Celular/Browser)      │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│            PWA (React + Vite)            │
+│                                          │
+│  ┌─────────┐  ┌──────────┐  ┌────────┐  │
+│  │  Telas  │  │  Estado  │  │  CSS   │  │
+│  │  (JSX)  │  │ (useState│  │(makeCSS│  │
+│  └────┬────┘  └────┬─────┘  └────────┘  │
+│       │            │                     │
+│  ┌────▼────────────▼─────────────────┐  │
+│  │         localStorage              │  │
+│  │  (usuário, plano, histórico,      │  │
+│  │   devocionais, pontos, propósitos)│  │
+│  └───────────────────────────────────┘  │
+└──────────────────┬──────────────────────┘
+                   │ HTTPS
+┌──────────────────▼──────────────────────┐
+│      Proxy local (/api/gemini) + Gemini │
+│  - Geração de conteúdo espiritual         │
+│  - Validação de foto (Vision)             │
+│  - Retry por modelo e versão da API       │
+│  - Fallback local obrigatório no cliente  │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 2. Stack técnica
+
+| Camada | Tecnologia | Versão | Justificativa |
+|--------|-----------|--------|---------------|
+| Framework | React | 18+ | Componentes reativos, amplo ecossistema |
+| Build | Vite | 8+ | Build rápido, HMR, suporte PWA |
+| PWA | vite-plugin-pwa | latest | Service worker + manifest automático |
+| Estilo | CSS-in-JS (makeCSS) | - | Tematização dinâmica claro/escuro sem dependências |
+| Fontes | Google Fonts | - | Cormorant Garamond + Lato |
+| IA | Gemini API + proxy local | gemini-2.0-flash / 1.5-flash | Geração de conteúdo + Vision com fallback resiliente |
+| Persistência | localStorage | - | MVP sem backend |
+| Canvas | Browser Canvas API | - | Geração de imagem do versículo |
+| Deploy | Netlify / Vercel | - | CDN global, HTTPS automático, deploy por arrasto |
+
+---
+
+## 3. Estrutura de arquivos
+
+```
+jornada-com-deus/
+├── public/
+│   ├── icon-192.png          ← Ícone PWA
+│   ├── icon-512.png          ← Ícone PWA
+│   └── favicon.ico
+├── src/
+│   ├── App.jsx               ← Componente raiz (todo o app)
+│   └── main.jsx              ← Entry point React
+├── docs/                     ← Documentação BMAD
+│   ├── 01-project-brief.md
+│   ├── 02-prd.md
+│   ├── 03-architecture.md
+│   ├── 04-stories.md
+│   └── 05-tasks.md
+├── index.html                ← HTML base com meta tags PWA
+├── vite.config.js            ← Config Vite + PWA
+├── package.json
+└── .gitignore
+```
+
+---
+
+## 4. Arquitetura do estado (localStorage)
+
+```javascript
+// Chaves do localStorage e seus formatos
+
+"jcd_user"        → { name: string, email: string }
+"jcd_plan"        → "bronze" | "prata" | "ouro"
+"jcd_dark"        → boolean
+"jcd_history"     → { "2026-04-16": true, "2026-04-15": true, ... }
+"jcd_notes"       → { "2026-04-16": "texto da anotação", ... }
+"jcd_pts"         → { week: number, total: number }
+"jcd_ci_YYYY-MM-DD" → { culto: boolean, biblia: boolean }
+"jcd_purposes"    → Propósito[]
+"jcd_dev_YYYY-MM-DD_PLANO_TEMA" → DevocionalGerado (cache)
+```
+
+---
+
+## 5. Fluxo de dados — Geração de devocional
+
+```
+App.jsx: openDevocional(theme)
+    │
+    ├─ Verifica cache: ls.get(`jcd_dev_${today}_${plan}_${theme}`)
+    │       │
+    │       ├─ HIT: setDev(cached) → renderiza
+    │       │
+    │       └─ MISS: 
+    │               │
+    │               ├─ setLoading(true)
+    │               ├─ setScreen("devotional")
+    │               │
+    │               └─ requestGemini(prompt)
+    │                       │
+    │                       ├─ fetch POST /api/gemini (proxy local)
+    │                       │   body: model, payload
+    │                       │
+    │                       ├─ parse JSON da resposta
+    │                       ├─ erro de IA? usa fallback local sem quebrar UX
+    │                       │
+    │                       ├─ ls.set(cacheKey, data)
+    │                       │
+    │                       └─ setDev(data) → renderiza
+```
+
+---
+
+## 6. Fluxo de dados — Validação de foto (Ranking)
+
+```
+Usuário tira foto
+    │
+    └─ handlePhotoSubmit(file, type)
+            │
+            ├─ setPhotoValidating(true)
+            │
+            ├─ validatePhotoWithAI(file, type)
+            │       │
+            │       ├─ FileReader → base64
+            │       │
+            │       └─ requestGemini com image block
+            │               resposta: "SIM" ou "NAO"
+            │
+            ├─ SE válido: addPoints(type)
+            │       │
+            │       ├─ calcula pts + streak bonus
+            │       ├─ atualiza myPts no state
+            │       ├─ ls.set("jcd_pts", ...)
+            │       └─ ls.set("jcd_ci_hoje", ...)
+            │
+            └─ setPhotoResult({ ok, msg })
+```
+
+---
+
+## 7. Componentes principais (App.jsx)
+
+```
+App()
+├── Telas condicionais por screen state
+│   ├── screen === "login"      → renderLogin
+│   └── screen === "devotional" → renderDevotional
+│
+└── Dashboard (screen === "dashboard")
+    └── Tabs por tab state
+        ├── tab === "home"           → renderHome()
+        ├── tab === "history"        → renderHistory()
+        ├── tab === "challenge"      → renderChallenge()
+        ├── tab === "journeys"       → renderJourneys()
+        ├── tab === "journey-detail" → renderJourneyDetail()
+        └── tab === "community"      → renderCommunity()
+            ├── commTab === "ranking"   → seção ranking
+            └── commTab === "purposes" → seção propósitos
+
+Modais (sempre renderizados, condicionais)
+├── showPlans     → modal de planos
+├── activePurpose → modal de propósito
+└── showPhotoModal → modal de foto
+```
+
+---
+
+## 8. Configuração PWA (vite.config.js)
+
+```javascript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
+      manifest: {
+        name: 'Jornada com Deus',
+        short_name: 'Jornada',
+        description: 'Seu devocional diário. Consistência que transforma.',
+        theme_color: '#080b18',
+        background_color: '#080b18',
+        display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'google-fonts-cache' }
+          }
+        ]
+      }
+    })
+  ]
+})
+```
+
+---
+
+## 9. Meta tags mobile (index.html)
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080b18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jornada com Deus">
+<link rel="apple-touch-icon" href="/icon-192.png">
+```
+
+---
+
+## 10. Limitações conhecidas do MVP
+
+| Limitação | Impacto | Solução futura |
+|-----------|---------|----------------|
+| API key exposta no browser | Segurança | Backend proxy (Next.js/Supabase Edge Functions) |
+| localStorage apenas | Dados não sincronizam entre dispositivos | Supabase ou Firebase |
+| Ranking mockado | Sem competição real | Backend com banco de dados |
+| Propósitos locais | Outros usuários não veem | Backend com banco de dados |
+| Sem pagamento real | Não gera receita | Stripe ou Mercado Pago |
+| Sem notificações push | Menor engajamento | Service Worker + backend |
+
+---
+
+## 11. Baseline técnico de resiliência (obrigatório)
+
+- Toda feature de IA deve ter fallback local funcional para manter UX estável.
+- Erros de quota (`429`) ativam cooldown temporário e evitam chamadas repetidas.
+- Falhas de modelo/versão (`404`) usam retry em modelo alternativo e fallback local.
+- O usuário final não deve ficar sem conteúdo em Devocional, Desafio ou Jornada.

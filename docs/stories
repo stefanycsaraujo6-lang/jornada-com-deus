@@ -1,0 +1,347 @@
+# User Stories — Jornada com Deus
+
+**Versão:** 1.0  
+**Autor:** Agente Scrum Master (BMAD)  
+
+---
+
+## ÉPICO 1 — Autenticação e Onboarding
+
+### US-01 — Login simples
+**Como** novo usuário  
+**Quero** informar meu nome e email  
+**Para** acessar o app e ter minha experiência personalizada  
+
+**Critérios de aceite:**
+- [ ] Tela de login exibe campo de nome e campo de email
+- [ ] Botão "Começar minha jornada" fica desabilitado se campos vazios
+- [ ] Ao confirmar, dados são salvos em localStorage
+- [ ] Usuário é redirecionado para o Dashboard
+- [ ] Na próxima visita, usuário vai direto para o Dashboard (sem login novamente)
+
+---
+
+### US-02 — Reconhecimento do usuário
+**Como** usuário recorrente  
+**Quero** que o app me reconheça ao abrir  
+**Para** não precisar fazer login toda vez  
+
+**Critérios de aceite:**
+- [ ] Se localStorage tem `jcd_user`, app vai direto para Dashboard
+- [ ] Nome do usuário aparece no header do Dashboard
+- [ ] Plano salvo é carregado automaticamente
+
+---
+
+## ÉPICO 2 — Devocional Diário
+
+### US-03 — Acessar devocional
+**Como** usuário de qualquer plano  
+**Quero** abrir o devocional do dia  
+**Para** ter meu momento espiritual diário  
+
+**Critérios de aceite:**
+- [ ] Card "Devocional de hoje" visível no Dashboard
+- [ ] Ao clicar, abre tela de devocional
+- [ ] Exibe spinner com mensagem rotativa enquanto carrega
+- [ ] Devocional completo exibido: versículo, reflexão, aplicação
+- [ ] Se IA falhar, o app usa fallback local e mantém o fluxo sem quebrar
+
+---
+
+### US-04 — Cache do devocional
+**Como** usuário  
+**Quero** que o devocional não seja gerado de novo se já abri hoje  
+**Para** economizar tempo e não perder créditos da API  
+
+**Critérios de aceite:**
+- [ ] Segundo acesso no mesmo dia carrega do cache instantaneamente
+- [ ] Cache diferencia por plano e tema (Ouro)
+- [ ] Cache expira no dia seguinte (nova chave por data)
+
+---
+
+### US-05 — Devocional personalizado (Prata)
+**Como** usuário do Plano Prata  
+**Quero** que o devocional seja personalizado com meu nome  
+**Para** ter uma experiência mais íntima e relevante  
+
+**Critérios de aceite:**
+- [ ] Prompt inclui nome do usuário na instrução
+- [ ] Conteúdo menciona o usuário sutilmente quando pertinente
+- [ ] 4 parágrafos de reflexão acessíveis
+
+---
+
+### US-06 — Devocional com tema (Ouro)
+**Como** usuário do Plano Ouro  
+**Quero** escolher o tema do meu devocional  
+**Para** receber conteúdo específico para minha necessidade atual  
+
+**Critérios de aceite:**
+- [ ] Picker de 10 temas exibido no Dashboard (Ouro)
+- [ ] Opção "IA vai escolher" disponível
+- [ ] Tema selecionado usado no prompt da IA
+- [ ] 5 parágrafos de reflexão mais profundos
+- [ ] Tema persiste na sessão atual
+
+---
+
+### US-07 — Marcar dia como concluído
+**Como** usuário  
+**Quero** marcar o devocional como concluído  
+**Para** registrar meu progresso e manter meu streak  
+
+**Critérios de aceite:**
+- [ ] Botão "Marcar como concluído" visível no final do devocional
+- [ ] Após marcar, botão muda para "✓ Dia concluído!" em verde
+- [ ] Streak é incrementado se dia anterior também foi marcado
+- [ ] Total de dias concluídos incrementa
+- [ ] Data marcada em localStorage
+- [ ] Toast de confirmação exibido
+
+---
+
+### US-08 — Anotações no devocional (Prata e Ouro)
+**Como** usuário do Plano Prata ou Ouro  
+**Quero** escrever anotações sobre o devocional  
+**Para** guardar o que Deus me falou naquele dia  
+
+**Critérios de aceite:**
+- [ ] Campo de texto visível na tela do devocional
+- [ ] Botão "Salvar anotação" disponível
+- [ ] Anotação salva em localStorage com a data como chave
+- [ ] Feedback visual "✓ Salvo!" após salvar
+- [ ] Anotações anteriores visíveis na aba Histórico
+
+---
+
+## ÉPICO 3 — Progresso e Histórico
+
+### US-09 — Ver streak e progresso
+**Como** usuário  
+**Quero** ver meu streak de dias consecutivos e total de dias  
+**Para** me sentir motivado a manter a consistência  
+
+**Critérios de aceite:**
+- [ ] Dois cards no Dashboard: "🔥 dias seguidos" e "📖 concluídos"
+- [ ] Streak calculado corretamente (quebra se pular um dia)
+- [ ] Grid de 7 dias visível no Dashboard com bolinhas coloridas
+
+---
+
+### US-10 — Histórico de 35 dias
+**Como** usuário  
+**Quero** ver meu histórico dos últimos 35 dias  
+**Para** visualizar minha consistência ao longo do tempo  
+
+**Critérios de aceite:**
+- [ ] Grid 7x5 com célula por dia
+- [ ] Dias concluídos em dourado
+- [ ] Dias não concluídos em cinza/borda
+- [ ] Tooltip com data ao passar o mouse (desktop)
+
+---
+
+## ÉPICO 4 — Compartilhamento
+
+### US-11 — Compartilhar versículo
+**Como** usuário  
+**Quero** compartilhar o versículo do dia nas redes sociais  
+**Para** inspirar meus amigos e mostrar minha jornada  
+
+**Critérios de aceite:**
+- [ ] Botões WhatsApp, Facebook e Instagram visíveis
+- [ ] WhatsApp abre com texto pré-formatado
+- [ ] Facebook abre compartilhamento com texto
+- [ ] Instagram copia texto e exibe toast "Texto copiado!"
+- [ ] Texto inclui versículo, referência e hashtag #JornadaComDeus
+
+---
+
+### US-12 — Gerar imagem do versículo (Prata e Ouro)
+**Como** usuário do Plano Prata ou Ouro  
+**Quero** gerar uma imagem bonita com o versículo  
+**Para** postar no Instagram com visual profissional  
+
+**Critérios de aceite:**
+- [ ] Botão "✨ Gerar imagem do versículo" visível para Prata/Ouro
+- [ ] Imagem 1080x1080px gerada via Canvas
+- [ ] Design sacro com fundo gradiente, estrelas, cruz e nome do app
+- [ ] Preview da imagem exibido na tela
+- [ ] Botão de download disponível
+- [ ] Bronze vê mensagem de bloqueio
+
+---
+
+## ÉPICO 5 — Planos
+
+### US-13 — Ver e selecionar planos
+**Como** usuário  
+**Quero** ver os planos disponíveis e escolher um  
+**Para** desbloquear as funcionalidades que preciso  
+
+**Critérios de aceite:**
+- [ ] Modal de planos acessível pelo ícone ⚙️
+- [ ] 3 planos exibidos com nome, preço e lista de features
+- [ ] Plano Prata marcado como "Mais popular"
+- [ ] Plano atual destacado com borda
+- [ ] Botão de confirmação muda o plano ativo
+- [ ] Toast de confirmação após seleção
+- [ ] Badge no header atualiza imediatamente
+
+---
+
+### US-14 — Ver conteúdo bloqueado com incentivo a upgrade
+**Como** usuário do Plano Bronze  
+**Quero** ver o que estou perdendo nos outros planos  
+**Para** decidir se vale a pena fazer upgrade  
+
+**Critérios de aceite:**
+- [ ] Cards de Desafio e Jornadas mostram cadeado 🔒
+- [ ] Banners de upgrade visíveis nas seções bloqueadas
+- [ ] Clicar no banner abre modal de planos com plano sugerido pré-selecionado
+
+---
+
+## ÉPICO 6 — Desafio Semanal
+
+### US-15 — Ver desafio semanal (Prata e Ouro)
+**Como** usuário do Plano Prata ou Ouro  
+**Quero** receber um desafio espiritual semanal gerado por IA  
+**Para** ter atividades práticas de crescimento durante a semana  
+
+**Critérios de aceite:**
+- [ ] Aba Desafio no bottom nav
+- [ ] Desafio gerado automaticamente ao acessar a aba (se não tiver)
+- [ ] Exibe título, descrição e 7 tarefas diárias
+- [ ] Botão "Gerar novo desafio" disponível
+- [ ] Spinner com mensagem "Criando seu desafio..." durante geração
+- [ ] Bronze vê banner de upgrade
+
+---
+
+## ÉPICO 7 — Jornadas Especiais
+
+### US-16 — Acessar jornadas especiais (Ouro)
+**Como** usuário do Plano Ouro  
+**Quero** acessar jornadas espirituais temáticas  
+**Para** aprofundar minha fé em trilhas estruturadas  
+
+**Critérios de aceite:**
+- [ ] 5 jornadas listadas na aba Jornadas
+- [ ] Ao clicar, IA gera a jornada com 5 etapas progressivas
+- [ ] Cada etapa tem título e descrição
+- [ ] Spinner durante geração
+- [ ] Prata e Bronze veem banner de upgrade
+
+---
+
+## ÉPICO 8 — Comunidade
+
+### US-17 — Ver ranking e competir
+**Como** usuário do Plano Prata ou Ouro  
+**Quero** ver minha posição no ranking espiritual  
+**Para** me motivar através da competição saudável  
+
+**Critérios de aceite:**
+- [ ] Aba Comunidade no bottom nav
+- [ ] Subtabs: Ranking e Propósitos
+- [ ] Ranking exibe top 10 com posição, avatar, nome, streak e pontos
+- [ ] Meu perfil destacado com borda azul
+- [ ] Banner com minha posição e pontuação
+- [ ] Toggle Global / Meu grupo
+- [ ] Toggle Semanal / Histórico
+
+---
+
+### US-18 — Registrar atividade com foto
+**Como** usuário  
+**Quero** registrar que fui ao culto ou li a Bíblia com uma foto  
+**Para** ganhar pontos no ranking de forma verificada  
+
+**Critérios de aceite:**
+- [ ] 3 botões de check-in: Culto (+10pts), Bíblia (+5pts), Devocional (+3pts)
+- [ ] Culto e Bíblia abrem modal de foto
+- [ ] Câmera do celular é acionada
+- [ ] IA analisa a foto e confirma se é válida
+- [ ] Pontos creditados imediatamente se válido
+- [ ] Feedback visual de sucesso/erro
+- [ ] Check-in do dia persiste (não pode registrar duas vezes)
+- [ ] Devocional é marcado automaticamente ao concluir
+
+---
+
+### US-19 — Participar de propósito
+**Como** usuário de qualquer plano  
+**Quero** entrar em um propósito pelo código de convite  
+**Para** orar junto com outras pessoas por uma causa comum  
+
+**Critérios de aceite:**
+- [ ] Campo de código visível na aba Propósitos
+- [ ] Ao inserir código válido, usuário é adicionado ao propósito
+- [ ] Toast de confirmação "🙏 Você entrou no propósito!"
+- [ ] Propósito aparece na lista
+- [ ] Código inválido exibe toast de erro
+
+---
+
+### US-20 — Criar propósito (Ouro)
+**Como** usuário do Plano Ouro  
+**Quero** criar um propósito de oração  
+**Para** convidar pessoas para orar juntas por uma causa  
+
+**Critérios de aceite:**
+- [ ] Botão "Criar novo propósito" visível para Ouro
+- [ ] Formulário: nome, objetivo, prazo opcional
+- [ ] Código de convite gerado automaticamente (JCD-XXXX)
+- [ ] Propósito aparece na lista imediatamente
+- [ ] Toast com código: "🕊️ Propósito criado! Código: JCD-XXXX"
+- [ ] Modal de detalhes com botão de copiar código
+- [ ] Prata e Bronze veem banner de upgrade
+
+---
+
+## ÉPICO 9 — Modo Claro/Escuro
+
+### US-21 — Alternar tema visual
+**Como** usuário  
+**Quero** alternar entre modo claro e escuro  
+**Para** usar o app no ambiente mais confortável para mim  
+
+**Critérios de aceite:**
+- [ ] Toggle ☀️/🌙 visível no header
+- [ ] Tema muda instantaneamente ao clicar
+- [ ] Preferência salva em localStorage
+- [ ] Default: modo escuro
+- [ ] Transição suave entre os temas
+
+---
+
+## ÉPICO 10 — PWA e Deploy
+
+### US-22 — Instalar app no celular
+**Como** usuário mobile  
+**Quero** instalar o Jornada com Deus na minha tela inicial  
+**Para** acessar como se fosse um app nativo  
+
+**Critérios de aceite:**
+- [ ] App tem manifest.json configurado
+- [ ] Ícones 192x192 e 512x512 disponíveis
+- [ ] Service worker registrado
+- [ ] No iOS: Safari exibe opção "Adicionar à Tela Início"
+- [ ] No Android: Chrome exibe banner ou opção de instalação
+- [ ] App abre em modo standalone (sem barra do navegador)
+- [ ] Tela de carregamento com cor de fundo correta
+
+---
+
+### US-23 — App funciona offline (básico)
+**Como** usuário  
+**Quero** que o app carregue mesmo sem internet  
+**Para** acessar o devocional cacheado quando estiver sem conexão  
+
+**Critérios de aceite:**
+- [ ] Shell do app carrega offline (service worker)
+- [ ] Devocional cacheado do dia é exibido offline
+- [ ] Funcionalidades que exigem IA mostram mensagem explicativa offline

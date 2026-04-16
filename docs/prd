@@ -1,0 +1,239 @@
+# PRD — Product Requirements Document
+# Jornada com Deus
+
+**Versão:** 1.0  
+**Autor:** Agente PM (BMAD)  
+**Status:** Aprovado para desenvolvimento  
+
+---
+
+## 1. Resumo executivo
+
+O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos brasileiros. O produto opera em modelo freemium com 3 planos (Bronze, Prata, Ouro) e diferencia experiências por plano. O MVP usa localStorage para persistência e a Claude API para geração de conteúdo.
+
+---
+
+## 2. Personas
+
+### Persona 1 — Ana, 34 anos, Dona de casa evangélica
+- Quer ter devocional diário mas esquece ou não tem tempo
+- Usa o celular para tudo
+- Não quer app complexo
+- Valoriza design bonito e conteúdo tocante
+
+### Persona 2 — Carlos, 28 anos, Profissional cristão
+- Quer consistência espiritual
+- Motivado por progresso e métricas (streak, ranking)
+- Compartilha conquistas espirituais no WhatsApp
+- Disposto a pagar pelo Plano Prata
+
+### Persona 3 — Pastora Maria, 52 anos
+- Lidera grupo de oração
+- Usa o Plano Ouro para criar Propósitos para sua célula
+- Quer acompanhar o engajamento dos membros
+
+---
+
+## 3. Requisitos Funcionais
+
+### RF-01 — Autenticação
+- O usuário deve informar nome e email para acessar o app
+- Não há senha — login é por identificação simples
+- Dados salvos em localStorage
+- Ao retornar, o app reconhece o usuário automaticamente
+
+### RF-02 — Dashboard (Tela Inicial)
+- Exibir saudação contextual (Bom dia / Boa tarde / Boa noite)
+- Mostrar nome do usuário e plano ativo
+- Exibir streak de dias consecutivos
+- Exibir total de dias concluídos
+- Mostrar progresso dos últimos 7 dias (bolinhas)
+- Botão para abrir devocional do dia
+- Cards de acesso rápido: Desafio Semanal e Jornadas Especiais (com lock por plano)
+- Toggle modo claro/escuro
+- Botão de configurações (planos)
+
+### RF-03 — Devocional Diário
+- Gerado pela Claude API conforme plano do usuário
+- **Bronze:** devocional fixo do dia (mesmo para todos, cacheado)
+- **Prata:** devocional personalizado com nome do usuário
+- **Ouro:** devocional personalizado + tema escolhido pelo usuário
+- Estrutura obrigatória: Versículo + Reflexão + Aplicação prática
+- **Bronze/Prata:** 4 parágrafos de reflexão
+- **Ouro:** 5 parágrafos mais profundos
+- Cache por dia/plano/tema em localStorage
+- Botão "Marcar como concluído"
+- Anotações pessoais (Prata e Ouro)
+- Seção de compartilhamento
+
+### RF-04 — Sistema de Progresso
+- Streak: contagem de dias consecutivos com devocional concluído
+- Histórico visual: grid 7x5 dos últimos 35 dias
+- Total de dias concluídos (contador acumulativo)
+- Dados persistidos em localStorage
+
+### RF-05 — Compartilhamento
+- Botões para WhatsApp, Facebook e Instagram
+- Texto padrão pré-formatado com versículo + hashtag
+- Instagram: copia texto para área de transferência
+- Gerar imagem do versículo com Canvas (Prata e Ouro)
+- Imagem 1080x1080px com design sacro
+- Botão de download da imagem
+
+### RF-06 — Planos e Upgrade
+- Modal de seleção de planos acessível pelo ícone ⚙️
+- 3 planos: Bronze, Prata, Ouro
+- Seleção simulada (sem gateway de pagamento real no MVP)
+- Badge do plano ativo visível no header
+- Banners de upgrade para funcionalidades bloqueadas
+- Overlays de cadeado nos cards bloqueados
+
+### RF-07 — Desafio Semanal (Prata e Ouro)
+- Gerado pela Claude API
+- 7 tarefas espirituais para a semana
+- Título motivador + descrição
+- Botão para gerar novo desafio
+- Bronze vê banner de upgrade
+
+### RF-08 — Jornadas Especiais (Ouro)
+- 5 jornadas disponíveis: 21 Dias de Fé, 30 Dias com Deus, Mulheres da Bíblia, Promessas Divinas, Renovação Interior
+- Cada jornada gerada pela Claude API com 5 etapas progressivas
+- Prata e Bronze veem banner de upgrade
+
+### RF-09 — Tema do Devocional (Ouro)
+- Picker de 10 temas espirituais
+- Opção "IA vai escolher"
+- Tema selecionado persiste durante a sessão
+
+### RF-10 — Comunidade
+- Aba dedicada com duas seções: Ranking e Propósitos
+
+#### RF-10a — Ranking
+- Check-in diário por atividade: Culto (+10pts), Bíblia (+5pts), Devocional (+3pts)
+- Verificação de culto/bíblia por foto com validação via Claude Vision API
+- Streak bônus: +1pt por 7 dias de streak
+- Ranking global (todos os usuários mockados + usuário real)
+- Ranking do grupo (usuários mockados selecionados + usuário real)
+- Toggle: Semanal (reseta segunda) / Histórico (acumulativo)
+- Banner com posição e pontuação do usuário
+- Check-ins persistidos por dia em localStorage
+
+#### RF-10b — Propósitos (Ouro criar, todos entrar)
+- Qualquer usuário pode entrar em propósito por código
+- Ouro pode criar novos propósitos
+- Propósito tem: nome, descrição, membros, dias ativos, prazo opcional
+- Código de convite gerado automaticamente (formato JCD-XXXX)
+- Modal de detalhes com lista de membros e código copiável
+- Barra de progresso visual
+- Dados mockados + dados criados pelo usuário em localStorage
+
+### RF-11 — Modo Claro/Escuro
+- Toggle no header (☀️/🌙)
+- Preferência salva em localStorage
+- Default: modo escuro
+- Transição suave entre temas
+
+---
+
+## 4. Requisitos Não-Funcionais
+
+### RNF-01 — Performance
+- Tempo de carregamento inicial < 3 segundos
+- Cache de devocionais evita chamadas repetidas à API
+- Imagens geradas via Canvas (sem dependências externas)
+
+### RNF-02 — Compatibilidade
+- Mobile-first (max-width: 430px)
+- Funciona em iOS Safari e Android Chrome
+- PWA instalável (manifest + service worker)
+- Modo offline: exibe devocional cacheado se disponível
+
+### RNF-03 — Acessibilidade
+- Fonte mínima 11px
+- Contraste adequado em modo claro e escuro
+- Botões com área de toque ≥ 44px
+
+### RNF-04 — Segurança
+- API key da Claude não exposta no frontend (limitação do MVP)
+- Dados do usuário apenas em localStorage (sem transmissão)
+- Header `anthropic-dangerous-direct-browser-access: true` necessário para chamadas browser
+
+### RNF-05 — UX
+- Design sacro moderno com fontes Cormorant Garamond + Lato
+- Paleta: dourado (#c9a96e) + tons noturnos (modo escuro) / bege (modo claro)
+- Animações suaves (fadeUp, spinner, toasts)
+- Feedback visual imediato em todas as ações
+
+---
+
+## 5. Fluxo do usuário principal
+
+```
+Abertura do app
+    ↓
+[Já tem usuário?] → SIM → Dashboard
+                 → NÃO → Tela de Login
+                              ↓
+                         Informa nome + email
+                              ↓
+                         Dashboard
+                              ↓
+                    Clica "Devocional de hoje"
+                              ↓
+                    [Tem cache?] → SIM → Exibe devocional
+                                → NÃO → Chama Claude API
+                                              ↓
+                                         Exibe devocional
+                                              ↓
+                                    Lê, anota, compartilha
+                                              ↓
+                                    Marca como concluído
+                                              ↓
+                                    Streak +1 / Pontos +3
+```
+
+---
+
+## 6. Mapa de funcionalidades por plano
+
+| Funcionalidade | Bronze | Prata | Ouro |
+|---|---|---|---|
+| Devocional diário | ✅ fixo | ✅ personalizado | ✅ personalizado |
+| Streak e progresso | ✅ | ✅ | ✅ |
+| Compartilhar versículo | ✅ | ✅ | ✅ |
+| Anotações | ❌ | ✅ | ✅ |
+| Histórico completo | ❌ | ✅ | ✅ |
+| Gerar imagem do versículo | ❌ | ✅ | ✅ |
+| Desafio semanal | ❌ | ✅ | ✅ |
+| Ranking comunidade | ✅ | ✅ | ✅ |
+| Propósitos (entrar) | ✅ | ✅ | ✅ |
+| Propósitos (criar) | ❌ | ❌ | ✅ |
+| Tema do devocional | ❌ | ❌ | ✅ |
+| Jornadas especiais | ❌ | ❌ | ✅ |
+| Devocionais avançados | ❌ | ❌ | ✅ |
+
+---
+
+## 7. Dependências externas
+
+| Dependência | Uso | Criticidade |
+|---|---|---|
+| Claude API (claude-opus-4-5) | Gerar devocionais, desafios, jornadas, validar fotos | Alta |
+| Google Fonts | Cormorant Garamond + Lato | Média |
+| Canvas API (browser) | Gerar imagem do versículo | Baixa |
+| localStorage | Persistência de dados | Alta |
+
+---
+
+## 8. Critérios de aceite do MVP
+
+- [ ] Usuário consegue fazer login e ser reconhecido no retorno
+- [ ] Devocional é gerado pela IA e exibido corretamente
+- [ ] Cache funciona (segundo acesso no dia não chama a API)
+- [ ] Marcar como concluído atualiza streak e histórico
+- [ ] Compartilhamento abre WhatsApp com texto correto
+- [ ] Seleção de plano muda funcionalidades disponíveis
+- [ ] Modo claro/escuro funciona e persiste
+- [ ] App é instalável como PWA no celular
+- [ ] Check-in de culto/bíblia valida foto via IA
+- [ ] Propósito pode ser criado (Ouro) e acessado por código

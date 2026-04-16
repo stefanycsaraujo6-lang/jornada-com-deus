@@ -1,0 +1,257 @@
+# Tasks de Implementação — Jornada com Deus
+
+**Versão:** 1.0  
+**Autor:** Agente Developer (BMAD)  
+**Ordem:** Sequencial — cada task depende da anterior  
+
+---
+
+## FASE 1 — Setup do projeto
+
+### TASK-01 — Criar projeto Vite + React
+```
+Status: ✅ Concluído
+Comando: npm create vite@latest jornada-com-deus -- --template react
+```
+
+### TASK-02 — Instalar dependências PWA
+```
+Status: ⬜ Pendente
+Comando: npm install vite-plugin-pwa -D
+Arquivo: package.json
+```
+
+### TASK-03 — Configurar vite.config.js com PWA
+```
+Status: ⬜ Pendente
+Arquivo: vite.config.js
+Conteúdo: VitePWA com manifest completo
+Referência: docs/03-architecture.md seção 8
+```
+
+### TASK-04 — Atualizar index.html com meta tags mobile
+```
+Status: ⬜ Pendente
+Arquivo: index.html
+Adicionar: viewport-fit=cover, apple-mobile-web-app, theme-color
+Referência: docs/03-architecture.md seção 9
+```
+
+### TASK-05 — Criar ícones PWA
+```
+Status: ⬜ Pendente
+Arquivos: public/icon-192.png, public/icon-512.png
+Ferramenta: realfavicongenerator.net
+Design: Cruz dourada em fundo escuro
+```
+
+### TASK-06 — Copiar App.jsx para src/App.jsx
+```
+Status: ✅ Concluído
+Arquivo: src/App.jsx
+Fonte: JornadaApp.jsx (arquivo gerado no Claude)
+```
+
+### TASK-07 — Limpar arquivos desnecessários
+```
+Status: ⬜ Pendente
+Remover: src/App.css, src/index.css (se existirem e não forem usados)
+Manter: src/main.jsx, src/App.jsx
+```
+
+---
+
+## FASE 2 — Correções e melhorias do MVP
+
+### TASK-08 — Corrigir erro de localhost no Windows
+```
+Status: ⬜ Pendente
+Problema: browser não conecta em localhost:5173
+Solução: Adicionar ao vite.config.js:
+  server: {
+    host: true,
+    port: 5173
+  }
+Arquivo: vite.config.js
+```
+
+### TASK-09 — Adicionar variável de ambiente para API key
+```
+Status: ⬜ Pendente
+Criar: .env.local
+Conteúdo: VITE_ANTHROPIC_KEY=sua_chave_aqui
+Atualizar: App.jsx → usar import.meta.env.VITE_ANTHROPIC_KEY no header
+Criar: .gitignore (adicionar .env.local)
+ATENÇÃO: Nunca commitar a .env.local no Git
+```
+
+### TASK-10 — Testar geração de devocional end-to-end
+```
+Status: ⬜ Pendente
+Verificar:
+  - Login → Dashboard → Devocional
+  - API retorna JSON válido
+  - Cache funciona no segundo acesso
+  - Marcar como concluído atualiza streak
+```
+
+### TASK-11 — Testar Ranking e validação de foto
+```
+Status: ⬜ Pendente
+Verificar:
+  - Check-in abre modal de câmera
+  - IA valida corretamente culto e Bíblia
+  - Pontos são creditados
+  - Ranking atualiza
+```
+
+### TASK-12 — Testar Propósitos
+```
+Status: ⬜ Pendente
+Verificar:
+  - Entrar por código JCD-7F3A (mockado)
+  - Criar propósito (Plano Ouro)
+  - Modal de detalhes e código copiável
+```
+
+---
+
+## FASE 3 — Deploy
+
+### TASK-13 — Build de produção
+```
+Status: ⬜ Pendente
+Comando: npm run build
+Resultado esperado: pasta dist/ gerada sem erros
+Verificar: tamanho dos assets, sem erros de TypeScript/lint
+```
+
+### TASK-14 — Deploy no Netlify
+```
+Status: ⬜ Pendente
+Opção A (arrasto):
+  1. Acesse netlify.com e faça login
+  2. Arraste a pasta dist/ para a área de deploy
+  3. Copie o link gerado
+
+Opção B (CLI):
+  npm install -g netlify-cli
+  netlify deploy --prod --dir=dist
+
+Resultado: URL pública tipo https://jornada-com-deus-xxx.netlify.app
+```
+
+### TASK-15 — Testar PWA no celular
+```
+Status: ⬜ Pendente
+iPhone:
+  1. Abra a URL no Safari
+  2. Toque em Compartilhar → Adicionar à Tela Início
+  3. Verifique que abre sem barra do navegador
+
+Android:
+  1. Abra a URL no Chrome
+  2. Menu ⋮ → Adicionar à tela inicial
+  3. Verifique que abre sem barra do navegador
+```
+
+### TASK-16 — Configurar domínio personalizado (opcional)
+```
+Status: ⬜ Opcional
+Serviços: Registro.br (domínio .com.br), Cloudflare (DNS)
+Custo estimado: R$ 40/ano para .com.br
+Exemplo: jornadadeusdevo.com.br
+```
+
+---
+
+## FASE 4 — Próximas features (pós-MVP)
+
+### TASK-17 — Backend com Supabase
+```
+Status: 🔮 Futuro
+Objetivo: Sincronizar dados entre dispositivos
+Stack: Supabase (PostgreSQL + Auth + Realtime)
+Custo: Gratuito até 500MB
+Features desbloqueadas:
+  - Login real com email/senha
+  - Ranking real entre usuários
+  - Propósitos compartilhados em tempo real
+  - Histórico sincronizado
+```
+
+### TASK-18 — Gateway de pagamento
+```
+Status: 🔮 Futuro
+Opção BR: Mercado Pago (PIX + cartão)
+Opção global: Stripe
+Integração: Webhook para ativar planos
+```
+
+### TASK-19 — Notificações push
+```
+Status: 🔮 Futuro
+Stack: Web Push API + Service Worker
+Backend: endpoint para enviar notificações
+Horário: configurável pelo usuário
+```
+
+### TASK-20 — App nativo (React Native)
+```
+Status: 🔮 Futuro
+Stack: Expo (React Native)
+Lojas: App Store + Google Play
+Reutilização: ~70% da lógica do React Web
+```
+
+### TASK-21 — Baseline de resiliência da IA (oficial)
+```
+Status: ✅ Concluído
+Objetivo: Garantir que erros de quota/modelo nunca quebrem a UX.
+Implementado:
+  - Fallback local para Devocional, Desafio e Jornada
+  - Cooldown após 429 para evitar spam de chamadas
+  - Retry com modelos alternativos
+  - Proxy Gemini com tentativa de versão alternativa da API
+Arquivos: src/App.jsx, vite.config.js, docs/arquitetura, docs/stories
+```
+
+---
+
+## Checklist de qualidade antes do deploy
+
+```
+[ ] App carrega sem erros no console
+[ ] Login → Dashboard funciona
+[ ] Devocional é gerado pela IA
+[ ] Marcar como concluído funciona
+[ ] Streak incrementa corretamente
+[ ] Compartilhamento abre WhatsApp
+[ ] Modo claro/escuro alterna
+[ ] Modal de planos funciona
+[ ] Build (npm run build) sem erros
+[ ] App abre no celular via URL
+[ ] PWA pode ser instalado no celular
+[ ] Todos os textos em português
+[ ] Sem dados sensíveis no código (API key em .env)
+```
+
+---
+
+## Prompt padrão para usar com o Cursor
+
+Copie e cole no início de cada conversa com o Cursor:
+
+```
+Você está trabalhando no projeto "Jornada com Deus".
+Leia os seguintes arquivos de contexto antes de qualquer implementação:
+- docs/01-project-brief.md (visão do produto)
+- docs/02-prd.md (requisitos completos)
+- docs/03-architecture.md (arquitetura técnica)
+- docs/04-stories.md (user stories)
+- docs/05-tasks.md (tasks pendentes)
+
+O arquivo principal é src/App.jsx.
+Stack: React + Vite + localStorage + Gemini API (com fallback local resiliente).
+Sempre mantenha compatibilidade com o código existente.
+```
