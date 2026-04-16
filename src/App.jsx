@@ -61,6 +61,7 @@ const AI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 const AI_VISION_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 const RETRYABLE_AI_STATUS = new Set([404, 429, 503]);
 const AI_COOLDOWN_MS = 10 * 60 * 1000;
+const ONE_SIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
 let aiBlockedUntil = 0;
 
 function buildAIError(status, apiMsg, model) {
@@ -138,6 +139,97 @@ function fallbackJourney(name) {
       { step: 5, title: "Perseveranca", preview: "Revise aprendizados e mantenha constancia para os proximos dias." }
     ]
   };
+}
+
+function dataUrlToFile(dataUrl, filename) {
+  const [meta, b64] = dataUrl.split(",");
+  const mime = meta?.match(/data:(.*?);base64/)?.[1] || "image/png";
+  const bytes = atob(b64 || "");
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new File([arr], filename, { type: mime });
+}
+
+function initOneSignal(user) {
+  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return;
+  if (window.__jcdOneSignalInit) return;
+  if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
+
+  window.OneSignalDeferred.push(async (OneSignal) => {
+    await OneSignal.init({
+      appId: ONE_SIGNAL_APP_ID,
+      allowLocalhostAsSecureOrigin: true,
+      notifyButton: { enable: false }
+    });
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    if (OneSignal.User?.addTags) {
+      await OneSignal.User.addTags({
+        reminder_daily_hour: "08:00",
+        reminder_timezone_mode: "device",
+        reminder_quiet_hours: "22:00-07:00",
+        reminder_timezone: timezone
+      });
+    } else if (OneSignal.sendTags) {
+      OneSignal.sendTags({
+        reminder_daily_hour: "08:00",
+        reminder_timezone_mode: "device",
+        reminder_quiet_hours: "22:00-07:00",
+        reminder_timezone: timezone
+      });
+    }
+
+    if (user?.email && OneSignal.login) {
+      await OneSignal.login(user.email);
+    }
+  });
+
+  window.__jcdOneSignalInit = true;
+}
+
+async function requestPushPermission() {
+  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return false;
+  if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
+
+  return new Promise((resolve) => {
+    window.OneSignalDeferred.push(async (OneSignal) => {
+      try {
+        if (Notification?.permission === "granted") return resolve(true);
+        if (OneSignal.Notifications?.requestPermission) {
+          await OneSignal.Notifications.requestPermission();
+          return resolve(Notification?.permission === "granted");
+        }
+        resolve(false);
+      } catch {
+        resolve(false);
+      }
+    });
+  });
+}
+
+async function applyNotificationTags(prefs) {
+  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return;
+  if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
+
+  window.OneSignalDeferred.push(async (OneSignal) => {
+    const tags = {
+      reminder_daily_hour: prefs.hour,
+      reminder_timezone_mode: "device",
+      reminder_quiet_hours: prefs.quietHours ? "22:00-07:00" : "off",
+      reminder_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      reminder_daily_enabled: prefs.enabled ? "1" : "0",
+      reminder_streak_enabled: prefs.enabled ? "1" : "0",
+      reminder_challenge_enabled: prefs.enabled ? "1" : "0"
+    };
+
+    if (OneSignal.User?.addTags) await OneSignal.User.addTags(tags);
+    else if (OneSignal.sendTags) OneSignal.sendTags(tags);
+
+    if (OneSignal.User?.pushSubscription?.optOut) {
+      if (prefs.enabled) await OneSignal.User.pushSubscription.optIn();
+      else await OneSignal.User.pushSubscription.optOut();
+    }
+  });
 }
 
 async function requestGemini(payload, models = AI_MODELS, tag = "callAI") {
@@ -479,7 +571,13 @@ export default function App() {
   const [imgLoading, setImgLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [showPlans, setShowPlans] = useState(false);
+  const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(plan);
+  const [notifPrefs, setNotifPrefs] = useState(() => ls.get("jcd_notif_prefs", {
+    enabled: false,
+    hour: "08:00",
+    quietHours: true
+  }));
   const [chosenTheme, setChosenTheme] = useState(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [challenge, setChallenge] = useState(null);
@@ -510,13 +608,42 @@ export default function App() {
 
   useEffect(() => { if (user) setScreen("dashboard"); }, []);
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
+  useEffect(() => { if (user) initOneSignal(user); }, [user]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!loginForm.name.trim() || !loginForm.email.trim()) return;
     const u = { name: loginForm.name.trim(), email: loginForm.email.trim() };
     ls.set("jcd_user", u); setUser(u); setScreen("dashboard");
+    initOneSignal(u);
+    if (ONE_SIGNAL_APP_ID) {
+      const wantsPush = window.confirm("Deseja ativar notificações para lembretes diários às 08:00?");
+      if (wantsPush) {
+        const ok = await requestPushPermission();
+        if (ok) {
+          const next = { ...notifPrefs, enabled: true };
+          setNotifPrefs(next);
+          ls.set("jcd_notif_prefs", next);
+          await applyNotificationTags(next);
+        }
+        showToast(ok ? "🔔 Notificações ativadas!" : "Notificações não ativadas.");
+      }
+    }
+  };
+
+  const saveNotifSettings = async () => {
+    let next = { ...notifPrefs };
+    if (notifPrefs.enabled && Notification?.permission !== "granted") {
+      const ok = await requestPushPermission();
+      next = { ...notifPrefs, enabled: ok };
+      if (!ok) showToast("Permissão de notificação não concedida.");
+    }
+    setNotifPrefs(next);
+    ls.set("jcd_notif_prefs", next);
+    await applyNotificationTags(next);
+    setShowNotifSettings(false);
+    showToast("Preferências de notificação salvas.");
   };
 
   const openDevocional = async (theme = null) => {
@@ -552,6 +679,29 @@ export default function App() {
   const handleGenImg = () => {
     if (!dev) return; setImgLoading(true);
     setTimeout(() => { setImgUrl(genVerseImage(dev.verseText, dev.verse, dev.theme, dark)); setImgLoading(false); }, 700);
+  };
+
+  const handleShareImageNative = async () => {
+    if (!imgUrl) return;
+    try {
+      const file = dataUrlToFile(imgUrl, `versiculo-${todayKey}.png`);
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: "Versículo do dia",
+          text: "Compartilhando meu versículo do dia ✨",
+          files: [file]
+        });
+        return;
+      }
+
+      const a = document.createElement("a");
+      a.href = imgUrl;
+      a.download = `versiculo-${todayKey}.png`;
+      a.click();
+      showToast("Imagem PNG salva nos downloads.");
+    } catch {
+      showToast("Não foi possível compartilhar a imagem agora.");
+    }
   };
 
   const shareText = dev ? `📖 Versículo do dia:\n\n"${dev.verseText}" – ${dev.verse}\n\n🙏 Hoje decidi confiar mais em Deus.\n\n✨ Estou fazendo a Jornada com Deus.` : "";
@@ -775,7 +925,7 @@ export default function App() {
                     {imgUrl && (
                       <>
                         <img src={imgUrl} className="img-preview" alt="Versículo"/>
-                        <a className="dl-btn" href={imgUrl} download="versiculo-do-dia.png">⬇ Baixar imagem</a>
+                        <button className="dl-btn" onClick={handleShareImageNative}>📤 Compartilhar / Salvar imagem</button>
                       </>
                     )}
                   </>
@@ -811,6 +961,7 @@ export default function App() {
           <button className="icon-btn" onClick={() => { setDark(d => !d); ls.set("jcd_dark", !dark); }} title="Alternar tema">
             {dark ? "☀️" : "🌙"}
           </button>
+          <button className="icon-btn" onClick={() => setShowNotifSettings(true)} title="Notificações">🔔</button>
           <button className="icon-btn" onClick={() => { setSelectedPlan(plan); setShowPlans(true); }} title="Planos">⚙️</button>
         </div>
       </div>
@@ -1289,6 +1440,52 @@ export default function App() {
                 Confirmar — {PLANS[selectedPlan].emoji} {PLANS[selectedPlan].name}
               </button>
               <button className="modal-close" onClick={() => setShowPlans(false)}>Fechar</button>
+            </div>
+          </div>
+        )}
+
+        {showNotifSettings && (
+          <div className="overlay" onClick={() => setShowNotifSettings(false)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-title">Notificações</div>
+              <p className="modal-sub">Configure lembretes diários, streak e desafio semanal.</p>
+
+              <div className="new-purpose-form" style={{ marginBottom: 0 }}>
+                <div className="form-row" style={{display:"flex",alignItems:"center",gap:10}}>
+                  <input
+                    type="checkbox"
+                    id="notif_enabled"
+                    checked={notifPrefs.enabled}
+                    onChange={e => setNotifPrefs(v => ({ ...v, enabled: e.target.checked }))}
+                  />
+                  <label htmlFor="notif_enabled" style={{fontSize:14,color:"var(--txt)"}}>Ativar notificações push</label>
+                </div>
+
+                <div className="form-row">
+                  <label className="form-lbl">Horário diário</label>
+                  <input
+                    type="time"
+                    className="form-inp"
+                    value={notifPrefs.hour}
+                    onChange={e => setNotifPrefs(v => ({ ...v, hour: e.target.value || "08:00" }))}
+                  />
+                </div>
+
+                <div className="form-row" style={{display:"flex",alignItems:"center",gap:10}}>
+                  <input
+                    type="checkbox"
+                    id="notif_quiet"
+                    checked={notifPrefs.quietHours}
+                    onChange={e => setNotifPrefs(v => ({ ...v, quietHours: e.target.checked }))}
+                  />
+                  <label htmlFor="notif_quiet" style={{fontSize:13,color:"var(--muted)"}}>
+                    Respeitar horário silencioso (22:00 - 07:00)
+                  </label>
+                </div>
+              </div>
+
+              <button className="plan-cta" onClick={saveNotifSettings}>Salvar preferências</button>
+              <button className="modal-close" onClick={() => setShowNotifSettings(false)}>Fechar</button>
             </div>
           </div>
         )}

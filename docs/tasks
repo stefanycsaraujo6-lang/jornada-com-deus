@@ -216,6 +216,37 @@ Implementado:
 Arquivos: src/App.jsx, vite.config.js, docs/arquitetura, docs/stories
 ```
 
+### TASK-22 — Blueprint Kiwify + LGPD + Escala
+```
+Status: ✅ Concluído (documentação)
+Objetivo: Definir arquitetura de produção para venda em escala com segurança e conformidade.
+Entregáveis:
+  - Arquitetura SaaS alvo (frontend + backend + banco + webhook + filas)
+  - Modelo de dados para assinatura e uso
+  - Fluxo de webhook Kiwify idempotente
+  - Requisitos de segurança e checklist LGPD
+  - Plano de migração por fases
+Arquivo: docs/kiwify-blueprint
+```
+
+### TASK-23 — Fase A: Backend base + assinatura + webhook Kiwify
+```
+Status: ✅ Concluído (estrutura inicial)
+Objetivo: iniciar backend seguro para monetização e controle de acesso por assinatura.
+Implementado:
+  - Backend Node/Express separado em `backend/`
+  - Conexão PostgreSQL e healthcheck
+  - Schema SQL inicial (`users`, `subscriptions`, `webhook_events`)
+  - Endpoint `POST /webhooks/kiwify` com validação, idempotência e upsert de assinatura
+  - Endpoint `GET /health`
+Arquivos:
+  - backend/src/server.js
+  - backend/src/db.js
+  - backend/sql/schema.sql
+  - backend/.env.example
+  - backend/README.md
+```
+
 ---
 
 ## Checklist de qualidade antes do deploy

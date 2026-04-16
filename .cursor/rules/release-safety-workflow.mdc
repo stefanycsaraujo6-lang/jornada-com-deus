@@ -1,0 +1,22 @@
+---
+description: Release safety workflow for build, env, and branching
+alwaysApply: true
+---
+
+# Release Safety Workflow (Mandatory)
+
+Before any push to `main`, follow this checklist:
+
+1. Run `npm run build` locally and only proceed if it succeeds.
+2. Never commit secrets or local env files (especially `.env.local`).
+3. If any `VITE_*` variable was added/changed, update the same variable in Netlify before/with deploy.
+4. For large or risky changes, use a branch named `feature/<topic>` and merge to `main` only after validation.
+
+## Quick examples
+
+- Small safe fix:
+  - Edit -> `npm run build` -> commit -> push `main`
+- Large change:
+  - `git checkout -b feature/new-flow`
+  - Implement + validate
+  - Open/merge into `main`

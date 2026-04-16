@@ -1,0 +1,185 @@
+# Blueprint SaaS — Jornada com Deus + Kiwify (Escalável, Seguro e LGPD)
+
+**Versão:** 1.0  
+**Objetivo:** preparar o produto para vender sem limite prático de usuários, com segurança, controle de acesso por assinatura e conformidade LGPD.
+
+---
+
+## 1) Arquitetura alvo (produção)
+
+```
+Frontend React (Vite)
+  -> API Backend (Node/Next/Nest, stateless)
+      -> PostgreSQL (dados principais)
+      -> Redis (cache/rate-limit/fila)
+      -> Worker de filas (tarefas pesadas de IA)
+      -> Gemini API (somente backend)
+      -> Webhook Kiwify (assinatura/pagamento)
+```
+
+### Princípios obrigatórios
+- Chaves secretas nunca no frontend.
+- Plano/permissão sempre decidido no backend.
+- Falha de IA nunca quebra UX (fallback local/server).
+- Webhook Kiwify validado por assinatura/segredo.
+
+---
+
+## 2) Stack recomendada
+
+- **Frontend:** React + Vite (manter base atual)
+- **Backend:** Next.js API routes ou NestJS
+- **Banco:** PostgreSQL (Supabase/Neon/RDS)
+- **Auth:** Supabase Auth ou Auth0/Clerk
+- **Cache/Fila:** Redis + BullMQ
+- **Observabilidade:** Sentry + logs estruturados
+- **Hospedagem:** Vercel/Fly/Render (API) + banco gerenciado
+
+---
+
+## 3) Modelo de dados mínimo
+
+### `users`
+- `id` (uuid, pk)
+- `email` (unique)
+- `name`
+- `created_at`
+- `lgpd_consent_at` (nullable)
+
+### `subscriptions`
+- `id` (uuid, pk)
+- `user_id` (fk users)
+- `provider` (`kiwify`)
+- `provider_customer_id`
+- `provider_subscription_id`
+- `plan` (`bronze|prata|ouro`)
+- `status` (`active|past_due|canceled|chargeback`)
+- `current_period_end`
+- `updated_at`
+
+### `devotionals`
+- `id`, `user_id`, `date_key`, `plan`, `theme`
+- `payload_json`
+- `source` (`ai|fallback`)
+- unique (`user_id`, `date_key`, `plan`, `theme`)
+
+### `usage_counters`
+- `id`, `user_id`, `metric` (`ai_generation`)
+- `window` (`daily|monthly`)
+- `count`, `reset_at`
+
+### `webhook_events`
+- `id`, `provider`, `event_id` (unique), `event_type`
+- `payload_json`, `processed_at`, `status`
+
+---
+
+## 4) Endpoints backend (contrato inicial)
+
+### Auth e perfil
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /me`
+
+### Planos/permissões
+- `GET /me/subscription`
+- `GET /me/entitlements`
+
+### Conteúdo espiritual
+- `POST /devotional/generate`
+- `POST /challenge/generate`
+- `POST /journey/generate`
+
+### Webhooks
+- `POST /webhooks/kiwify`
+
+### Saúde e operação
+- `GET /health`
+
+---
+
+## 5) Fluxo Kiwify (venda -> acesso)
+
+1. Cliente compra/assina na Kiwify.
+2. Kiwify envia evento para `POST /webhooks/kiwify`.
+3. Backend valida assinatura do webhook.
+4. Backend grava evento idempotente (`event_id` único).
+5. Backend cria/atualiza assinatura do usuário.
+6. Front consulta `/me/entitlements` e libera recursos.
+
+### Eventos importantes
+- compra aprovada
+- renovação aprovada
+- assinatura cancelada
+- chargeback/reembolso
+
+---
+
+## 6) Segurança (hard requirements)
+
+- JWT curto + refresh token rotacionado
+- Rate limit por IP e por usuário
+- Validação de payload (Zod/Joi)
+- Idempotência de webhook por `event_id`
+- Logs sem dados sensíveis
+- Backup diário + restore testado
+- RLS (Row Level Security) no banco quando possível
+
+---
+
+## 7) LGPD (checklist prático)
+
+- Política de privacidade publicada e versionada
+- Termos de uso publicados
+- Registro de consentimento (`lgpd_consent_at`)
+- Canal para titular solicitar acesso/correção/exclusão
+- Política de retenção e descarte
+- Registro de incidentes e plano de resposta
+- DPA com fornecedores (infra, auth, analytics)
+
+---
+
+## 8) Escalabilidade para "sem limites"
+
+- API stateless com autoscaling horizontal
+- Fila para geração de IA sob pico
+- Cache Redis para reduzir custo/latência
+- Índices de banco e paginação
+- CDN para assets estáticos
+- Limites por plano para proteger margem
+
+---
+
+## 9) Migração do app atual (ordem recomendada)
+
+### Fase A — Fundamentos
+- Criar backend e banco
+- Implementar auth e `/me/entitlements`
+- Mover chave Gemini para backend
+
+### Fase B — Monetização
+- Implementar webhook Kiwify com idempotência
+- Conectar plano do usuário ao frontend
+- Bloqueio/liberação de features por entitlement
+
+### Fase C — Dados e UX
+- Migrar histórico/anotações/localStorage para banco
+- Manter fallback de IA (baseline atual)
+- Adicionar observabilidade e alertas
+
+### Fase D — Compliance e operação
+- Publicar documentos LGPD
+- Fluxo de exclusão/exportação de dados
+- Backups e runbook operacional
+
+---
+
+## 10) Critérios de pronto para venda em escala
+
+- [ ] Nenhum segredo no frontend
+- [ ] Kiwify webhook validado + idempotente
+- [ ] Planos controlados no backend
+- [ ] Geração IA protegida por limites e logs
+- [ ] Fluxo LGPD (acesso/exclusão) operacional
+- [ ] Sentry + alertas em produção
+- [ ] Teste de carga básico aprovado
