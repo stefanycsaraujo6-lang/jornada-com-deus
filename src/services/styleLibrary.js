@@ -55,10 +55,10 @@ export function pickStyle(seed) {
   return STYLE_LIBRARY[idx];
 }
 
-export function pickDailyDevotionalStyle({ todayKey, userName, theme, plan }) {
-  return pickStyle(`devotional|${todayKey}|${userName || ""}|${theme || ""}|${plan || ""}`);
+export function pickDailyDevotionalStyle({ todayKey, userName, theme, plan, variant, nonce }) {
+  return pickStyle(`devotional|${todayKey}|${userName || ""}|${theme || ""}|${plan || ""}|${variant || 0}|${nonce || ""}`);
 }
 
-export function pickChallengeStyle({ todayKey, variant, userName }) {
-  return pickStyle(`challenge|${todayKey}|${variant || 0}|${userName || ""}`);
+export function pickChallengeStyle({ todayKey, variant, userName, nonce }) {
+  return pickStyle(`challenge|${todayKey}|${variant || 0}|${userName || ""}|${nonce || ""}`);
 }

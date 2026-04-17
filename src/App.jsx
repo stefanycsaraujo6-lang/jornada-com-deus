@@ -314,7 +314,7 @@ export default function App() {
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
   const {
     dev, loading, loadMsg, imgUrl, imgLoading, shareText,
-    loadDevotional, generateVerseImage, shareImage
+    loadDevotional, regenerateDevotional, generateVerseImage, shareImage
   } = useDevotional({
     ls,
     plan,
@@ -560,6 +560,10 @@ export default function App() {
               <button className={`done-btn ${isToday ? "done-done" : "done-active"}`}
                 onClick={isToday ? undefined : markDone}>
                 {isToday ? "✓ Dia concluído!" : "Marcar como concluído"}
+              </button>
+
+              <button className="regen-btn" style={{marginTop:10}} onClick={() => regenerateDevotional(chosenTheme)}>
+                🔄 Gerar novo devocional
               </button>
             </>
           ) : null}

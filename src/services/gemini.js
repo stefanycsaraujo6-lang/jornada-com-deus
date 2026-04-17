@@ -30,12 +30,22 @@ export async function requestGemini(payload, models = AI_MODELS, tag = "callAI")
   let lastError = null;
   let quotaError = null;
 
+  const enrichedPayload = {
+    ...payload,
+    generationConfig: {
+      temperature: 1.0,
+      topP: 0.95,
+      topK: 64,
+      ...(payload?.generationConfig || {})
+    }
+  };
+
   for (let attempt = 0; attempt < models.length; attempt++) {
     const model = models[attempt];
     const res = await fetch("/api/gemini", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, payload })
+      body: JSON.stringify({ model, payload: enrichedPayload })
     });
     const data = await res.json().catch(() => ({ error: "Resposta inválida do proxy Gemini." }));
     if (res.ok) return data;

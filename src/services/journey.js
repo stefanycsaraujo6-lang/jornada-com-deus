@@ -47,17 +47,22 @@ async function callAI(prompt) {
 export async function genChallenge(userName, options = {}) {
   const todayKey = options.todayKey || new Date().toISOString().slice(0, 10);
   const variant = Number.isFinite(options.variant) ? options.variant : 0;
-  const style = pickChallengeStyle({ todayKey, variant, userName });
+  const nonce = options.nonce || Math.random().toString(36).slice(2, 10);
+  const history = Array.isArray(options.history) ? options.history.slice(-5) : [];
+  const style = pickChallengeStyle({ todayKey, variant, userName, nonce });
   const styleCatalog = getStyleLibrary()
     .map((s) => `${s.id}: ${s.identity}`)
     .join(" | ");
   const previousSummary = options.previousChallenge
     ? `\nDESAFIO ANTERIOR (nao repetir estrutura nem frases): ${JSON.stringify(options.previousChallenge)}`
     : "";
+  const historyBlock = history.length
+    ? `\nHISTORICO RECENTE (NAO REPETIR titulos, temas centrais nem tarefas):\n${history.map((h, i) => `- ${i + 1}. titulo="${h.title || ""}", estilo="${h.styleLabel || ""}"`).join("\n")}`
+    : "";
   try {
-    return await callAI(`Crie um desafio espiritual semanal (7 dias) para ${userName || "um cristão"}.
+    return await callAI(`Crie um desafio espiritual semanal (7 dias) INEDITO para ${userName || "um cristão"}.
+ID unico desta geracao: ${todayKey}-${variant}-${nonce}.
 Objetivo: profundo, humano, praticável na vida real e espiritualmente consistente.
-Contexto de variação: data=${todayKey}, variante=${variant}.
 
 REGRAS:
 1) Evite tarefas genéricas e repetitivas. Cada dia precisa ser unico.
@@ -66,8 +71,9 @@ REGRAS:
 4) Linguagem pastoral, calorosa e realista, sem culpa toxica e sem legalismo.
 5) Sequência progressiva: do interior para a prática.
 6) Inclua micro-acao concreta por dia (ex.: "enviar mensagem de perdão", "anotar 3 medos e orar por eles").
-7) Se variante for maior que 0, torne este desafio explicitamente diferente do anterior em tema central, metáforas e tarefas.
+7) Este desafio deve ser claramente diferente dos anteriores em tema central, metáforas, versiculos citados e tarefas.
 8) Traga criatividade intuitiva: desafios inteligentes que conversem com rotina real (trabalho, família, cansaço, decisões).
+9) Varie o angulo central: pode ser cura, missao, quietude, confronto amoroso, contemplacao, gratidao, serviço, intimidade.
 
 BIBLIOTECA DE ESTILOS DISPONIVEIS:
 ${styleCatalog}
@@ -77,7 +83,7 @@ ESTILO OBRIGATORIO DESTA GERACAO:
 - nome: ${style.label}
 - identidade: ${style.identity}
 - diretriz de escrita: ${style.challengeGuide}
-${previousSummary}
+${previousSummary}${historyBlock}
 
 Responda APENAS com JSON válido:
 {"title":"título motivador e criativo","description":"2 frases com sentido espiritual e humano","days":[{"day":1,"task":"tarefa específica"},{"day":2,"task":"tarefa específica"},{"day":3,"task":"tarefa específica"},{"day":4,"task":"tarefa específica"},{"day":5,"task":"tarefa específica"},{"day":6,"task":"tarefa específica"},{"day":7,"task":"tarefa específica"}],"styleId":"${style.id}","styleLabel":"${style.label}"}`);

@@ -44,16 +44,22 @@ async function callAI(prompt) {
 
 export async function genDevocional(plan, userName, theme, options = {}) {
   const todayKey = options.todayKey || new Date().toISOString().slice(0, 10);
-  const style = pickDailyDevotionalStyle({ todayKey, userName, theme, plan });
+  const variant = Number.isFinite(options.variant) ? options.variant : 0;
+  const nonce = options.nonce || Math.random().toString(36).slice(2, 10);
+  const history = Array.isArray(options.history) ? options.history.slice(-6) : [];
+  const style = pickDailyDevotionalStyle({ todayKey, userName, theme, plan, variant, nonce });
   const styleCatalog = getStyleLibrary()
     .map((s) => `${s.id}: ${s.identity}`)
     .join(" | ");
-  const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante para hoje.";
+  const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante e inesperado para hoje (evite repetir temas batidos).";
   const personClause = plan !== "bronze" && userName ? `Personalize sutilmente para ${userName}.` : "";
   const depth = plan === "ouro" ? "5 parágrafos densos, humanos e teologicamente profundos" : "4 parágrafos curtos, claros e emocionalmente reais";
+  const historyBlock = history.length
+    ? `\nHISTORICO RECENTE (NAO REPITA esses versiculos, temas nem frases-chave):\n${history.map((h, i) => `- ${i + 1}. tema="${h.theme || ""}", verso="${h.verse || ""}"`).join("\n")}`
+    : "";
   try {
     return await callAI(`Você é um escritor devocional cristão brasileiro, biblicamente fiel, pastoral e humano.
-Objetivo: gerar UM devocional do dia (somente hoje), com profundidade espiritual, aplicação concreta e linguagem natural.
+Objetivo: gerar UM devocional inédito (ID unico: ${todayKey}-${variant}-${nonce}), com profundidade espiritual, aplicação concreta e linguagem natural.
 
 REGRAS DE QUALIDADE (obrigatórias):
 1) Nada genérico, nada de frases prontas vazias, nada de "religiosês".
@@ -62,6 +68,8 @@ REGRAS DE QUALIDADE (obrigatórias):
 4) Traga esperança realista: sem triunfalismo, sem promessas fáceis.
 5) Use imagens e linguagem vivas, com criatividade e inteligência pastoral.
 6) Escreva para hoje (devocional diário), sem repetir estrutura engessada.
+7) Traga um versiculo DIFERENTE dos ultimos usados. Evite classicos repetidos (ex.: Jeremias 29:11, Filipenses 4:13, Provérbios 3:5-6) se eles aparecerem no historico.
+8) Varie o livro biblico (Antigo e Novo Testamento), tom e metaforas a cada geracao.
 
 BIBLIOTECA DE ESTILOS DISPONIVEIS:
 ${styleCatalog}
@@ -71,6 +79,7 @@ ESTILO OBRIGATORIO DE HOJE:
 - nome: ${style.label}
 - identidade: ${style.identity}
 - diretriz de escrita: ${style.devotionalGuide}
+${historyBlock}
 
 ${themeClause}
 ${personClause}

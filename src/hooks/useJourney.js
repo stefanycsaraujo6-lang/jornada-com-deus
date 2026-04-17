@@ -13,6 +13,23 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
 
   const getChallengeKey = (dateKey) => `jcd_challenge_${dateKey}`;
   const getVariantKey = (dateKey) => `jcd_challenge_variant_${dateKey}`;
+  const CHALLENGE_HISTORY_KEY = "jcd_challenge_history";
+  const CHALLENGE_HISTORY_MAX = 5;
+
+  const readChallengeHistory = () => {
+    const list = ls?.get(CHALLENGE_HISTORY_KEY);
+    return Array.isArray(list) ? list : [];
+  };
+
+  const pushChallengeHistory = (entry) => {
+    try {
+      const prev = readChallengeHistory();
+      const next = [...prev, entry].slice(-CHALLENGE_HISTORY_MAX);
+      ls?.set(CHALLENGE_HISTORY_KEY, next);
+    } catch {
+      // ignore
+    }
+  };
 
   const loadChallenge = async (forceNew = false) => {
     if (challengeLoading) return false;
@@ -34,14 +51,19 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
       const currentVariant = Number(ls?.get(variantKey, 0) || 0);
       const nextVariant = forceNew ? currentVariant + 1 : currentVariant;
       const previousChallenge = forceNew ? ls?.get(cacheKey) : null;
+      const nonce = Math.random().toString(36).slice(2, 10);
+      const history = readChallengeHistory();
       const c = await genChallenge(userName, {
         todayKey: dayKey,
         variant: nextVariant,
-        previousChallenge
+        previousChallenge,
+        nonce,
+        history
       });
       if (!c?.days) throw new Error("Resposta inválida");
       ls?.set(variantKey, nextVariant);
       ls?.set(cacheKey, c);
+      pushChallengeHistory({ title: c?.title, styleLabel: c?.styleLabel });
       setChallenge(c);
       return true;
     } catch (e) {
