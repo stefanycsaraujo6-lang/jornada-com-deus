@@ -1,8 +1,12 @@
-// ── MODIFICAÇÃO: ajustes de chamadas à Claude API com chave em env e headers seguros
-// ── DATA: 2026-04-16
-// ── TASK: TASK-09 (variável de ambiente da API) + regras Safe-Call/.cursorrules
+// ── MODIFICAÇÃO: extração de comunidade para hook + UX de push via modal + painel de ambiente
+// ── DATA: 2026-04-17
+// ── TASK: TASK-12 (useCommunity) + TASK-13 (modal push/painel ambiente)
 import { useState, useEffect } from "react";
 import { Stars } from "./components/Stars.jsx";
+import { applyNotificationTags, getNotificationEnvironmentInfo, initOneSignal, isNotificationFeatureEnabled, isOneSignalConfigured, requestPushPermission } from "./services/onesignal.js";
+import { useDevotional } from "./hooks/useDevotional.js";
+import { useJourney } from "./hooks/useJourney.js";
+import { useCommunity } from "./hooks/useCommunity.js";
 
 const todayStr = () => new Date().toISOString().split("T")[0];
 const greet = () => { const h = new Date().getHours(); return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"; };
@@ -55,288 +59,6 @@ const MOCK_PURPOSES = [
   { id:1, code:"JCD-7F3A", name:"Cura da Dona Maria", desc:"Orando pela recuperação da nossa irmã após a cirurgia.", members:[{name:"Ana Beatriz",avatar:"AB",days:12},{name:"Carlos",avatar:"CE",days:10},{name:"Mariana",avatar:"MS",days:8}], days_active:12, deadline:"2026-05-01", has_deadline:true },
   { id:2, code:"JCD-2B9C", name:"Jejum de Daniel — 21 dias", desc:"Campanha coletiva de oração e jejum para nossa família.", members:[{name:"Pedro",avatar:"PA",days:5},{name:"Júlia",avatar:"JF",days:5}], days_active:5, deadline:null, has_deadline:false },
 ];
-const POINTS = { culto:10, biblia:5, devocional:3 };
-
-const AI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
-const AI_VISION_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
-const RETRYABLE_AI_STATUS = new Set([404, 429, 503]);
-const AI_COOLDOWN_MS = 10 * 60 * 1000;
-const ONE_SIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
-let aiBlockedUntil = 0;
-
-function buildAIError(status, apiMsg, model) {
-  const err = new Error(`API error ${status}: ${apiMsg}`);
-  err.status = status;
-  err.apiMsg = String(apiMsg || "");
-  err.model = model;
-  return err;
-}
-
-function getFriendlyAIErrorMessage(err, fallback) {
-  const msg = `${err?.apiMsg || err?.message || ""}`.toLowerCase();
-  if (err?.status === 429 || msg.includes("quota") || msg.includes("rate limit")) {
-    return "Limite de uso da IA atingido no momento. Tente novamente em alguns minutos.";
-  }
-  if (err?.status === 404 || msg.includes("not found for api version")) {
-    return "Modelo de IA indisponível agora. Tente novamente em instantes.";
-  }
-  return fallback;
-}
-
-function fallbackDevocional(plan, userName, theme) {
-  const selectedTheme = theme || "Confiança em Deus";
-  const isOuro = plan === "ouro";
-  const reflection = isOuro
-    ? [
-        "Mesmo quando o futuro parece incerto, Deus continua no controle e sustentando cada detalhe da sua caminhada.",
-        "A paz de Cristo nao depende da ausencia de lutas, mas da certeza de que Ele caminha com voce em meio a elas.",
-        "Confiar em Deus e entregar hoje o que voce nao consegue resolver sozinho, sabendo que Ele cuida melhor do que nos.",
-        "A fidelidade do Senhor no passado fortalece nossa fe para o presente e renova nossa esperanca para o amanha.",
-        `${userName ? `${userName}, ` : ""}permaneça firme: Deus nao perdeu nenhum capitulo da sua historia.`
-      ]
-    : [
-        "Deus conhece seus medos e suas lutas de hoje.",
-        "Ele nao te abandona no meio do processo.",
-        "Confie: cada passo em fe aproxima voce da paz de Cristo.",
-        "Ore com sinceridade e entregue a Ele tudo o que pesa no seu coracao."
-      ];
-
-  return {
-    theme: selectedTheme,
-    verse: "Provérbios 3:5-6",
-    verseText: "Confia no Senhor de todo o teu coracao e nao te estribes no teu proprio entendimento.",
-    reflection,
-    application: "Separe 5 minutos hoje para orar e entregar suas preocupacoes a Deus. Anote uma decisao pratica de fe e viva esse passo ainda hoje."
-  };
-}
-
-function fallbackChallenge(userName) {
-  const name = userName || "você";
-  return {
-    title: "7 Dias de Proximidade com Deus",
-    description: `Um plano simples e profundo para fortalecer sua caminhada com Deus nesta semana, ${name}.`,
-    days: [
-      { day: 1, task: "Leia Salmo 23 e agradeca a Deus por 3 cuidados que voce ja recebeu." },
-      { day: 2, task: "Separe 10 minutos de oração em silencio, apresentando suas maiores preocupacoes." },
-      { day: 3, task: "Leia Filipenses 4:6-7 e entregue a Deus algo que tem tirado sua paz." },
-      { day: 4, task: "Compartilhe um versiculo com alguem e ore por essa pessoa." },
-      { day: 5, task: "Leia Mateus 6:33 e anote uma prioridade espiritual para esta semana." },
-      { day: 6, task: "Faça um ato de bondade intencional e dedique isso ao Senhor." },
-      { day: 7, task: "Relembre a semana, agradeca a Deus e escreva um testemunho curto." }
-    ]
-  };
-}
-
-function fallbackJourney(name) {
-  return {
-    title: name,
-    description: "Uma jornada em 5 etapas para aprofundar sua fe de forma pratica, constante e transformadora.",
-    steps: [
-      { step: 1, title: "Comeco com Intencao", preview: "Defina um horario diario de encontro com Deus." },
-      { step: 2, title: "Raizes na Palavra", preview: "Leia e medite em textos biblicos curtos todos os dias." },
-      { step: 3, title: "Vida de Oracao", preview: "Transforme pedidos e gratidao em um habito espiritual." },
-      { step: 4, title: "Fe em Acao", preview: "Pratique pequenos atos de obediencia e amor ao proximo." },
-      { step: 5, title: "Perseveranca", preview: "Revise aprendizados e mantenha constancia para os proximos dias." }
-    ]
-  };
-}
-
-function dataUrlToFile(dataUrl, filename) {
-  const [meta, b64] = dataUrl.split(",");
-  const mime = meta?.match(/data:(.*?);base64/)?.[1] || "image/png";
-  const bytes = atob(b64 || "");
-  const arr = new Uint8Array(bytes.length);
-  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-  return new File([arr], filename, { type: mime });
-}
-
-function initOneSignal(user) {
-  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return;
-  if (window.__jcdOneSignalInit) return;
-  if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
-
-  window.OneSignalDeferred.push(async (OneSignal) => {
-    await OneSignal.init({
-      appId: ONE_SIGNAL_APP_ID,
-      allowLocalhostAsSecureOrigin: true,
-      notifyButton: { enable: false }
-    });
-
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-    if (OneSignal.User?.addTags) {
-      await OneSignal.User.addTags({
-        reminder_daily_hour: "08:00",
-        reminder_timezone_mode: "device",
-        reminder_quiet_hours: "22:00-07:00",
-        reminder_timezone: timezone
-      });
-    } else if (OneSignal.sendTags) {
-      OneSignal.sendTags({
-        reminder_daily_hour: "08:00",
-        reminder_timezone_mode: "device",
-        reminder_quiet_hours: "22:00-07:00",
-        reminder_timezone: timezone
-      });
-    }
-
-    if (user?.email && OneSignal.login) {
-      await OneSignal.login(user.email);
-    }
-  });
-
-  window.__jcdOneSignalInit = true;
-}
-
-async function requestPushPermission() {
-  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return false;
-  if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
-
-  return new Promise((resolve) => {
-    window.OneSignalDeferred.push(async (OneSignal) => {
-      try {
-        if (Notification?.permission === "granted") return resolve(true);
-        if (OneSignal.Notifications?.requestPermission) {
-          await OneSignal.Notifications.requestPermission();
-          return resolve(Notification?.permission === "granted");
-        }
-        resolve(false);
-      } catch {
-        resolve(false);
-      }
-    });
-  });
-}
-
-async function applyNotificationTags(prefs) {
-  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return;
-  if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
-
-  window.OneSignalDeferred.push(async (OneSignal) => {
-    const tags = {
-      reminder_daily_hour: prefs.hour,
-      reminder_timezone_mode: "device",
-      reminder_quiet_hours: prefs.quietHours ? "22:00-07:00" : "off",
-      reminder_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-      reminder_daily_enabled: prefs.enabled ? "1" : "0",
-      reminder_streak_enabled: prefs.enabled ? "1" : "0",
-      reminder_challenge_enabled: prefs.enabled ? "1" : "0"
-    };
-
-    if (OneSignal.User?.addTags) await OneSignal.User.addTags(tags);
-    else if (OneSignal.sendTags) OneSignal.sendTags(tags);
-
-    if (OneSignal.User?.pushSubscription?.optOut) {
-      if (prefs.enabled) await OneSignal.User.pushSubscription.optIn();
-      else await OneSignal.User.pushSubscription.optOut();
-    }
-  });
-}
-
-async function requestGemini(payload, models = AI_MODELS, tag = "callAI") {
-  if (Date.now() < aiBlockedUntil) {
-    throw buildAIError(429, "Quota em cooldown temporário. Usando fallback local.", "cooldown");
-  }
-
-  let lastError = null;
-  let quotaError = null;
-  for (let attempt = 0; attempt < models.length; attempt++) {
-    const model = models[attempt];
-    const res = await fetch("/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, payload })
-    });
-    const data = await res.json().catch(() => ({ error: "Resposta inválida do proxy Gemini." }));
-    if (res.ok) return data;
-
-    const apiMsg = data?.error?.message || data?.error || JSON.stringify(data);
-    console.warn(`[${tag}] ${model} — ${res.status}: ${apiMsg}`);
-    lastError = buildAIError(res.status, apiMsg, model);
-    if (res.status === 429) {
-      quotaError = lastError;
-      aiBlockedUntil = Date.now() + AI_COOLDOWN_MS;
-      break;
-    }
-
-    const canRetry = RETRYABLE_AI_STATUS.has(res.status) && attempt < models.length - 1;
-    if (canRetry) {
-      const wait = 1200 * (attempt + 1);
-      console.log(`[${tag}] Tentando novamente em ${wait}ms (modelo alternativo)...`);
-      await new Promise(r => setTimeout(r, wait));
-      continue;
-    }
-    throw quotaError || lastError;
-  }
-  throw quotaError || lastError || new Error("Falha ao chamar a API Gemini.");
-}
-
-async function callAI(prompt) {
-  const data = await requestGemini({
-    contents: [{ parts: [{ text: prompt }] }]
-  });
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
-}
-
-async function genDevocional(plan, userName, theme) {
-  const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante para hoje.";
-  const personClause = plan !== "bronze" && userName ? `Personalize sutilmente para ${userName}.` : "";
-  const depth = plan === "ouro" ? "5 parágrafos ricos e teologicamente profundos" : "4 parágrafos curtos e acessíveis";
-  try {
-    return await callAI(`Você é um pastor evangélico brasileiro, acolhedor e profundo, para cristãos de todas as idades. Responda APENAS com JSON válido, sem markdown. ${themeClause} ${personClause} Reflexão com ${depth}.\n{"theme":"título curto","verse":"Livro cap:v","verseText":"texto completo em português","reflection":["p1","p2","p3","p4"],"application":"ação prática hoje em 2-3 frases"}`);
-  } catch {
-    return fallbackDevocional(plan, userName, theme);
-  }
-}
-
-async function genChallenge(userName) {
-  try {
-    return await callAI(`Crie um desafio espiritual semanal para ${userName || "um cristão"}. Responda APENAS com JSON válido:\n{"title":"título motivador","description":"2 frases","days":[{"day":1,"task":"tarefa"},{"day":2,"task":"tarefa"},{"day":3,"task":"tarefa"},{"day":4,"task":"tarefa"},{"day":5,"task":"tarefa"},{"day":6,"task":"tarefa"},{"day":7,"task":"tarefa"}]}`);
-  } catch {
-    return fallbackChallenge(userName);
-  }
-}
-
-async function genJourney(name, userName) {
-  try {
-    return await callAI(`Crie a jornada espiritual "${name}" para ${userName || "um cristão"} com 5 etapas progressivas. Responda APENAS com JSON válido:\n{"title":"${name}","description":"2-3 frases","steps":[{"step":1,"title":"título","preview":"descrição"},{"step":2,"title":"título","preview":"descrição"},{"step":3,"title":"título","preview":"descrição"},{"step":4,"title":"título","preview":"descrição"},{"step":5,"title":"título","preview":"descrição"}]}`);
-  } catch {
-    return fallbackJourney(name);
-  }
-}
-
-function genVerseImage(verseText, verseRef, theme, dark) {
-  const c = document.createElement("canvas"); c.width = 1080; c.height = 1080;
-  const ctx = c.getContext("2d");
-  const bg = ctx.createRadialGradient(540,380,0,540,540,900);
-  if (dark) { bg.addColorStop(0,"#1a1f3c"); bg.addColorStop(0.6,"#0d1025"); bg.addColorStop(1,"#06080f"); }
-  else { bg.addColorStop(0,"#fdf8f0"); bg.addColorStop(0.6,"#f5ede0"); bg.addColorStop(1,"#e8d8c0"); }
-  ctx.fillStyle = bg; ctx.fillRect(0,0,1080,1080);
-  for (let i = 0; i < 100; i++) {
-    ctx.beginPath(); ctx.arc(Math.random()*1080,Math.random()*1080,Math.random()*1.8,0,Math.PI*2);
-    ctx.fillStyle = dark ? `rgba(255,255,255,${.05+Math.random()*.3})` : `rgba(160,120,64,${.05+Math.random()*.15})`; ctx.fill();
-  }
-  const lg = ctx.createLinearGradient(240,0,840,0); lg.addColorStop(0,"transparent"); lg.addColorStop(0.5,"#c9a96e"); lg.addColorStop(1,"transparent");
-  ctx.strokeStyle = lg; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(240,265); ctx.lineTo(840,265); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(240,815); ctx.lineTo(840,815); ctx.stroke();
-  ctx.fillStyle = "rgba(201,169,110,0.55)"; ctx.fillRect(530,155,20,88); ctx.fillRect(505,188,70,22);
-  ctx.fillStyle = "#c9a96e"; ctx.font = "500 26px Georgia,serif"; ctx.textAlign = "center";
-  ctx.fillText(theme.toUpperCase(), 540, 325);
-  ctx.fillStyle = dark ? "#ede8dc" : "#2c1a0e"; ctx.font = "italic 44px Georgia,serif";
-  const words = `"${verseText}"`.split(" "); const lines = []; let cur = "";
-  for (const w of words) { const t = cur+(cur?" ":"")+w; if (ctx.measureText(t).width>760&&cur) { lines.push(cur); cur=w; } else cur=t; }
-  if (cur) lines.push(cur);
-  const sy = 540-(lines.length*64)/2+30;
-  lines.forEach((l,i) => ctx.fillText(l,540,sy+i*64));
-  ctx.fillStyle="#c9a96e"; ctx.font="500 34px Georgia,serif";
-  ctx.fillText(`— ${verseRef}`,540,sy+lines.length*64+48);
-  ctx.fillStyle = dark?"rgba(237,232,220,0.4)":"rgba(100,70,40,0.5)"; ctx.font="italic 28px Georgia,serif";
-  ctx.fillText("✦ Jornada com Deus",540,878);
-  return c.toDataURL("image/png");
-}
-
 const makeCSS = (dark) => {
   const d = dark;
   return `
@@ -564,14 +286,10 @@ export default function App() {
   const [notes, setNotes] = useState(() => ls.get("jcd_notes", {}));
   const [noteText, setNoteText] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
-  const [dev, setDev] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [loadMsg, setLoadMsg] = useState("Preparando seu devocional...");
-  const [imgUrl, setImgUrl] = useState(null);
-  const [imgLoading, setImgLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [showPlans, setShowPlans] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(plan);
   const [notifPrefs, setNotifPrefs] = useState(() => ls.get("jcd_notif_prefs", {
     enabled: false,
@@ -580,59 +298,98 @@ export default function App() {
   }));
   const [chosenTheme, setChosenTheme] = useState(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
-  const [challenge, setChallenge] = useState(null);
-  const [challengeLoading, setChallengeLoading] = useState(false);
-  const [journey, setJourney] = useState(null);
-  const [journeyLoading, setJourneyLoading] = useState(false);
-
-  // Community state
-  const [commTab, setCommTab] = useState("ranking");
-  const [rankScope, setRankScope] = useState("global"); // global | group
-  const [rankPeriod, setRankPeriod] = useState("week"); // week | total
-  const [myPts, setMyPts] = useState(() => ls.get("jcd_pts", { week:0, total:0 }));
-  const [todayCheckins, setTodayCheckins] = useState(() => ls.get("jcd_checkins_"+todayStr(), {}));
-  const [showPhotoModal, setShowPhotoModal] = useState(null); // null | "culto" | "biblia"
-  const [photoValidating, setPhotoValidating] = useState(false);
-  const [photoResult, setPhotoResult] = useState(null);
-  const [purposes, setPurposes] = useState(() => ls.get("jcd_purposes", MOCK_PURPOSES));
-  const [activePurpose, setActivePurpose] = useState(null);
-  const [showNewPurpose, setShowNewPurpose] = useState(false);
-  const [newPurposeForm, setNewPurposeForm] = useState({ name:"", desc:"", deadline:"", has_deadline:false });
-  const [joinCode, setJoinCode] = useState("");
 
   const todayKey = todayStr();
   const streak = getStreak(history);
   const totalDone = Object.values(history).filter(Boolean).length;
   const isToday = !!history[todayKey];
   const days7 = last7();
+  const notificationsAvailable = isNotificationFeatureEnabled();
+  const notificationEnv = getNotificationEnvironmentInfo();
 
   useEffect(() => { if (user) setScreen("dashboard"); }, []);
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
-  useEffect(() => { if (user) initOneSignal(user); }, [user]);
+  useEffect(() => { if (user && notificationsAvailable) initOneSignal(user); }, [user, notificationsAvailable]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
+  const {
+    dev, loading, loadMsg, imgUrl, imgLoading, shareText,
+    loadDevotional, generateVerseImage, shareImage
+  } = useDevotional({
+    ls,
+    plan,
+    userName: user?.name,
+    todayKey,
+    dark,
+    onToast: showToast
+  });
+  const {
+    challenge, setChallenge, challengeLoading,
+    journey, journeyLoading, loadChallenge, loadJourney
+  } = useJourney({
+    userName: user?.name,
+    onToast: showToast
+  });
+  const {
+    commTab, setCommTab,
+    rankScope, setRankScope,
+    rankPeriod, setRankPeriod,
+    myPts,
+    todayCheckins,
+    showPhotoModal, setShowPhotoModal,
+    photoValidating,
+    photoResult,
+    purposes,
+    activePurpose, setActivePurpose,
+    showNewPurpose, setShowNewPurpose,
+    newPurposeForm, setNewPurposeForm,
+    joinCode, setJoinCode,
+    displayUsers, myRank, streakBonus,
+    handlePhotoSubmit,
+    createPurpose,
+    joinPurpose,
+    resetPhotoModal
+  } = useCommunity({
+    ls,
+    user,
+    streak,
+    todayKey,
+    mockUsers: MOCK_USERS,
+    mockGroup: MOCK_GROUP,
+    initialPurposes: MOCK_PURPOSES,
+    onToast: showToast
+  });
 
   const handleLogin = async () => {
     if (!loginForm.name.trim() || !loginForm.email.trim()) return;
     const u = { name: loginForm.name.trim(), email: loginForm.email.trim() };
     ls.set("jcd_user", u); setUser(u); setScreen("dashboard");
-    initOneSignal(u);
-    if (ONE_SIGNAL_APP_ID) {
-      const wantsPush = window.confirm("Deseja ativar notificações para lembretes diários às 08:00?");
-      if (wantsPush) {
-        const ok = await requestPushPermission();
-        if (ok) {
-          const next = { ...notifPrefs, enabled: true };
-          setNotifPrefs(next);
-          ls.set("jcd_notif_prefs", next);
-          await applyNotificationTags(next);
-        }
-        showToast(ok ? "🔔 Notificações ativadas!" : "Notificações não ativadas.");
-      }
+    if (notificationsAvailable) initOneSignal(u);
+    if (isOneSignalConfigured()) setShowPushPrompt(true);
+  };
+
+  const handlePushPrompt = async (shouldEnable) => {
+    setShowPushPrompt(false);
+    if (!shouldEnable) {
+      showToast("Você pode ativar notificações depois nas configurações.");
+      return;
     }
+    const ok = await requestPushPermission();
+    if (ok) {
+      const next = { ...notifPrefs, enabled: true };
+      setNotifPrefs(next);
+      ls.set("jcd_notif_prefs", next);
+      await applyNotificationTags(next);
+    }
+    showToast(ok ? "🔔 Notificações ativadas!" : "Notificações não ativadas.");
   };
 
   const saveNotifSettings = async () => {
+    if (!notificationsAvailable) {
+      setShowNotifSettings(false);
+      showToast("Notificações desativadas neste ambiente.");
+      return;
+    }
     let next = { ...notifPrefs };
     if (notifPrefs.enabled && Notification?.permission !== "granted") {
       const ok = await requestPushPermission();
@@ -647,21 +404,10 @@ export default function App() {
   };
 
   const openDevocional = async (theme = null) => {
-    setNoteText(notes[todayKey] || ""); setImgUrl(null);
-    const cacheKey = `jcd_dev_${todayKey}_${plan}${theme ? "_"+theme.slice(0,10) : ""}`;
-    const cached = ls.get(cacheKey);
-    if (cached) { setDev(cached); setScreen("devotional"); return; }
-    setLoading(true); setScreen("devotional");
-    const msgs = ["✨ Preparando seu devocional...", "📖 Buscando a Palavra...", "🙏 Quase pronto..."];
-    let mi = 0; setLoadMsg(msgs[0]);
-    const iv = setInterval(() => { mi = (mi+1)%msgs.length; setLoadMsg(msgs[mi]); }, 2000);
-    try {
-      const data = await genDevocional(plan, user?.name, theme);
-      setDev(data); ls.set(cacheKey, data);
-    } catch(e) {
-      showToast(getFriendlyAIErrorMessage(e, "Erro ao gerar devocional. Tente novamente."));
-      setScreen("dashboard");
-    } finally { clearInterval(iv); setLoading(false); }
+    setNoteText(notes[todayKey] || "");
+    setScreen("devotional");
+    const ok = await loadDevotional(theme);
+    if (!ok) setScreen("dashboard");
   };
 
   const markDone = () => {
@@ -677,34 +423,13 @@ export default function App() {
   };
 
   const handleGenImg = () => {
-    if (!dev) return; setImgLoading(true);
-    setTimeout(() => { setImgUrl(genVerseImage(dev.verseText, dev.verse, dev.theme, dark)); setImgLoading(false); }, 700);
+    generateVerseImage();
   };
 
   const handleShareImageNative = async () => {
-    if (!imgUrl) return;
-    try {
-      const file = dataUrlToFile(imgUrl, `versiculo-${todayKey}.png`);
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: "Versículo do dia",
-          text: "Compartilhando meu versículo do dia ✨",
-          files: [file]
-        });
-        return;
-      }
-
-      const a = document.createElement("a");
-      a.href = imgUrl;
-      a.download = `versiculo-${todayKey}.png`;
-      a.click();
-      showToast("Imagem PNG salva nos downloads.");
-    } catch {
-      showToast("Não foi possível compartilhar a imagem agora.");
-    }
+    await shareImage();
   };
 
-  const shareText = dev ? `📖 Versículo do dia:\n\n"${dev.verseText}" – ${dev.verse}\n\n🙏 Hoje decidi confiar mais em Deus.\n\n✨ Estou fazendo a Jornada com Deus.` : "";
   const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
   const shareFB = () => window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(shareText)}`, "_blank");
   const shareIG = () => { navigator.clipboard?.writeText(shareText); showToast("Texto copiado! Cole no Instagram."); };
@@ -715,115 +440,9 @@ export default function App() {
     showToast(`${PLANS[selectedPlan].emoji} Plano ${PLANS[selectedPlan].name} ativado!`);
   };
 
-  const loadChallenge = async () => {
-    if (challengeLoading) return;
-    setChallengeLoading(true);
-    setChallenge(null);
-    try {
-      const c = await genChallenge(user?.name);
-      if (!c?.days) throw new Error("Resposta inválida");
-      setChallenge(c);
-    } catch(e) {
-      showToast(getFriendlyAIErrorMessage(e, "Erro ao gerar desafio. Verifique sua conexão."));
-      console.error("[loadChallenge] Falha ao chamar Gemini:", {
-        message: e?.message,
-        stack: e?.stack
-      });
-    } finally { setChallengeLoading(false); }
-  };
-
-  const loadJourney = async (name) => {
-    setJourneyLoading(true);
-    try {
-      const j = await genJourney(name, user?.name);
-      if (!j?.steps) throw new Error("Resposta inválida");
-      setJourney(j); setTab("journey-detail");
-    } catch(e) {
-      showToast(getFriendlyAIErrorMessage(e, "Erro ao gerar jornada. Verifique sua conexão."));
-      console.error("[loadJourney] Falha ao chamar Gemini:", {
-        message: e?.message,
-        stack: e?.stack
-      });
-    } finally { setJourneyLoading(false); }
-  };
-
-  // ── COMMUNITY FUNCTIONS ──────────────────────────────────────────────────
-  const addPoints = (type) => {
-    const pts = POINTS[type] || 0;
-    const streakBonus = Math.floor(streak / 7);
-    const total = pts + streakBonus;
-    const updated = { week: myPts.week + total, total: myPts.total + total };
-    setMyPts(updated); ls.set("jcd_pts", updated);
-    const ci = { ...todayCheckins, [type]: true };
-    setTodayCheckins(ci); ls.set("jcd_checkins_"+todayStr(), ci);
-    return total;
-  };
-
-  const validatePhotoWithAI = async (file, type) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const b64 = e.target.result.split(",")[1];
-        const questionText = type === "culto"
-          ? "Esta imagem mostra um ambiente de culto, igreja, celebração religiosa cristã ou pessoas adorando? Responda apenas: SIM ou NAO"
-          : "Esta imagem mostra uma Bíblia aberta ou fechada, livro sagrado cristão? Responda apenas: SIM ou NAO";
-        try {
-          const data = await requestGemini({
-            contents: [{
-              parts: [
-                { inlineData: { mimeType: file.type, data: b64 } },
-                { text: questionText }
-              ]
-            }]
-          }, AI_VISION_MODELS, "photo-check");
-          const answer = (data?.candidates?.[0]?.content?.parts?.[0]?.text || "").toUpperCase().trim();
-          resolve(answer.includes("SIM"));
-        } catch (err) {
-          console.warn("[photo-check] Erro ao validar imagem:", err?.message);
-          resolve(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handlePhotoSubmit = async (file, type) => {
-    setPhotoValidating(true); setPhotoResult(null);
-    const valid = await validatePhotoWithAI(file, type);
-    if (valid) {
-      const earned = addPoints(type);
-      setPhotoResult({ ok:true, msg:`✓ Validado! +${earned} pontos creditados.` });
-    } else {
-      setPhotoResult({ ok:false, msg:`Não foi possível confirmar. Envie uma foto mais clara.` });
-    }
-    setPhotoValidating(false);
-  };
-
-  const createPurpose = () => {
-    if (!newPurposeForm.name.trim()) return;
-    const code = "JCD-"+Math.random().toString(36).slice(2,6).toUpperCase();
-    const p = {
-      id: Date.now(), code,
-      name: newPurposeForm.name,
-      desc: newPurposeForm.desc,
-      members: [{ name: user?.name?.split(" ")[0]||"Você", avatar:(user?.name||"EU").slice(0,2).toUpperCase(), days:1 }],
-      days_active:1,
-      deadline: newPurposeForm.has_deadline ? newPurposeForm.deadline : null,
-      has_deadline: newPurposeForm.has_deadline
-    };
-    const updated = [p, ...purposes];
-    setPurposes(updated); ls.set("jcd_purposes", updated);
-    setShowNewPurpose(false); setNewPurposeForm({ name:"", desc:"", deadline:"", has_deadline:false });
-    showToast(`🕊️ Propósito criado! Código: ${code}`);
-  };
-
-  const joinPurpose = () => {
-    const found = purposes.find(p => p.code === joinCode.toUpperCase().trim());
-    if (!found) { showToast("Código não encontrado."); return; }
-    const me = { name: user?.name?.split(" ")[0]||"Você", avatar:(user?.name||"EU").slice(0,2).toUpperCase(), days:0 };
-    const updated = purposes.map(p => p.id===found.id ? { ...p, members:[...p.members, me] } : p);
-    setPurposes(updated); ls.set("jcd_purposes", updated);
-    setJoinCode(""); showToast("🙏 Você entrou no propósito!");
+  const openJourney = async (name) => {
+    const ok = await loadJourney(name);
+    if (ok) setTab("journey-detail");
   };
 
   const histDays = () => {
@@ -961,7 +580,13 @@ export default function App() {
           <button className="icon-btn" onClick={() => { setDark(d => !d); ls.set("jcd_dark", !dark); }} title="Alternar tema">
             {dark ? "☀️" : "🌙"}
           </button>
-          <button className="icon-btn" onClick={() => setShowNotifSettings(true)} title="Notificações">🔔</button>
+          <button
+            className="icon-btn"
+            onClick={() => notificationsAvailable ? setShowNotifSettings(true) : showToast("Notificações desativadas neste ambiente.")}
+            title="Notificações"
+          >
+            🔔
+          </button>
           <button className="icon-btn" onClick={() => { setSelectedPlan(plan); setShowPlans(true); }} title="Planos">⚙️</button>
         </div>
       </div>
@@ -1115,7 +740,7 @@ export default function App() {
         </div>
       ) : (
         JOURNEYS.map(j => (
-          <div key={j} className="cta" onClick={() => loadJourney(j)} style={{marginBottom:10}}>
+          <div key={j} className="cta" onClick={() => openJourney(j)} style={{marginBottom:10}}>
             <div className="cta-eye">Jornada Especial</div>
             <div className="cta-title">{j}</div>
             <span className="cta-arr">→</span>
@@ -1156,13 +781,6 @@ export default function App() {
 
   // ── RENDER COMMUNITY ────────────────────────────────────────────────────
   const renderCommunity = () => {
-    const allUsers = [...MOCK_USERS, { id:99, name:user?.name||"Você", avatar:(user?.name||"EU").slice(0,2).toUpperCase(), pts_week:myPts.week, pts_total:myPts.total, streak, isMe:true }]
-      .sort((a,b) => rankPeriod==="week" ? b.pts_week-a.pts_week : b.pts_total-a.pts_total);
-    const groupUsers = [...MOCK_GROUP, { id:99, name:user?.name||"Você", avatar:(user?.name||"EU").slice(0,2).toUpperCase(), pts_week:myPts.week, pts_total:myPts.total, streak, isMe:true }]
-      .sort((a,b) => rankPeriod==="week" ? b.pts_week-a.pts_week : b.pts_total-a.pts_total);
-    const displayUsers = rankScope==="global" ? allUsers : groupUsers;
-    const myRank = displayUsers.findIndex(u=>u.isMe)+1;
-
     return (
       <>
         <div className="hdr">
@@ -1201,7 +819,7 @@ export default function App() {
                   <span className="checkin-pts">{isToday ? "✓ +3pts" : "+3pts"}</span>
                 </div>
               </div>
-              <p style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:6}}>🔥 Streak bônus: +{Math.floor(streak/7)}pts por ação</p>
+              <p style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:6}}>🔥 Streak bônus: +{streakBonus}pts por ação</p>
             </div>
 
             <div className="my-rank-banner">
@@ -1373,7 +991,7 @@ export default function App() {
             <div style={{padding:"16px 0",textAlign:"center"}}>
               <div style={{fontSize:32,marginBottom:8}}>{photoResult.ok?"✅":"❌"}</div>
               <p style={{fontSize:14,color:photoResult.ok?"var(--grn)":"var(--red)",fontWeight:700}}>{photoResult.msg}</p>
-              <button className="form-submit" style={{marginTop:14}} onClick={() => { setShowPhotoModal(null); setPhotoResult(null); }}>
+              <button className="form-submit" style={{marginTop:14}} onClick={resetPhotoModal}>
                 {photoResult.ok ? "Ótimo! Fechar" : "Tentar novamente"}
               </button>
             </div>
@@ -1386,7 +1004,7 @@ export default function App() {
             </label>
           )}
           {!photoResult && !photoValidating && (
-            <button className="modal-close" onClick={() => { setShowPhotoModal(null); setPhotoResult(null); }}>Cancelar</button>
+            <button className="modal-close" onClick={resetPhotoModal}>Cancelar</button>
           )}
         </div>
       </div>
@@ -1444,7 +1062,20 @@ export default function App() {
           </div>
         )}
 
-        {showNotifSettings && (
+        {showPushPrompt && (
+          <div className="overlay" onClick={() => setShowPushPrompt(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-title">Ativar lembretes diários?</div>
+              <p className="modal-sub">
+                Receba notificações elegantes para manter seu devocional, streak e desafios em dia. Você pode ajustar horário e silêncio depois.
+              </p>
+              <button className="plan-cta" onClick={() => handlePushPrompt(true)}>🔔 Ativar notificações</button>
+              <button className="modal-close" onClick={() => handlePushPrompt(false)}>Agora não</button>
+            </div>
+          </div>
+        )}
+
+        {showNotifSettings && notificationsAvailable && (
           <div className="overlay" onClick={() => setShowNotifSettings(false)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
               <div className="modal-title">Notificações</div>
@@ -1482,6 +1113,17 @@ export default function App() {
                     Respeitar horário silencioso (22:00 - 07:00)
                   </label>
                 </div>
+              </div>
+
+              <div className="sec" style={{ marginTop: 14 }}>
+                <div className="sec-lbl">⚙️ Ambiente atual</div>
+                <p style={{fontSize:12,color:"var(--muted)",lineHeight:1.6}}>
+                  Modo: <strong style={{color:"var(--txt)"}}>{notificationEnv.mode}</strong><br/>
+                  Flag por ambiente ({notificationEnv.envFlagKey}): <strong style={{color:"var(--txt)"}}>{notificationEnv.envFlagValue}</strong><br/>
+                  Flag global (VITE_NOTIFICATIONS_ENABLED): <strong style={{color:"var(--txt)"}}>{notificationEnv.globalFlagValue}</strong><br/>
+                  OneSignal App ID configurado: <strong style={{color:"var(--txt)"}}>{notificationEnv.hasOneSignalAppId ? "sim" : "não"}</strong><br/>
+                  Resultado final da feature flag: <strong style={{color:"var(--txt)"}}>{notificationEnv.enabledByFlag ? "ativo" : "inativo"}</strong>
+                </p>
               </div>
 
               <button className="plan-cta" onClick={saveNotifSettings}>Salvar preferências</button>

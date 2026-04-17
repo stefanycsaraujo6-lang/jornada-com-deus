@@ -249,6 +249,17 @@ Arquivos:
 
 ---
 
+## Backlog Master (Arquitetura do Front)
+
+- [x] #01 — [REFACTOR] Extrair chamadas Gemini para camada de serviços (`services/gemini.js` + uso centralizado)
+- [x] #02 — [FEATURE] Criar feature flag de notificações por ambiente (`services/onesignal.js`)
+- [x] #03 — [REFACTOR] Revisar `App.jsx` e extrair lógica de domínio para hooks (`hooks/useDevotional.js`, `hooks/useJourney.js`)
+- [x] #04 — [REFACTOR] Extrair domínio de comunidade (`ranking`, `propósitos`, `check-in`) para hook dedicado (`useCommunity`)
+- [x] #05 — [UX] Substituir `window.confirm` de push por modal premium com o mesmo design system
+- [x] #06 — [FEATURE] Criar painel de “Ambiente atual” em configurações para transparência das flags de notificação
+
+---
+
 ## Checklist de qualidade antes do deploy
 
 ```
