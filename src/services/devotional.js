@@ -2,6 +2,7 @@
 // ── DATA: 2026-04-17
 // ── TASK: TASK-10 (refactor App.jsx com hooks/serviços)
 import { requestGemini } from "./gemini.js";
+import { getStyleLibrary, pickDailyDevotionalStyle } from "./styleLibrary.js";
 
 const AI_VISION_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
@@ -10,17 +11,17 @@ function fallbackDevocional(plan, userName, theme) {
   const isOuro = plan === "ouro";
   const reflection = isOuro
     ? [
-        "Mesmo quando o futuro parece incerto, Deus continua no controle e sustentando cada detalhe da sua caminhada.",
-        "A paz de Cristo nao depende da ausencia de lutas, mas da certeza de que Ele caminha com voce em meio a elas.",
-        "Confiar em Deus e entregar hoje o que voce nao consegue resolver sozinho, sabendo que Ele cuida melhor do que nos.",
-        "A fidelidade do Senhor no passado fortalece nossa fe para o presente e renova nossa esperanca para o amanha.",
-        `${userName ? `${userName}, ` : ""}permaneça firme: Deus nao perdeu nenhum capitulo da sua historia.`
+        "Tem dias em que o coracao acelera e a mente tenta controlar tudo, mas Deus nao se desespera com o nosso caos.",
+        "A paz de Cristo nao e fuga da realidade; e presenca no meio da dor, sustentando voce quando faltam respostas.",
+        "Confiar e abrir as maos hoje, inclusive sobre aquilo que voce tem medo de perder, e descansar no cuidado do Pai.",
+        "Quando lembramos da fidelidade de Deus no passado, criamos coragem para obedecer no presente, mesmo sem entender o amanha.",
+        `${userName ? `${userName}, ` : ""}Deus nao se distraiu da sua historia: Ele continua escrevendo redenção em cada detalhe.`
       ]
     : [
-        "Deus conhece seus medos e suas lutas de hoje.",
-        "Ele nao te abandona no meio do processo.",
-        "Confie: cada passo em fe aproxima voce da paz de Cristo.",
-        "Ore com sinceridade e entregue a Ele tudo o que pesa no seu coracao."
+        "Deus ve sua luta de hoje e nao minimiza sua dor.",
+        "Ele permanece perto de voce no processo, mesmo quando tudo parece lento.",
+        "Um passo de fe hoje vale mais do que promessas vazias para amanha.",
+        "Ore com sinceridade e entregue a Cristo o que esta pesando no seu coracao."
       ];
 
   return {
@@ -41,14 +42,48 @@ async function callAI(prompt) {
   return JSON.parse(clean);
 }
 
-export async function genDevocional(plan, userName, theme) {
+export async function genDevocional(plan, userName, theme, options = {}) {
+  const todayKey = options.todayKey || new Date().toISOString().slice(0, 10);
+  const style = pickDailyDevotionalStyle({ todayKey, userName, theme, plan });
+  const styleCatalog = getStyleLibrary()
+    .map((s) => `${s.id}: ${s.identity}`)
+    .join(" | ");
   const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante para hoje.";
   const personClause = plan !== "bronze" && userName ? `Personalize sutilmente para ${userName}.` : "";
-  const depth = plan === "ouro" ? "5 parágrafos ricos e teologicamente profundos" : "4 parágrafos curtos e acessíveis";
+  const depth = plan === "ouro" ? "5 parágrafos densos, humanos e teologicamente profundos" : "4 parágrafos curtos, claros e emocionalmente reais";
   try {
-    return await callAI(`Você é um pastor evangélico brasileiro, acolhedor e profundo, para cristãos de todas as idades. Responda APENAS com JSON válido, sem markdown. ${themeClause} ${personClause} Reflexão com ${depth}.\n{"theme":"título curto","verse":"Livro cap:v","verseText":"texto completo em português","reflection":["p1","p2","p3","p4"],"application":"ação prática hoje em 2-3 frases"}`);
+    return await callAI(`Você é um escritor devocional cristão brasileiro, biblicamente fiel, pastoral e humano.
+Objetivo: gerar UM devocional do dia (somente hoje), com profundidade espiritual, aplicação concreta e linguagem natural.
+
+REGRAS DE QUALIDADE (obrigatórias):
+1) Nada genérico, nada de frases prontas vazias, nada de "religiosês".
+2) Tom conversacional, acolhedor, verdadeiro, com empatia para dores reais (ansiedade, culpa, cansaço, perdas, recomeços).
+3) Fundamente na Escritura: o texto bíblico deve guiar a reflexão, não o contrário.
+4) Traga esperança realista: sem triunfalismo, sem promessas fáceis.
+5) Use imagens e linguagem vivas, com criatividade e inteligência pastoral.
+6) Escreva para hoje (devocional diário), sem repetir estrutura engessada.
+
+BIBLIOTECA DE ESTILOS DISPONIVEIS:
+${styleCatalog}
+
+ESTILO OBRIGATORIO DE HOJE:
+- id: ${style.id}
+- nome: ${style.label}
+- identidade: ${style.identity}
+- diretriz de escrita: ${style.devotionalGuide}
+
+${themeClause}
+${personClause}
+Reflexão com ${depth}.
+
+Responda APENAS com JSON válido, sem markdown, neste formato:
+{"theme":"título curto e marcante","verse":"Livro cap:v","verseText":"texto bíblico em português","reflection":["p1","p2","p3","p4"],"application":"passos práticos para hoje em 2-3 frases, específicos e executáveis","styleId":"${style.id}","styleLabel":"${style.label}"}`);
   } catch {
-    return fallbackDevocional(plan, userName, theme);
+    return {
+      ...fallbackDevocional(plan, userName, theme),
+      styleId: style.id,
+      styleLabel: style.label
+    };
   }
 }
 

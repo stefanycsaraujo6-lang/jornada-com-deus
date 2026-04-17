@@ -8,7 +8,7 @@ import { buildShareText, genDevocional, genVerseImage, shareVerseImage } from ".
 export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   const [dev, setDev] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [loadMsg, setLoadMsg] = useState("Preparando seu devocional...");
+  const [loadMsg, setLoadMsg] = useState("Conectando na rede eterna...");
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(false);
 
@@ -22,7 +22,12 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
     }
 
     setLoading(true);
-    const msgs = ["✨ Preparando seu devocional...", "📖 Buscando a Palavra...", "🙏 Quase pronto..."];
+    const msgs = [
+      "Conectando na rede eterna...",
+      "Se conectando com Deus para captar melhor...",
+      "Ajustando o coracao na frequencia da graca...",
+      "Compilando fe, esperança e direção para hoje..."
+    ];
     let mi = 0;
     setLoadMsg(msgs[0]);
     const iv = setInterval(() => {
@@ -31,7 +36,7 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
     }, 2000);
 
     try {
-      const data = await genDevocional(plan, userName, theme);
+      const data = await genDevocional(plan, userName, theme, { todayKey });
       setDev(data);
       ls.set(cacheKey, data);
       return true;

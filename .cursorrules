@@ -223,3 +223,6 @@ Antes de entregar qualquer código, verifique mentalmente:
 - [ ] Sugestões extras estão no Backlog (não no meio do texto)?
 - [ ] Cache da API foi considerado?
 - [ ] Plano do usuário foi verificado antes de mostrar feature premium?
+"O design deve ser minimalista, limpo e de alto padrão. Ao sugerir novos componentes, priorize fundos em tons profundos e elegantes (como azul-marinho ou verde-escuro) para contraste com o var(--gold), ou off-white no modo claro. Evite sombras exageradas ou botões com cara de 'bootstrap genérico'."
+"Se uma nova funcionalidade adicionar mais de 50 linhas ao App.jsx, você deve OBRIGATORIAMENTE extrair a lógica para um Custom Hook (ex: useDevotional, usePlanManager) dentro do próprio arquivo antes do componente principal, mantendo o JSX limpo e focado apenas na renderização."
+"Sempre que alterar o payload enviado à API do Claude, garanta que o 'system prompt' embutido no código exija um tom acolhedor, profundo e reflexivo para o devocional, garantindo suporte emocional e clareza no texto gerado."

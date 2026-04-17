@@ -327,6 +327,8 @@ export default function App() {
     challenge, setChallenge, challengeLoading,
     journey, journeyLoading, loadChallenge, loadJourney
   } = useJourney({
+    ls,
+    todayKey,
     userName: user?.name,
     onToast: showToast
   });
@@ -708,7 +710,7 @@ export default function App() {
             <button className="upgrade-btn" onClick={() => { setSelectedPlan("prata"); setShowPlans(true); }}>Upgrade</button>
           </div>
         ) : challengeLoading ? (
-          <div className="loading"><div className="spinner"/><p className="loading-txt">Criando seu desafio...</p></div>
+          <div className="loading"><div className="spinner"/><p className="loading-txt">Montando sua missão com Deus para esta semana...</p></div>
         ) : challenge ? (
           <div className="sec">
             <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontStyle:"italic",marginBottom:6}}>{challenge.title}</div>
@@ -719,7 +721,7 @@ export default function App() {
                 <div className="cd-task">{d.task}</div>
               </div>
             ))}
-            <button className="regen-btn" onClick={() => { setChallenge(null); loadChallenge(); }}>
+            <button className="regen-btn" onClick={() => { setChallenge(null); loadChallenge(true); }}>
               🔄 Gerar novo desafio
             </button>
           </div>

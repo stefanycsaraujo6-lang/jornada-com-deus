@@ -2,6 +2,7 @@
 // ── DATA: 2026-04-17
 // ── TASK: TASK-10 (refactor App.jsx com hooks/serviços)
 import { requestGemini } from "./gemini.js";
+import { getStyleLibrary, pickChallengeStyle } from "./styleLibrary.js";
 
 function fallbackChallenge(userName) {
   const name = userName || "você";
@@ -43,11 +44,49 @@ async function callAI(prompt) {
   return JSON.parse(clean);
 }
 
-export async function genChallenge(userName) {
+export async function genChallenge(userName, options = {}) {
+  const todayKey = options.todayKey || new Date().toISOString().slice(0, 10);
+  const variant = Number.isFinite(options.variant) ? options.variant : 0;
+  const style = pickChallengeStyle({ todayKey, variant, userName });
+  const styleCatalog = getStyleLibrary()
+    .map((s) => `${s.id}: ${s.identity}`)
+    .join(" | ");
+  const previousSummary = options.previousChallenge
+    ? `\nDESAFIO ANTERIOR (nao repetir estrutura nem frases): ${JSON.stringify(options.previousChallenge)}`
+    : "";
   try {
-    return await callAI(`Crie um desafio espiritual semanal para ${userName || "um cristão"}. Responda APENAS com JSON válido:\n{"title":"título motivador","description":"2 frases","days":[{"day":1,"task":"tarefa"},{"day":2,"task":"tarefa"},{"day":3,"task":"tarefa"},{"day":4,"task":"tarefa"},{"day":5,"task":"tarefa"},{"day":6,"task":"tarefa"},{"day":7,"task":"tarefa"}]}`);
+    return await callAI(`Crie um desafio espiritual semanal (7 dias) para ${userName || "um cristão"}.
+Objetivo: profundo, humano, praticável na vida real e espiritualmente consistente.
+Contexto de variação: data=${todayKey}, variante=${variant}.
+
+REGRAS:
+1) Evite tarefas genéricas e repetitivas. Cada dia precisa ser unico.
+2) Misture: Biblia, oração, silencio, autoexame, reconciliação, gratidão, serviço ao proximo.
+3) Cada tarefa deve ser especifica e executável em 10 a 25 minutos.
+4) Linguagem pastoral, calorosa e realista, sem culpa toxica e sem legalismo.
+5) Sequência progressiva: do interior para a prática.
+6) Inclua micro-acao concreta por dia (ex.: "enviar mensagem de perdão", "anotar 3 medos e orar por eles").
+7) Se variante for maior que 0, torne este desafio explicitamente diferente do anterior em tema central, metáforas e tarefas.
+8) Traga criatividade intuitiva: desafios inteligentes que conversem com rotina real (trabalho, família, cansaço, decisões).
+
+BIBLIOTECA DE ESTILOS DISPONIVEIS:
+${styleCatalog}
+
+ESTILO OBRIGATORIO DESTA GERACAO:
+- id: ${style.id}
+- nome: ${style.label}
+- identidade: ${style.identity}
+- diretriz de escrita: ${style.challengeGuide}
+${previousSummary}
+
+Responda APENAS com JSON válido:
+{"title":"título motivador e criativo","description":"2 frases com sentido espiritual e humano","days":[{"day":1,"task":"tarefa específica"},{"day":2,"task":"tarefa específica"},{"day":3,"task":"tarefa específica"},{"day":4,"task":"tarefa específica"},{"day":5,"task":"tarefa específica"},{"day":6,"task":"tarefa específica"},{"day":7,"task":"tarefa específica"}],"styleId":"${style.id}","styleLabel":"${style.label}"}`);
   } catch {
-    return fallbackChallenge(userName);
+    return {
+      ...fallbackChallenge(userName),
+      styleId: style.id,
+      styleLabel: style.label
+    };
   }
 }
 
