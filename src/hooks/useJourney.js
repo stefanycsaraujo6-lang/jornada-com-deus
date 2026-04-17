@@ -11,9 +11,9 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
   const [journey, setJourney] = useState(null);
   const [journeyLoading, setJourneyLoading] = useState(false);
 
-  const getChallengeKey = (dateKey) => `jcd_challenge_${dateKey}`;
-  const getVariantKey = (dateKey) => `jcd_challenge_variant_${dateKey}`;
-  const CHALLENGE_HISTORY_KEY = "jcd_challenge_history";
+  const getChallengeKey = (dateKey) => `jcd_challenge_v2_${dateKey}`;
+  const getVariantKey = (dateKey) => `jcd_challenge_variant_v2_${dateKey}`;
+  const CHALLENGE_HISTORY_KEY = "jcd_challenge_history_v2";
   const CHALLENGE_HISTORY_MAX = 5;
 
   const readChallengeHistory = () => {

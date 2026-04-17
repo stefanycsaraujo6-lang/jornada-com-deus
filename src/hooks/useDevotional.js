@@ -5,8 +5,10 @@ import { useState } from "react";
 import { getFriendlyAIErrorMessage } from "../services/gemini.js";
 import { buildShareText, genDevocional, genVerseImage, shareVerseImage } from "../services/devotional.js";
 
-const DEV_HISTORY_KEY = "jcd_dev_history";
+const DEV_HISTORY_KEY = "jcd_dev_history_v2";
 const DEV_HISTORY_MAX = 6;
+const DEV_CACHE_PREFIX = "jcd_dev_v2";
+const DEV_VARIANT_PREFIX = "jcd_dev_variant_v2";
 
 export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   const [dev, setDev] = useState(null);
@@ -15,7 +17,7 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(false);
 
-  const getVariantKey = (dateKey, themeKey) => `jcd_dev_variant_${dateKey}_${themeKey || "default"}`;
+  const getVariantKey = (dateKey, themeKey) => `${DEV_VARIANT_PREFIX}_${dateKey}_${themeKey || "default"}`;
 
   const pushHistory = (entry) => {
     try {
@@ -35,7 +37,7 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   const runGeneration = async (theme, { forceNew = false } = {}) => {
     setImgUrl(null);
     const themeSlice = theme ? theme.slice(0, 10) : "";
-    const cacheKey = `jcd_dev_${todayKey}_${plan}${themeSlice ? `_${themeSlice}` : ""}`;
+    const cacheKey = `${DEV_CACHE_PREFIX}_${todayKey}_${plan}${themeSlice ? `_${themeSlice}` : ""}`;
     const variantKey = getVariantKey(todayKey, themeSlice);
 
     if (!forceNew) {

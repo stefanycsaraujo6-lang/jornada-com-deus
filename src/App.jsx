@@ -309,6 +309,22 @@ export default function App() {
 
   useEffect(() => { if (user) setScreen("dashboard"); }, []);
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
+
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined" || !window.localStorage) return;
+      if (window.localStorage.getItem("jcd_cache_cleanup_v2") === "1") return;
+      const prefixes = ["jcd_dev_", "jcd_dev_variant_", "jcd_challenge_", "jcd_challenge_variant_", "jcd_dev_history", "jcd_challenge_history"];
+      const keys = Object.keys(window.localStorage);
+      keys.forEach((k) => {
+        const stale = prefixes.some((p) => k.startsWith(p) && !k.includes("_v2"));
+        if (stale) window.localStorage.removeItem(k);
+      });
+      window.localStorage.setItem("jcd_cache_cleanup_v2", "1");
+    } catch {
+      // ignore
+    }
+  }, []);
   useEffect(() => { if (user && notificationsAvailable) initOneSignal(user); }, [user, notificationsAvailable]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
