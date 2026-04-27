@@ -128,17 +128,9 @@ Verificar: tamanho dos assets, sem erros de TypeScript/lint
 
 ### TASK-14 — Deploy no Netlify
 ```
-Status: ⬜ Pendente
-Opção A (arrasto):
-  1. Acesse netlify.com e faça login
-  2. Arraste a pasta dist/ para a área de deploy
-  3. Copie o link gerado
-
-Opção B (CLI):
-  npm install -g netlify-cli
-  netlify deploy --prod --dir=dist
-
-Resultado: URL pública tipo https://jornada-com-deus-xxx.netlify.app
+Status: ⛔ Cancelado (mudança arquitetural)
+Motivo: projeto migrou para estratégia com Supabase como BaaS oficial.
+Substituir por: deploy do frontend em provedor compatível (Vercel/Cloudflare) + integração com Supabase.
 ```
 
 ### TASK-15 — Testar PWA no celular
@@ -257,6 +249,11 @@ Arquivos:
 - [x] #04 — [REFACTOR] Extrair domínio de comunidade (`ranking`, `propósitos`, `check-in`) para hook dedicado (`useCommunity`)
 - [x] #05 — [UX] Substituir `window.confirm` de push por modal premium com o mesmo design system
 - [x] #06 — [FEATURE] Criar painel de “Ambiente atual” em configurações para transparência das flags de notificação
+- [x] #07 — [FEATURE] Adicionar cliente base do Supabase em `src/services/supabase.js` com variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
+- [ ] #08 — [SEGURANÇA] Padronizar validação de ambiente para Supabase (`.env.example` + fail-fast em dev sem segredos)
+- [ ] #09 — [REFACTOR] Criar camada de gateway (`storageGateway`) mantendo `localStorage` como fonte de verdade e adicionando hooks de sincronização futura
+- [ ] #10 — [FEATURE] Implementar healthcheck de conexão Supabase (teste simples de sessão/latência) visível em painel de ambiente
+- [ ] #11 — [REFACTOR] Definir contrato de migração progressiva por domínio (usuário, histórico, comunidade) sem ativar escrita remota no MVP atual
 
 ---
 
