@@ -1,16 +1,39 @@
-# React + Vite
+# Jornada com Deus
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PWA de devocional diario para cristaos brasileiros, com foco em consistencia espiritual, experiencia mobile-first e evolucao para modelo SaaS com assinaturas.
 
-Currently, two official plugins are available:
+Repositorio: [stefanycsaraujo6-lang/jornada-com-deus](https://github.com/stefanycsaraujo6-lang/jornada-com-deus.git)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack atual
 
-## React Compiler
+- Frontend: React + Vite
+- Persistencia no MVP: `localStorage`
+- IA no app: Gemini (com servicos em `src/services`)
+- PWA: `vite-plugin-pwa`
+- Backend inicial (fase A): Node + Express + PostgreSQL em `backend/`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Estrutura principal
 
-## Expanding the ESLint configuration
+- `src/`: aplicacao frontend
+- `backend/`: API para healthcheck, webhook Kiwify e campanhas
+- `docs/`: documentos de produto, requisitos, arquitetura e planejamento
+- `.cursorrules`: diretrizes de assistente para o projeto
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Como rodar o frontend
+
+1. Instale dependencias:
+   - `npm install`
+2. Rode em desenvolvimento:
+   - `npm run dev`
+3. Build de producao:
+   - `npm run build`
+4. Preview local do build:
+   - `npm run preview`
+
+## Como rodar o backend
+
+Consulte `backend/README.md` para requisitos e configuracao de ambiente.
+
+## Documentacao
+
+Veja o mapa em `docs/README.md`.

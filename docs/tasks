@@ -26,7 +26,7 @@ Arquivo: package.json
 Status: ⬜ Pendente
 Arquivo: vite.config.js
 Conteúdo: VitePWA com manifest completo
-Referência: docs/03-architecture.md seção 8
+Referência: docs/arquitetura seção 8
 ```
 
 ### TASK-04 — Atualizar index.html com meta tags mobile
@@ -34,7 +34,7 @@ Referência: docs/03-architecture.md seção 8
 Status: ⬜ Pendente
 Arquivo: index.html
 Adicionar: viewport-fit=cover, apple-mobile-web-app, theme-color
-Referência: docs/03-architecture.md seção 9
+Referência: docs/arquitetura seção 9
 ```
 
 ### TASK-05 — Criar ícones PWA
@@ -49,7 +49,7 @@ Design: Cruz dourada em fundo escuro
 ```
 Status: ✅ Concluído
 Arquivo: src/App.jsx
-Fonte: JornadaApp.jsx (arquivo gerado no Claude)
+Fonte: JornadaApp.jsx (arquivo gerado por IA)
 ```
 
 ### TASK-07 — Limpar arquivos desnecessários
@@ -287,11 +287,11 @@ Copie e cole no início de cada conversa com o Cursor:
 ```
 Você está trabalhando no projeto "Jornada com Deus".
 Leia os seguintes arquivos de contexto antes de qualquer implementação:
-- docs/01-project-brief.md (visão do produto)
-- docs/02-prd.md (requisitos completos)
-- docs/03-architecture.md (arquitetura técnica)
-- docs/04-stories.md (user stories)
-- docs/05-tasks.md (tasks pendentes)
+- docs/project brief (visão do produto)
+- docs/prd (requisitos completos)
+- docs/arquitetura (arquitetura técnica)
+- docs/stories (user stories)
+- docs/tasks (tasks pendentes)
 
 O arquivo principal é src/App.jsx.
 Stack: React + Vite + localStorage + Gemini API (com fallback local resiliente).

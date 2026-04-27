@@ -66,11 +66,11 @@ jornada-com-deus/
 │   ├── App.jsx               ← Componente raiz (todo o app)
 │   └── main.jsx              ← Entry point React
 ├── docs/                     ← Documentação BMAD
-│   ├── 01-project-brief.md
-│   ├── 02-prd.md
-│   ├── 03-architecture.md
-│   ├── 04-stories.md
-│   └── 05-tasks.md
+│   ├── project brief
+│   ├── prd
+│   ├── arquitetura
+│   ├── stories
+│   └── tasks
 ├── index.html                ← HTML base com meta tags PWA
 ├── vite.config.js            ← Config Vite + PWA
 ├── package.json

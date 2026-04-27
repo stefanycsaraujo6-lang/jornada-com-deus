@@ -59,7 +59,7 @@ Assinatura mensal em 3 planos:
 
 - **Frontend:** React + Vite
 - **Estilo:** CSS-in-JS (makeCSS interno)
-- **IA:** Claude API (claude-opus-4-5)
+- **IA:** Gemini API (via proxy/servicos)
 - **Armazenamento:** localStorage (MVP)
 - **Deploy:** Netlify ou Vercel
 - **PWA:** vite-plugin-pwa

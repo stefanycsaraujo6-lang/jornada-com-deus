@@ -9,13 +9,13 @@
 Você está trabalhando no projeto **Jornada com Deus** — um PWA de devocional diário gerado por IA para cristãos brasileiros.
 
 Antes de qualquer resposta, leia os documentos de contexto:
-- `docs/01-project-brief.md` — visão do produto
-- `docs/02-prd.md` — requisitos completos
-- `docs/03-architecture.md` — arquitetura técnica
-- `docs/04-stories.md` — user stories
-- `docs/05-tasks.md` — tasks e checklist
+- `docs/project brief` — visão do produto
+- `docs/prd` — requisitos completos
+- `docs/arquitetura` — arquitetura técnica
+- `docs/stories` — user stories
+- `docs/tasks` — tasks e checklist
 
-Stack: **React + Vite + localStorage + Claude API (claude-opus-4-5)**
+Stack: **React + Vite + localStorage + Gemini API (via services/proxy)**
 Arquivo principal: `src/App.jsx`
 
 ---
@@ -81,8 +81,8 @@ ls.set("jcd_history", updated);
 localStorage.setItem("history", JSON.stringify(data));
 ```
 
-### REGRA 6 — Chamadas à Claude API (Padrão Safe-Call)
-Toda chamada à Claude API deve:
+### REGRA 6 — Chamadas à IA (Padrão Safe-Call)
+Toda chamada à API de IA deve:
 - Ter `try-catch` obrigatório
 - Ter feedback visual de loading para o usuário
 - Nunca travar a interface em caso de erro
@@ -92,12 +92,12 @@ Toda chamada à Claude API deve:
 ```javascript
 // ✅ PADRÃO OBRIGATÓRIO
 try {
-  const data = await callClaude(prompt);
+  const data = await callAI(prompt);
   if (!data?.campoObrigatorio) throw new Error("Resposta inválida");
   setEstado(data);
 } catch (e) {
   showToast("Erro ao conectar. Verifique sua conexão.");
-  console.error("[callClaude]", e);
+  console.error("[callAI]", e);
 } finally {
   setLoading(false);
 }
@@ -113,12 +113,12 @@ Erros nunca devem estourar a tela do usuário. Regras:
 
 ### REGRA 8 — Proteção de dados do usuário
 - Nunca exiba email do usuário publicamente
-- Nunca exponha a API key no código — use `import.meta.env.VITE_ANTHROPIC_KEY`
+- Nunca exponha a API key no código — use variáveis `import.meta.env` e mantenha segredos fora do frontend
 - O arquivo `.env.local` NUNCA deve ser commitado no Git
 - Sempre valide dados vindos do localStorage antes de usar
 
 ### REGRA 9 — Cache inteligente (Anti-API-Abuse)
-Antes de qualquer chamada à Claude API, sempre verificar:
+Antes de qualquer chamada à IA, sempre verificar:
 ```javascript
 const cached = ls.get(cacheKey);
 if (cached) { setData(cached); return; } // Retorna do cache
@@ -225,4 +225,4 @@ Antes de entregar qualquer código, verifique mentalmente:
 - [ ] Plano do usuário foi verificado antes de mostrar feature premium?
 "O design deve ser minimalista, limpo e de alto padrão. Ao sugerir novos componentes, priorize fundos em tons profundos e elegantes (como azul-marinho ou verde-escuro) para contraste com o var(--gold), ou off-white no modo claro. Evite sombras exageradas ou botões com cara de 'bootstrap genérico'."
 "Se uma nova funcionalidade adicionar mais de 50 linhas ao App.jsx, você deve OBRIGATORIAMENTE extrair a lógica para um Custom Hook (ex: useDevotional, usePlanManager) dentro do próprio arquivo antes do componente principal, mantendo o JSX limpo e focado apenas na renderização."
-"Sempre que alterar o payload enviado à API do Claude, garanta que o 'system prompt' embutido no código exija um tom acolhedor, profundo e reflexivo para o devocional, garantindo suporte emocional e clareza no texto gerado."
+"Sempre que alterar o payload enviado à API de IA, garanta que o prompt embutido no código exija um tom acolhedor, profundo e reflexivo para o devocional, garantindo suporte emocional e clareza no texto gerado."

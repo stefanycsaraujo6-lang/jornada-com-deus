@@ -9,7 +9,7 @@
 
 ## 1. Resumo executivo
 
-O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos brasileiros. O produto opera em modelo freemium com 3 planos (Bronze, Prata, Ouro) e diferencia experiências por plano. O MVP usa localStorage para persistência e a Claude API para geração de conteúdo.
+O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos brasileiros. O produto opera em modelo freemium com 3 planos (Bronze, Prata, Ouro) e diferencia experiências por plano. O MVP usa localStorage para persistência e API de IA (Gemini via serviços/proxy) para geração de conteúdo.
 
 ---
 
@@ -54,7 +54,7 @@ O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos 
 - Botão de configurações (planos)
 
 ### RF-03 — Devocional Diário
-- Gerado pela Claude API conforme plano do usuário
+- Gerado por API de IA conforme plano do usuário
 - **Bronze:** devocional fixo do dia (mesmo para todos, cacheado)
 - **Prata:** devocional personalizado com nome do usuário
 - **Ouro:** devocional personalizado + tema escolhido pelo usuário
@@ -89,7 +89,7 @@ O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos 
 - Overlays de cadeado nos cards bloqueados
 
 ### RF-07 — Desafio Semanal (Prata e Ouro)
-- Gerado pela Claude API
+- Gerado por API de IA
 - 7 tarefas espirituais para a semana
 - Título motivador + descrição
 - Botão para gerar novo desafio
@@ -97,7 +97,7 @@ O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos 
 
 ### RF-08 — Jornadas Especiais (Ouro)
 - 5 jornadas disponíveis: 21 Dias de Fé, 30 Dias com Deus, Mulheres da Bíblia, Promessas Divinas, Renovação Interior
-- Cada jornada gerada pela Claude API com 5 etapas progressivas
+- Cada jornada gerada por API de IA com 5 etapas progressivas
 - Prata e Bronze veem banner de upgrade
 
 ### RF-09 — Tema do Devocional (Ouro)
@@ -110,7 +110,7 @@ O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos 
 
 #### RF-10a — Ranking
 - Check-in diário por atividade: Culto (+10pts), Bíblia (+5pts), Devocional (+3pts)
-- Verificação de culto/bíblia por foto com validação via Claude Vision API
+- Verificação de culto/bíblia por foto com validação via visão da API de IA
 - Streak bônus: +1pt por 7 dias de streak
 - Ranking global (todos os usuários mockados + usuário real)
 - Ranking do grupo (usuários mockados selecionados + usuário real)
@@ -154,7 +154,7 @@ O Jornada com Deus é um PWA de devocional diário gerado por IA para cristãos 
 - Botões com área de toque ≥ 44px
 
 ### RNF-04 — Segurança
-- API key da Claude não exposta no frontend (limitação do MVP)
+- API key da IA não exposta no frontend (limitação do MVP)
 - Dados do usuário apenas em localStorage (sem transmissão)
 - Header `anthropic-dangerous-direct-browser-access: true` necessário para chamadas browser
 
@@ -181,7 +181,7 @@ Abertura do app
                     Clica "Devocional de hoje"
                               ↓
                     [Tem cache?] → SIM → Exibe devocional
-                                → NÃO → Chama Claude API
+                                → NÃO → Chama API de IA
                                               ↓
                                          Exibe devocional
                                               ↓
@@ -218,7 +218,7 @@ Abertura do app
 
 | Dependência | Uso | Criticidade |
 |---|---|---|
-| Claude API (claude-opus-4-5) | Gerar devocionais, desafios, jornadas, validar fotos | Alta |
+| API de IA (Gemini via servicos/proxy) | Gerar devocionais, desafios, jornadas, validar fotos | Alta |
 | Google Fonts | Cormorant Garamond + Lato | Média |
 | Canvas API (browser) | Gerar imagem do versículo | Baixa |
 | localStorage | Persistência de dados | Alta |
