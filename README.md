@@ -21,13 +21,16 @@ Repositorio: [stefanycsaraujo6-lang/jornada-com-deus](https://github.com/stefany
 
 ## Como rodar o frontend
 
-1. Instale dependencias:
+1. Configure ambiente:
+   - copie `.env.example` para `.env.local`
+   - preencha `VITE_GEMINI_KEY`
+2. Instale dependencias:
    - `npm install`
-2. Rode em desenvolvimento:
+3. Rode em desenvolvimento:
    - `npm run dev`
-3. Build de producao:
+4. Build de producao:
    - `npm run build`
-4. Preview local do build:
+5. Preview local do build:
    - `npm run preview`
 
 ## Como rodar o backend
