@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import { Stars } from "./components/Stars.jsx";
 import { applyNotificationTags, getNotificationEnvironmentInfo, initOneSignal, isNotificationFeatureEnabled, isOneSignalConfigured, requestPushPermission } from "./services/onesignal.js";
+import { getSupabaseSessionSnapshot, watchSupabaseAuthChanges, sendMagicLinkOtp, isMagicLinkFeatureEnabled } from "./services/supabaseAuth.js";
+import { syncJcdUserWithProfiles, bumpLocalProfileEdited } from "./services/profileSync.js";
 import { useDevotional } from "./hooks/useDevotional.js";
 import { useJourney } from "./hooks/useJourney.js";
 import { useCommunity } from "./hooks/useCommunity.js";
@@ -165,7 +167,7 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 .spinner{width:38px;height:38px;border:2px solid rgba(201,169,110,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--muted)}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--bdr2);border-radius:12px;padding:12px 20px;font-size:13px;color:var(--txt);z-index:999;animation:toastIn .3s ease;white-space:nowrap;box-shadow:0 8px 24px var(--shad)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--bdr2);border-radius:12px;padding:12px 20px;font-size:13px;color:var(--txt);z-index:999;animation:toastIn .3s ease;white-space:normal;text-align:center;max-width:min(360px,92vw);box-shadow:0 8px 24px var(--shad)}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 .login-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;position:relative;z-index:1}
 .login-sym{font-family:'Cormorant Garamond',serif;font-size:52px;color:var(--gold);opacity:.75;margin-bottom:14px;font-weight:300}
@@ -179,6 +181,21 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 .login-btn{width:100%;max-width:320px;padding:15px;background:linear-gradient(135deg,#c9a96e,#a07840);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:700;letter-spacing:.5px;cursor:pointer;margin-top:8px;transition:all .3s}
 .login-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 28px rgba(201,169,110,.3)}
 .login-btn:disabled{opacity:.45;cursor:not-allowed}
+.login-divider{display:flex;align-items:center;gap:14px;width:100%;max-width:320px;margin:22px 0 18px;color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--bdr2),transparent)}
+.magic-card{width:100%;max-width:320px;background:var(--card);border:1px solid var(--bdr);border-radius:18px;padding:20px 18px 22px;margin-bottom:4px;box-shadow:0 12px 40px var(--shad)}
+.magic-card .login-btn{max-width:none;width:100%;margin-top:6px}
+.magic-eyebrow{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
+.magic-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;font-style:italic;color:var(--txt);line-height:1.25;margin-bottom:6px}
+.magic-hint{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px;font-weight:300}
+.magic-row{display:flex;gap:10px;align-items:stretch}
+.magic-row .inp{flex:1}
+.login-btn--ghost{width:100%;max-width:320px;padding:13px;background:transparent;border:1px solid var(--bdr2);border-radius:14px;color:var(--goldl);font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;margin-top:6px;transition:all .25s;font-family:'Lato',sans-serif}
+.login-btn--ghost:hover:not(:disabled){background:var(--goldd);border-color:var(--gold)}
+.login-btn--ghost:disabled{opacity:.45;cursor:not-allowed}
+.login-btn-inner{display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.spinner-btn{width:18px;height:18px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite;flex-shrink:0}
+.toast--err{border-color:rgba(220,100,100,.45);color:var(--txt)}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:flex;align-items:flex-end}
 .modal{background:var(--surf);border:1px solid var(--bdr2);border-radius:24px 24px 0 0;padding:28px 22px 48px;width:100%;max-width:430px;margin:0 auto;animation:slideUp .3s ease;max-height:90vh;overflow-y:auto}
 @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -298,7 +315,10 @@ export default function App() {
   }));
   const [chosenTheme, setChosenTheme] = useState(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [magicEmail, setMagicEmail] = useState("");
+  const [magicLoading, setMagicLoading] = useState(false);
 
+  const magicLinkEnabled = isMagicLinkFeatureEnabled();
   const todayKey = todayStr();
   const streak = getStreak(history);
   const totalDone = Object.values(history).filter(Boolean).length;
@@ -307,8 +327,66 @@ export default function App() {
   const notificationsAvailable = isNotificationFeatureEnabled();
   const notificationEnv = getNotificationEnvironmentInfo();
 
-  useEffect(() => { if (user) setScreen("dashboard"); }, []);
+  useEffect(() => { if (user) setScreen("dashboard"); }, [user]);
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
+  useEffect(() => {
+    let active = true;
+
+    const persistHybridAuthState = (session, message = null) => {
+      const remoteUser = session?.user || null;
+      const current = ls.get("jcd_supabase_auth", {});
+      ls.set("jcd_supabase_auth", {
+        ...current,
+        mode: "hybrid",
+        remoteAuthenticated: !!remoteUser,
+        remoteUserId: remoteUser?.id || null,
+        remoteEmail: remoteUser?.email || null,
+        lastCheckAt: new Date().toISOString(),
+        message
+      });
+    };
+
+    const runProfileSync = async (session) => {
+      if (!session?.user?.id) return;
+      const syncRes = await syncJcdUserWithProfiles(session);
+      if (!active) return;
+      if (syncRes.message && !syncRes.skipped) {
+        console.warn("[profileSync]", syncRes.message);
+      }
+      if (syncRes.user) {
+        setUser(syncRes.user);
+        setScreen("dashboard");
+        if (notificationsAvailable) initOneSignal(syncRes.user);
+        if (syncRes.source === "hydrate" && notificationsAvailable && isOneSignalConfigured()) {
+          setShowPushPrompt(true);
+        }
+      }
+    };
+
+    const applySession = async (session, message) => {
+      persistHybridAuthState(session, message);
+      await runProfileSync(session);
+    };
+
+    const bootstrapHybridAuth = async () => {
+      const snapshot = await getSupabaseSessionSnapshot();
+      if (!active) return;
+      if (!snapshot.ok) {
+        persistHybridAuthState(null, snapshot.message || "Sessao remota indisponivel.");
+        return;
+      }
+      await applySession(snapshot.session, null);
+    };
+
+    bootstrapHybridAuth();
+    const unsubscribe = watchSupabaseAuthChanges((session) => {
+      void applySession(session, null);
+    });
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [notificationsAvailable]);
 
   useEffect(() => {
     try {
@@ -327,7 +405,17 @@ export default function App() {
   }, []);
   useEffect(() => { if (user && notificationsAvailable) initOneSignal(user); }, [user, notificationsAvailable]);
 
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2800); };
+  const showToast = (msg, kind = "ok") => {
+    if (kind === "err") setToast({ kind: "err", msg });
+    else setToast(msg);
+    setTimeout(() => setToast(null), 3200);
+  };
+  const renderToast = () =>
+    toast ? (
+      <div className={`toast${typeof toast === "object" && toast.kind === "err" ? " toast--err" : ""}`}>
+        {typeof toast === "string" ? toast : toast.msg}
+      </div>
+    ) : null;
   const {
     dev, loading, loadMsg, imgUrl, imgLoading, shareText,
     loadDevotional, regenerateDevotional, generateVerseImage, shareImage
@@ -380,10 +468,29 @@ export default function App() {
 
   const handleLogin = async () => {
     if (!loginForm.name.trim() || !loginForm.email.trim()) return;
-    const u = { name: loginForm.name.trim(), email: loginForm.email.trim() };
-    ls.set("jcd_user", u); setUser(u); setScreen("dashboard");
+    const u = {
+      name: loginForm.name.trim(),
+      email: loginForm.email.trim().toLowerCase()
+    };
+    ls.set("jcd_user", u);
+    bumpLocalProfileEdited();
+    setUser(u);
+    setScreen("dashboard");
     if (notificationsAvailable) initOneSignal(u);
     if (isOneSignalConfigured()) setShowPushPrompt(true);
+  };
+
+  const handleMagicLink = async () => {
+    const em = magicEmail.trim().toLowerCase();
+    if (!em || !em.includes("@")) {
+      showToast("Informe um e-mail valido.", "err");
+      return;
+    }
+    setMagicLoading(true);
+    const res = await sendMagicLinkOtp(em);
+    setMagicLoading(false);
+    if (res.ok) showToast("Link enviado. Abra seu e-mail para continuar.");
+    else showToast(res.message || "Nao foi possivel enviar o link.", "err");
   };
 
   const handlePushPrompt = async (shouldEnable) => {
@@ -484,6 +591,38 @@ export default function App() {
           <div className="login-sym">✦</div>
           <h1 className="login-title">Jornada<br/>com Deus</h1>
           <p className="login-sub">Seu devocional diário.<br/>Consistência que transforma.</p>
+          {magicLinkEnabled && (
+            <>
+              <div className="magic-card">
+                <div className="magic-eyebrow">Acesso seguro</div>
+                <h2 className="magic-title">Entre sem senha</h2>
+                <p className="magic-hint">Enviamos um link mágico para seu e-mail. Rapido, sem fricção.</p>
+                <label className="inp-lbl" htmlFor="jcd-magic-email">E-mail</label>
+                <input
+                  id="jcd-magic-email"
+                  className="inp"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  value={magicEmail}
+                  onChange={(e) => setMagicEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !magicLoading && handleMagicLink()}
+                />
+                <button
+                  type="button"
+                  className="login-btn"
+                  onClick={() => void handleMagicLink()}
+                  disabled={magicLoading || !magicEmail.trim()}
+                >
+                  <span className="login-btn-inner">
+                    {magicLoading && <span className="spinner-btn" aria-hidden />}
+                    {magicLoading ? "Enviando..." : "Receber link no e-mail"}
+                  </span>
+                </button>
+              </div>
+              <div className="login-divider">ou neste aparelho</div>
+            </>
+          )}
           <div className="inp-grp">
             <label className="inp-lbl">Seu nome</label>
             <input className="inp" placeholder="Como você se chama?" value={loginForm.name} onChange={e => setLoginForm(f=>({...f,name:e.target.value}))} />
@@ -498,7 +637,7 @@ export default function App() {
             Começar minha jornada →
           </button>
         </div>
-        {toast && <div className="toast">{toast}</div>}
+        {renderToast()}
       </div>
     </>
   );
@@ -584,7 +723,7 @@ export default function App() {
             </>
           ) : null}
         </div>
-        {toast && <div className="toast">{toast}</div>}
+        {renderToast()}
       </div>
     </>
   );
@@ -1156,7 +1295,7 @@ export default function App() {
 
         {renderPurposeDetail()}
         {renderPhotoModal()}
-        {toast && <div className="toast">{toast}</div>}
+        {renderToast()}
       </div>
     </>
   );

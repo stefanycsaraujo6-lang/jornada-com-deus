@@ -12,7 +12,10 @@ dist
 dist-ssr
 *.local
 .env
+.env.local
 backend/.env
+.convex/
+convex/.generated/
 
 # Editor directories and files
 .vscode/*

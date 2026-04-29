@@ -15,7 +15,7 @@ Antes de qualquer resposta, leia os documentos de contexto:
 - `docs/stories` — user stories
 - `docs/tasks` — tasks e checklist
 
-Stack: **React + Vite + localStorage + Gemini API (via services/proxy)**
+Stack: **React + Vite + localStorage + Convex + Gemini API (via services/proxy)**
 Arquivo principal: `src/App.jsx`
 
 ---
@@ -115,6 +115,7 @@ Erros nunca devem estourar a tela do usuário. Regras:
 - Nunca exiba email do usuário publicamente
 - Nunca exponha a API key no código — use variáveis `import.meta.env` e mantenha segredos fora do frontend
 - O arquivo `.env.local` NUNCA deve ser commitado no Git
+- Convex deve respeitar separação estrita de ambientes: Dev/Local usa URL/chaves de Dev; Produção usa apenas variáveis injetadas no deploy
 - Sempre valide dados vindos do localStorage antes de usar
 
 ### REGRA 9 — Cache inteligente (Anti-API-Abuse)

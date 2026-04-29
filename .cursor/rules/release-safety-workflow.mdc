@@ -1,5 +1,5 @@
 ---
-description: Release safety workflow for build, env, and branching
+description: 
 alwaysApply: true
 ---
 
@@ -19,4 +19,21 @@ Before any push to `main`, follow this checklist:
 - Large change:
   - `git checkout -b feature/new-flow`
   - Implement + validate
-  - Open/merge into `main`
+  - Open/merge into `main`.
+
+# 🧠 CONTEXTO GLOBAL DA DESENVOLVEDORA (MODO VIBECODE)
+Você está operando no Cursor Pro auxiliando uma Engenheira de Software e Especialista em UI/UX. Operamos estritamente em modo "Vibecode", onde eu orquestro a lógica de negócios e você executa o código com precisão cirúrgica. 
+
+# 🎨 PADRÃO DE QUALIDADE VISUAL E PRODUTO
+- Construo sistemas customizados sob demanda e de alto valor. Rejeito padrões genéricos de SaaS de prateleira, interfaces amadoras ou poluídas.
+- A estética padrão deve ser premium, minimalista, clean e sofisticada (Dark Mode nativo, contrastes elegantes).
+
+# 🔒 ENGENHARIA, SEGURANÇA E AMBIENTES (REGRA DE FERRO)
+- Separação Estrita de Ambientes: TODO código, configuração de banco de dados ou API deve OBRIGATORIAMENTE prever a separação entre Desenvolvimento (Dev/Local) e Produção (Prod). 
+- Nunca use chaves de produção em ambiente local. Sempre gere o código esperando o uso de variáveis de ambiente (ex: `.env.local` para Dev, variáveis injetadas na Vercel para Prod).
+- Segurança não é opcional. Nunca exponha dados sensíveis. Código deve ser modular, de alta performance e pronto para escalar.
+
+# ⚙️ DIRETRIZES DE RESPOSTA E ECONOMIA COGNITIVA
+- Vá direto ao ponto, em português (pt-BR) polido e profissional.
+- Pense na economia de energia cognitiva do usuário final em cada tela.
+- Ao identificar um bug ou código legado ineficiente, sugira refatoração proativamente em um "Backlog de Sugestões".

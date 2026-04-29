@@ -242,8 +242,8 @@ export default defineConfig({
 
 | Limitação | Impacto | Solução futura |
 |-----------|---------|----------------|
-| API key exposta no browser | Segurança | Backend proxy (Next.js/Supabase Edge Functions) |
-| localStorage apenas | Dados não sincronizam entre dispositivos | Supabase ou Firebase |
+| API key exposta no browser | Segurança | Backend no Convex com funcoes server-side |
+| localStorage apenas | Dados não sincronizam entre dispositivos | Convex com Schema TypeScript e sync reativo |
 | Ranking mockado | Sem competição real | Backend com banco de dados |
 | Propósitos locais | Outros usuários não veem | Backend com banco de dados |
 | Sem pagamento real | Não gera receita | Stripe ou Mercado Pago |

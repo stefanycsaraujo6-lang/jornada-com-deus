@@ -129,8 +129,8 @@ Verificar: tamanho dos assets, sem erros de TypeScript/lint
 ### TASK-14 — Deploy no Netlify
 ```
 Status: ⛔ Cancelado (mudança arquitetural)
-Motivo: projeto migrou para estratégia com Supabase como BaaS oficial.
-Substituir por: deploy do frontend em provedor compatível (Vercel/Cloudflare) + integração com Supabase.
+Motivo: estratégia oficial agora é Vercel + Convex com separação estrita Dev/Prod.
+Substituir por: deploy do frontend no Vercel + variáveis de ambiente do Convex por ambiente.
 ```
 
 ### TASK-15 — Testar PWA no celular
@@ -159,14 +159,14 @@ Exemplo: jornadadeusdevo.com.br
 
 ## FASE 4 — Próximas features (pós-MVP)
 
-### TASK-17 — Backend com Supabase
+### TASK-17 — Backend com Convex
 ```
 Status: 🔮 Futuro
 Objetivo: Sincronizar dados entre dispositivos
-Stack: Supabase (PostgreSQL + Auth + Realtime)
-Custo: Gratuito até 500MB
+Stack: Convex (Schema TypeScript + Functions/Mutations + Realtime)
+Custo: Conforme plano Convex
 Features desbloqueadas:
-  - Login real com email/senha
+  - Login real com Convex Auth nativo ou Clerk
   - Ranking real entre usuários
   - Propósitos compartilhados em tempo real
   - Histórico sincronizado
@@ -227,8 +227,8 @@ Status: ✅ Concluído (estrutura inicial)
 Objetivo: iniciar backend seguro para monetização e controle de acesso por assinatura.
 Implementado:
   - Backend Node/Express separado em `backend/`
-  - Conexão PostgreSQL e healthcheck
-  - Schema SQL inicial (`users`, `subscriptions`, `webhook_events`)
+  - Camada de dados inicial e healthcheck
+  - Schema TypeScript inicial (`users`, `subscriptions`, `webhook_events`)
   - Endpoint `POST /webhooks/kiwify` com validação, idempotência e upsert de assinatura
   - Endpoint `GET /health`
 Arquivos:
@@ -249,11 +249,21 @@ Arquivos:
 - [x] #04 — [REFACTOR] Extrair domínio de comunidade (`ranking`, `propósitos`, `check-in`) para hook dedicado (`useCommunity`)
 - [x] #05 — [UX] Substituir `window.confirm` de push por modal premium com o mesmo design system
 - [x] #06 — [FEATURE] Criar painel de “Ambiente atual” em configurações para transparência das flags de notificação
-- [x] #07 — [FEATURE] Adicionar cliente base do Supabase em `src/services/supabase.js` com variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
-- [ ] #08 — [SEGURANÇA] Padronizar validação de ambiente para Supabase (`.env.example` + fail-fast em dev sem segredos)
+- [x] #07 — [FEATURE] Adicionar cliente base do Convex em `src/services/convexClient.js` com variáveis `VITE_CONVEX_URL_DEV` e `VITE_CONVEX_URL_PROD`
+- [x] #08 — [SEGURANÇA] Padronizar validação de ambiente para Convex (`.env.example` + fail-safe quando URL ausente/invalida)
 - [ ] #09 — [REFACTOR] Criar camada de gateway (`storageGateway`) mantendo `localStorage` como fonte de verdade e adicionando hooks de sincronização futura
-- [ ] #10 — [FEATURE] Implementar healthcheck de conexão Supabase (teste simples de sessão/latência) visível em painel de ambiente
+- [ ] #10 — [FEATURE] Implementar healthcheck de conexão Convex com degradação graciosa no serviço, sem poluir a UI premium
 - [ ] #11 — [REFACTOR] Definir contrato de migração progressiva por domínio (usuário, histórico, comunidade) sem ativar escrita remota no MVP atual
+- [ ] #12 — [FEATURE] Introduzir autenticação Convex em modo híbrido (sessão remota monitorada + fallback local) sem quebrar login atual por `localStorage`
+- [ ] #13 — [REFACTOR] Sincronização incremental de perfil (`jcd_user` <-> colecao `profiles`) com estratégia offline-first e reconciliação
+- [ ] #14 — [FEATURE] Criar fluxo opcional de login Convex (nativo ou Clerk) com feature flag, mantendo login local como fallback imediato
+
+**Implementação Convex (novo plano oficial):**
+- `convex/schema.ts` — definir collections e indices com Schema TypeScript.
+- `convex/auth.ts` — configurar Auth (Convex nativo ou Clerk).
+- `convex/users.ts` / `convex/profiles.ts` — queries, mutations e regras de acesso por usuario.
+- `src/services/convexClient.js` — URL dinâmica por ambiente (`VITE_CONVEX_URL_DEV`/`VITE_CONVEX_URL_PROD`) com fallback seguro.
+- `src/components/ConvexProviderGate.jsx` — provider opcional para nao quebrar o frontend enquanto backend evolui.
 
 ---
 

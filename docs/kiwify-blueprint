@@ -10,7 +10,7 @@
 ```
 Frontend React (Vite)
   -> API Backend (Node/Next/Nest, stateless)
-      -> PostgreSQL (dados principais)
+      -> Convex (dados principais + funcoes TS)
       -> Redis (cache/rate-limit/fila)
       -> Worker de filas (tarefas pesadas de IA)
       -> Gemini API (somente backend)
@@ -29,8 +29,8 @@ Frontend React (Vite)
 
 - **Frontend:** React + Vite (manter base atual)
 - **Backend:** Next.js API routes ou NestJS
-- **Banco:** PostgreSQL (Supabase/Neon/RDS)
-- **Auth:** Supabase Auth ou Auth0/Clerk
+- **Banco:** Convex (Schema TypeScript + Realtime)
+- **Auth:** Convex Auth nativo ou Clerk
 - **Cache/Fila:** Redis + BullMQ
 - **Observabilidade:** Sentry + logs estruturados
 - **Hospedagem:** Vercel/Fly/Render (API) + banco gerenciado
