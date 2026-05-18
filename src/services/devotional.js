@@ -47,8 +47,8 @@ export function isSameDevotional(a, b) {
 function fallbackDevocional(plan, userName, theme, variant = 0) {
   const base = FALLBACK_DEVOTIONALS[Math.abs(Number(variant) || 0) % FALLBACK_DEVOTIONALS.length];
   const selectedTheme = theme || base.theme;
-  const isOuro = plan === "ouro";
-  const reflection = isOuro
+  const isGoldPlan = plan === "gold" || plan === "ouro";
+  const reflection = isGoldPlan
     ? [
         `Hoje, ${userName ? `${userName}, ` : ""}Deus convida você a descansar em ${base.verse}, sem exigir que você entenda tudo agora.`,
         "A paz de Cristo não nega a dor; ela caminha com você quando as respostas demoram a chegar.",
@@ -92,8 +92,10 @@ export async function genDevocional(plan, userName, theme, options = {}) {
     .map((s) => `${s.id}: ${s.identity}`)
     .join(" | ");
   const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante e inesperado para hoje (evite repetir temas batidos).";
-  const personClause = plan !== "bronze" && userName ? `Personalize sutilmente para ${userName}.` : "";
-  const depth = plan === "ouro" ? "5 parágrafos densos, humanos e teologicamente profundos" : "4 parágrafos curtos, claros e emocionalmente reais";
+  const personClause = userName ? `Personalize sutilmente para ${userName}.` : "";
+  const depth = isGoldPlan
+    ? "5 parágrafos densos, humanos e teologicamente profundos"
+    : "4 parágrafos curtos, claros e emocionalmente reais";
   const historyBlock = history.length
     ? `\nHISTORICO RECENTE (NAO REPITA esses versiculos, temas nem frases-chave):\n${history.map((h, i) => `- ${i + 1}. tema="${h.theme || ""}", verso="${h.verse || ""}"`).join("\n")}`
     : "";

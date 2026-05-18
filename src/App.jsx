@@ -9,6 +9,8 @@ import { syncJcdUserWithProfiles, bumpLocalProfileEdited } from "./services/prof
 import { useDevotional } from "./hooks/useDevotional.js";
 import { useJourney } from "./hooks/useJourney.js";
 import { useCommunity } from "./hooks/useCommunity.js";
+import { GOLD_REQUIRED_MESSAGE, PLANS, isGold, readStoredPlan, savePlan } from "./services/planAccess.js";
+import { syncPlanFromBackend } from "./services/subscriptionApi.js";
 
 const todayStr = () => new Date().toISOString().split("T")[0];
 const greet = () => { const h = new Date().getHours(); return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"; };
@@ -29,13 +31,7 @@ const last7 = () => [...Array(7)].map((_, i) => {
   return { key: d.toISOString().split("T")[0], lbl: d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").slice(0, 3), isToday: i === 6 };
 });
 
-const PLANS = {
-  bronze: { id: "bronze", name: "Bronze", emoji: "🥉", price: "R$ 9,90", features: ["Devocional diário para todos", "Versículo + reflexão + aplicação", "Marcar dia concluído", "Streak de dias", "Compartilhar versículo"] },
-  prata:  { id: "prata",  name: "Prata",  emoji: "🥈", price: "R$ 19,90", popular: true, features: ["Tudo do Bronze", "Devocional personalizado por IA", "Histórico de progresso", "Anotações salvas por dia", "Desafios semanais por IA", "Sequências 21 e 30 dias", "Gerar imagem do versículo"] },
-  ouro:   { id: "ouro",   name: "Ouro",   emoji: "🥇", price: "R$ 39,90", features: ["Tudo do Prata", "Tema do devocional você escolhe", "Jornadas especiais exclusivas", "Devocionais avançados e profundos", "Desbloqueios progressivos", "Materiais e conteúdos exclusivos"] }
-};
-
-const THEMES_OURO = [
+const THEMES_GOLD = [
   "Ansiedade e Paz","Família e Relacionamentos","Fé e Confiança",
   "Propósito de Vida","Perdão e Cura","Gratidão",
   "Mulheres da Bíblia","Promessas de Deus","Força nos Momentos Difíceis","Identidade em Cristo"
@@ -297,7 +293,7 @@ export default function App() {
   const [screen, setScreen] = useState(() => (ls.get("jcd_user") ? "dashboard" : "login"));
   const [tab, setTab] = useState("home");
   const [user, setUser] = useState(() => ls.get("jcd_user"));
-  const [plan, setPlan] = useState(() => ls.get("jcd_plan", "bronze"));
+  const [plan, setPlan] = useState(() => readStoredPlan(ls));
   const [loginForm, setLoginForm] = useState({ name: "", email: "" });
   const [history, setHistory] = useState(() => ls.get("jcd_history", {}));
   const [notes, setNotes] = useState(() => ls.get("jcd_notes", {}));
@@ -405,6 +401,13 @@ export default function App() {
     }
   }, []);
   useEffect(() => { if (user && notificationsAvailable) initOneSignal(user); }, [user, notificationsAvailable]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    syncPlanFromBackend(ls, user.email).then((remotePlan) => {
+      if (remotePlan) setPlan(remotePlan);
+    });
+  }, [user?.email]);
 
   const showToast = (msg, kind = "ok") => {
     if (kind === "err") setToast({ kind: "err", msg });
@@ -561,9 +564,22 @@ export default function App() {
   const shareIG = () => { navigator.clipboard?.writeText(shareText); showToast("Texto copiado! Cole no Instagram."); };
 
   const confirmPlan = () => {
-    setPlan(selectedPlan); ls.set("jcd_plan", selectedPlan);
+    const nextPlan = savePlan(ls, selectedPlan);
+    setPlan(nextPlan);
     setShowPlans(false);
-    showToast(`${PLANS[selectedPlan].emoji} Plano ${PLANS[selectedPlan].name} ativado!`);
+    showToast(`${PLANS[nextPlan].emoji} Plano ${PLANS[nextPlan].name} ativado!`);
+  };
+
+  const openGoldUpgrade = () => {
+    setSelectedPlan("gold");
+    setShowPlans(true);
+  };
+
+  const guardGoldAccess = (action) => {
+    if (isGold(plan)) return action?.();
+    showToast(GOLD_REQUIRED_MESSAGE, "err");
+    openGoldUpgrade();
+    return false;
   };
 
   const openJourney = async (name) => {
@@ -677,15 +693,13 @@ export default function App() {
                 <p className="appl-txt">{dev.application}</p>
               </div>
 
-              {plan !== "bronze" && (
-                <div className="sec">
-                  <div className="sec-lbl">💬 Anotações</div>
-                  <textarea className="notes-ta" placeholder="Escreva o que Deus falou com você hoje..."
-                    value={noteText} onChange={e => setNoteText(e.target.value)} />
-                  <button className="save-note" onClick={saveNote}>Salvar anotação</button>
-                  {noteSaved && <p className="saved-ok">✓ Salvo!</p>}
-                </div>
-              )}
+              <div className="sec">
+                <div className="sec-lbl">💬 Anotações</div>
+                <textarea className="notes-ta" placeholder="Escreva o que Deus falou com você hoje..."
+                  value={noteText} onChange={e => setNoteText(e.target.value)} />
+                <button className="save-note" onClick={saveNote}>Salvar anotação</button>
+                {noteSaved && <p className="saved-ok">✓ Salvo!</p>}
+              </div>
 
               <div className="sec">
                 <div className="sec-lbl">🔗 Compartilhar</div>
@@ -694,7 +708,7 @@ export default function App() {
                   <button className="sh-btn sf" onClick={shareFB}>Facebook</button>
                   <button className="sh-btn si" onClick={shareIG}>Instagram</button>
                 </div>
-                {plan !== "bronze" ? (
+                {isGold(plan) ? (
                   <>
                     <button className="gen-img" onClick={handleGenImg} disabled={imgLoading}>
                       {imgLoading ? "Gerando imagem..." : "✨ Gerar imagem do versículo"}
@@ -708,7 +722,7 @@ export default function App() {
                   </>
                 ) : (
                   <p style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:8}}>
-                    🔒 Imagem disponível no Plano Prata e Ouro
+                    🔒 Imagem disponível no Plano Ouro
                   </p>
                 )}
               </div>
@@ -772,14 +786,14 @@ export default function App() {
         ))}
       </div>
 
-      {plan === "ouro" && (
+      {isGold(plan) && (
         <div className="sec" style={{marginBottom:14}}>
           <div className="sec-lbl">🎯 Tema do devocional</div>
           <p style={{fontSize:13,color:"var(--muted)",marginBottom:10}}>Escolha o tema de hoje ou deixe a IA decidir.</p>
           {showThemePicker ? (
             <>
               <div className="theme-grid">
-                {THEMES_OURO.map(t => (
+                {THEMES_GOLD.map(t => (
                   <button key={t} className={`theme-opt${chosenTheme===t?" sel":""}`}
                     onClick={() => { setChosenTheme(t); setShowThemePicker(false); }}>{t}
                   </button>
@@ -807,27 +821,26 @@ export default function App() {
       </div>
 
       <div className="feat-row">
-        <div className="feat" onClick={() => plan !== "bronze" ? (setTab("challenge"), loadChallenge()) : setShowPlans(true)}>
+        <div className="feat" onClick={() => (setTab("challenge"), loadChallenge())}>
           <div className="feat-icon">🏆</div>
           <div className="feat-title">Desafio semanal</div>
           <div className="feat-sub">7 dias de crescimento</div>
-          {plan === "bronze" && <div className="lock-ov">🔒</div>}
         </div>
-        <div className="feat" onClick={() => plan === "ouro" ? setTab("journeys") : setShowPlans(true)}>
+        <div className="feat" onClick={() => guardGoldAccess(() => setTab("journeys"))}>
           <div className="feat-icon">🗺️</div>
           <div className="feat-title">Jornadas especiais</div>
           <div className="feat-sub">Trilhas exclusivas Ouro</div>
-          {plan !== "ouro" && <div className="lock-ov">🔒</div>}
+          {!isGold(plan) && <div className="lock-ov">🔒</div>}
         </div>
       </div>
 
-      {plan === "bronze" && (
+      {!isGold(plan) && (
         <div className="upgrade">
           <div className="upgrade-txt">
-            <strong>✨ Desbloqueie mais recursos</strong>
-            <span>Personalize sua jornada espiritual</span>
+            <strong>👑 Plano Ouro</strong>
+            <span>Jornadas de Fé, Jejum e Propósitos</span>
           </div>
-          <button className="upgrade-btn" onClick={() => { setSelectedPlan("prata"); setShowPlans(true); }}>Ver planos</button>
+          <button className="upgrade-btn" onClick={openGoldUpgrade}>Fazer upgrade</button>
         </div>
       )}
     </>
@@ -854,27 +867,16 @@ export default function App() {
           <p style={{fontSize:14,color:"var(--txt)",fontWeight:300,lineHeight:1.65}}>{v}</p>
         </div>
       ))}
-      {plan === "bronze" && (
-        <div className="upgrade">
-          <div className="upgrade-txt"><strong>📝 Anotações salvas</strong><span>Disponível no Plano Prata e Ouro</span></div>
-          <button className="upgrade-btn" onClick={() => { setSelectedPlan("prata"); setShowPlans(true); }}>Upgrade</button>
-        </div>
-      )}
     </>
   );
 
   const renderChallenge = () => (
       <>
         <div className="section-hdr">
-          <div className="section-hdr-eye">Prata & Ouro</div>
+          <div className="section-hdr-eye">Sua semana</div>
           <div className="section-hdr-title">Desafio Semanal</div>
         </div>
-        {plan === "bronze" ? (
-          <div className="upgrade">
-            <div className="upgrade-txt"><strong>🏆 Desafios semanais</strong><span>Disponível no Plano Prata e Ouro</span></div>
-            <button className="upgrade-btn" onClick={() => { setSelectedPlan("prata"); setShowPlans(true); }}>Upgrade</button>
-          </div>
-        ) : challengeLoading ? (
+        {challengeLoading ? (
           <div className="loading"><div className="spinner"/><p className="loading-txt">Montando sua missão com Deus para esta semana...</p></div>
         ) : challenge ? (
           <div className="sec">
@@ -905,10 +907,10 @@ export default function App() {
         <div className="section-hdr-eye">Exclusivo Ouro</div>
         <div className="section-hdr-title">Jornadas Especiais</div>
       </div>
-      {plan !== "ouro" ? (
+      {!isGold(plan) ? (
         <div className="upgrade">
           <div className="upgrade-txt"><strong>🗺️ Jornadas Especiais</strong><span>Disponível apenas no Plano Ouro</span></div>
-          <button className="upgrade-btn" onClick={() => { setSelectedPlan("ouro"); setShowPlans(true); }}>Upgrade para Ouro</button>
+          <button className="upgrade-btn" onClick={openGoldUpgrade}>Upgrade para Ouro</button>
         </div>
       ) : (
         JOURNEYS.map(j => (
@@ -965,7 +967,7 @@ export default function App() {
       <>
         <div className="hdr">
           <div>
-            <div className="hdr-greet">Plano Prata & Ouro</div>
+            <div className="hdr-greet">Comunidade</div>
             <div className="hdr-name">Comunidade</div>
           </div>
           <div className="hdr-actions">
@@ -1041,7 +1043,14 @@ export default function App() {
           </>
         )}
 
-        {commTab === "purposes" && (
+        {commTab === "purposes" && !isGold(plan) && (
+          <div className="upgrade">
+            <div className="upgrade-txt"><strong>🕊️ Propósitos e Jejum</strong><span>{GOLD_REQUIRED_MESSAGE}</span></div>
+            <button className="upgrade-btn" onClick={openGoldUpgrade}>Upgrade para Ouro</button>
+          </div>
+        )}
+
+        {commTab === "purposes" && isGold(plan) && (
           <>
             <div className="sec" style={{marginBottom:14}}>
               <div className="sec-lbl">🔗 Entrar em um propósito</div>
@@ -1051,7 +1060,7 @@ export default function App() {
               </div>
             </div>
 
-            {plan === "ouro" ? (
+            {isGold(plan) ? (
               showNewPurpose ? (
                 <div className="new-purpose-form">
                   <div className="sec-lbl">🕊️ Novo propósito</div>
@@ -1081,7 +1090,7 @@ export default function App() {
             ) : (
               <div className="upgrade" style={{marginBottom:14}}>
                 <div className="upgrade-txt"><strong>🕊️ Criar propósitos</strong><span>Disponível no Plano Ouro</span></div>
-                <button className="upgrade-btn" onClick={() => { setSelectedPlan("ouro"); setShowPlans(true); }}>Upgrade</button>
+                <button className="upgrade-btn" onClick={openGoldUpgrade}>Upgrade</button>
               </div>
             )}
 
@@ -1211,7 +1220,8 @@ export default function App() {
               className={`nav-btn${(tab===id||(tab==="journey-detail"&&id==="journeys"))?" active":""}`}
               onClick={() => {
                 setTab(id);
-                if (id==="challenge" && plan!=="bronze" && !challenge) loadChallenge();
+                if (id==="challenge" && !challenge) loadChallenge();
+                if (id==="journeys" && !isGold(plan)) guardGoldAccess();
               }}>
               <span className="nav-ico">{ico}</span>{lbl}
             </button>

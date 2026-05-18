@@ -1,6 +1,6 @@
 # Backend (Fase A)
 
-Backend inicial para assinatura Kiwify e segurança de dados.
+Backend para assinatura Kiwify com planos **Basic** e **Gold**.
 
 ## Requisitos
 
@@ -10,9 +10,10 @@ Backend inicial para assinatura Kiwify e segurança de dados.
 ## Setup
 
 1. Copie `.env.example` para `.env`.
-2. Configure `DATABASE_URL`, `KIWIFY_WEBHOOK_SECRET`, `CRON_SECRET`, `ONESIGNAL_APP_ID` e `ONESIGNAL_REST_API_KEY`.
+2. Configure `DATABASE_URL`, `KIWIFY_WEBHOOK_SECRET`, `KIWIFY_PRODUCT_ID_BASIC`, `KIWIFY_PRODUCT_ID_GOLD`, `CRON_SECRET`, `ONESIGNAL_APP_ID` e `ONESIGNAL_REST_API_KEY`.
 3. Aplique schema:
    - `psql "$DATABASE_URL" -f sql/schema.sql`
+   - Se já existia banco antigo: `psql "$DATABASE_URL" -f sql/migration_002_basic_gold.sql`
 4. Instale dependências:
    - `npm install`
 5. Rode em desenvolvimento:
@@ -21,22 +22,23 @@ Backend inicial para assinatura Kiwify e segurança de dados.
 ## Endpoints
 
 - `GET /health` -> valida API e banco.
-- `POST /webhooks/kiwify` -> recebe evento da Kiwify, valida assinatura e aplica upsert idempotente.
-- `POST /notifications/campaigns/daily` -> campanha diária segmentada por tags OneSignal.
-- `POST /notifications/campaigns/streak-risk` -> campanha de risco de streak.
-- `POST /notifications/campaigns/challenge-weekly` -> campanha de desafio semanal.
+- `GET /api/me` -> plano do usuário (header `X-User-Email`).
+- `POST /api/webhooks/kiwify` -> webhook Kiwify (também em `/webhooks/kiwify`).
+- `POST /api/premium/journeys` -> exige Gold.
+- `POST /api/premium/fasting` -> exige Gold.
+- `POST /api/premium/purposes` -> exige Gold.
+- `POST /notifications/campaigns/*` -> campanhas OneSignal (cron).
 
-### Segurança dos endpoints de campanha
+### Webhook Kiwify
 
-- Enviar header `x-cron-secret: <CRON_SECRET>`.
-- Payload opcional:
-  - `dryRun` (boolean)
-  - `heading` (string)
-  - `message` (string)
-  - `url` (url)
+- Processa apenas pagamentos **approved/paid**.
+- Produto Basic: cria/atualiza usuário como `basic`.
+- Produto Gold: atualiza para `gold` (`is_gold=true`).
+- Reembolso/chargeback: rebaixa para `basic`.
+- Conta nova Basic recebe senha temporária (log no servidor; enviar por e-mail em produção).
 
-## Segurança aplicada nesta fase
+### Segurança
 
-- assinatura HMAC para webhook (quando `KIWIFY_WEBHOOK_SECRET` está configurado)
-- idempotência por `provider + event_id`
-- validação de payload com Zod
+- Assinatura HMAC quando `KIWIFY_WEBHOOK_SECRET` está configurado.
+- Idempotência por `provider + event_id`.
+- Rotas premium retornam `403` com `GOLD_REQUIRED` para upgrade no frontend.
