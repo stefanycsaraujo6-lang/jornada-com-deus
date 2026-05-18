@@ -1,41 +1,81 @@
-// ── MODIFICAÇÃO: extração de domínio de devocional
-// ── DATA: 2026-04-17
+// ── MODIFICAÇÃO: regeneração inédita com fallbacks variados e anti-repetição
+// ── DATA: 2026-05-18
 // ── TASK: TASK-10 (refactor App.jsx com hooks/serviços)
+import { getGenerationConfig } from "./aiGeneration.js";
 import { requestGemini } from "./gemini.js";
 import { getStyleLibrary, pickDailyDevotionalStyle } from "./styleLibrary.js";
 
 const AI_VISION_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
-function fallbackDevocional(plan, userName, theme) {
-  const selectedTheme = theme || "Confiança em Deus";
+const FALLBACK_DEVOTIONALS = [
+  {
+    theme: "Confiança em Deus",
+    verse: "Provérbios 3:5-6",
+    verseText: "Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento."
+  },
+  {
+    theme: "Paz no meio da tempestade",
+    verse: "João 14:27",
+    verseText: "Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá."
+  },
+  {
+    theme: "Força renovada",
+    verse: "Isaías 40:31",
+    verseText: "Os que esperam no Senhor renovarão as suas forças e subirão com asas de águias."
+  },
+  {
+    theme: "Presença que sustenta",
+    verse: "Salmo 46:1",
+    verseText: "Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia."
+  },
+  {
+    theme: "Esperança viva",
+    verse: "Romanos 15:13",
+    verseText: "O Deus da esperança vos encha de toda alegria e paz na fé."
+  }
+];
+
+export function isSameDevotional(a, b) {
+  if (!a || !b) return false;
+  const verseA = String(a.verse || "").trim().toLowerCase();
+  const verseB = String(b.verse || "").trim().toLowerCase();
+  const themeA = String(a.theme || "").trim().toLowerCase();
+  const themeB = String(b.theme || "").trim().toLowerCase();
+  return Boolean(verseA && verseB && verseA === verseB && themeA === themeB);
+}
+
+function fallbackDevocional(plan, userName, theme, variant = 0) {
+  const base = FALLBACK_DEVOTIONALS[Math.abs(Number(variant) || 0) % FALLBACK_DEVOTIONALS.length];
+  const selectedTheme = theme || base.theme;
   const isOuro = plan === "ouro";
   const reflection = isOuro
     ? [
-        "Tem dias em que o coracao acelera e a mente tenta controlar tudo, mas Deus nao se desespera com o nosso caos.",
-        "A paz de Cristo nao e fuga da realidade; e presenca no meio da dor, sustentando voce quando faltam respostas.",
-        "Confiar e abrir as maos hoje, inclusive sobre aquilo que voce tem medo de perder, e descansar no cuidado do Pai.",
-        "Quando lembramos da fidelidade de Deus no passado, criamos coragem para obedecer no presente, mesmo sem entender o amanha.",
-        `${userName ? `${userName}, ` : ""}Deus nao se distraiu da sua historia: Ele continua escrevendo redenção em cada detalhe.`
+        `Hoje, ${userName ? `${userName}, ` : ""}Deus convida você a descansar em ${base.verse}, sem exigir que você entenda tudo agora.`,
+        "A paz de Cristo não nega a dor; ela caminha com você quando as respostas demoram a chegar.",
+        "Confiar é abrir as mãos sobre o que você tenta controlar e receber o cuidado do Pai no presente.",
+        "Quando você lembra da fidelidade de Deus no passado, ganha coragem para obedecer no agora.",
+        "Esta palavra é um convite gentil: permaneça perto dEle, um passo de fé de cada vez."
       ]
     : [
-        "Deus ve sua luta de hoje e nao minimiza sua dor.",
-        "Ele permanece perto de voce no processo, mesmo quando tudo parece lento.",
-        "Um passo de fe hoje vale mais do que promessas vazias para amanha.",
-        "Ore com sinceridade e entregue a Cristo o que esta pesando no seu coracao."
+        "Deus vê sua luta de hoje e não minimiza sua dor.",
+        "Ele permanece perto de você no processo, mesmo quando tudo parece lento.",
+        "Um passo de fé hoje vale mais do que promessas vazias para amanhã.",
+        "Ore com sinceridade e entregue a Cristo o que está pesando no seu coração."
       ];
 
   return {
     theme: selectedTheme,
-    verse: "Provérbios 3:5-6",
-    verseText: "Confia no Senhor de todo o teu coracao e nao te estribes no teu proprio entendimento.",
+    verse: base.verse,
+    verseText: base.verseText,
     reflection,
-    application: "Separe 5 minutos hoje para orar e entregar suas preocupacoes a Deus. Anote uma decisao pratica de fe e viva esse passo ainda hoje."
+    application: "Separe 5 minutos hoje para orar com este versículo. Anote uma decisão prática de fé e viva esse passo ainda hoje."
   };
 }
 
-async function callAI(prompt) {
+async function callAI(prompt, generationConfig) {
   const data = await requestGemini({
-    contents: [{ parts: [{ text: prompt }] }]
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig
   });
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   const clean = text.replace(/```json|```/g, "").trim();
@@ -57,8 +97,18 @@ export async function genDevocional(plan, userName, theme, options = {}) {
   const historyBlock = history.length
     ? `\nHISTORICO RECENTE (NAO REPITA esses versiculos, temas nem frases-chave):\n${history.map((h, i) => `- ${i + 1}. tema="${h.theme || ""}", verso="${h.verse || ""}"`).join("\n")}`
     : "";
+  const previousBlock = options.previousDevotional
+    ? `\nDEVOCIONAL ANTERIOR (PROIBIDO repetir tema, versiculo, texto biblico, estrutura e frases centrais):\n${JSON.stringify({
+        theme: options.previousDevotional.theme,
+        verse: options.previousDevotional.verse,
+        verseText: options.previousDevotional.verseText,
+        styleLabel: options.previousDevotional.styleLabel
+      })}`
+    : "";
+  const generationConfig = getGenerationConfig(options.forceNew);
+
   try {
-    return await callAI(`Você é um escritor devocional cristão brasileiro, biblicamente fiel, pastoral e humano.
+    const parsed = await callAI(`Você é um escritor devocional cristão brasileiro, biblicamente fiel, pastoral e humano.
 Objetivo: gerar UM devocional inédito (ID unico: ${todayKey}-${variant}-${nonce}), com profundidade espiritual, aplicação concreta e linguagem natural.
 
 REGRAS DE QUALIDADE (obrigatórias):
@@ -80,18 +130,21 @@ ESTILO OBRIGATORIO DE HOJE:
 - identidade: ${style.identity}
 - diretriz de escrita: ${style.devotionalGuide}
 ${historyBlock}
+${previousBlock}
 
 ${themeClause}
 ${personClause}
 Reflexão com ${depth}.
 
 Responda APENAS com JSON válido, sem markdown, neste formato:
-{"theme":"título curto e marcante","verse":"Livro cap:v","verseText":"texto bíblico em português","reflection":["p1","p2","p3","p4"],"application":"passos práticos para hoje em 2-3 frases, específicos e executáveis","styleId":"${style.id}","styleLabel":"${style.label}"}`);
+{"theme":"título curto e marcante","verse":"Livro cap:v","verseText":"texto bíblico em português","reflection":["p1","p2","p3","p4"],"application":"passos práticos para hoje em 2-3 frases, específicos e executáveis","styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
+    return parsed;
   } catch {
     return {
-      ...fallbackDevocional(plan, userName, theme),
+      ...fallbackDevocional(plan, userName, theme, variant),
       styleId: style.id,
-      styleLabel: style.label
+      styleLabel: style.label,
+      fromFallback: true
     };
   }
 }

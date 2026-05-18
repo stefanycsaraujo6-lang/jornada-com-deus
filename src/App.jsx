@@ -391,11 +391,13 @@ export default function App() {
     try {
       if (typeof window === "undefined" || !window.localStorage) return;
       if (window.localStorage.getItem("jcd_cache_cleanup_v2") === "1") return;
-      const prefixes = ["jcd_dev_", "jcd_dev_variant_", "jcd_challenge_", "jcd_challenge_variant_", "jcd_dev_history", "jcd_challenge_history"];
+      const prefixes = ["jcd_dev_", "jcd_dev_variant_", "jcd_challenge_", "jcd_challenge_variant_", "jcd_journey_", "jcd_journey_variant_", "jcd_dev_history", "jcd_challenge_history", "jcd_journey_history"];
+      const staleChallengePrefixes = ["jcd_challenge_v2_", "jcd_challenge_variant_v2", "jcd_challenge_history_v2"];
       const keys = Object.keys(window.localStorage);
       keys.forEach((k) => {
-        const stale = prefixes.some((p) => k.startsWith(p) && !k.includes("_v2"));
-        if (stale) window.localStorage.removeItem(k);
+        const stale = prefixes.some((p) => k.startsWith(p) && !k.includes("_v2") && !k.includes("_v3"));
+        const staleChallenge = staleChallengePrefixes.some((p) => k.startsWith(p));
+        if (stale || staleChallenge) window.localStorage.removeItem(k);
       });
       window.localStorage.setItem("jcd_cache_cleanup_v2", "1");
     } catch {
@@ -428,7 +430,7 @@ export default function App() {
   });
   const {
     challenge, setChallenge, challengeLoading,
-    journey, journeyLoading, loadChallenge, loadJourney
+    journey, journeyLoading, loadChallenge, regenerateChallenge, loadJourney, regenerateJourney
   } = useJourney({
     ls,
     todayKey,
@@ -716,8 +718,13 @@ export default function App() {
                 {isToday ? "✓ Dia concluído!" : "Marcar como concluído"}
               </button>
 
-              <button className="regen-btn" style={{marginTop:10}} onClick={() => regenerateDevotional(chosenTheme)}>
-                🔄 Gerar novo devocional
+              <button
+                className="regen-btn"
+                style={{marginTop:10, opacity: loading ? 0.6 : 1}}
+                disabled={loading}
+                onClick={() => regenerateDevotional(chosenTheme)}
+              >
+                {loading ? "Gerando novo devocional..." : "🔄 Gerar novo devocional"}
               </button>
             </>
           ) : null}
@@ -785,7 +792,7 @@ export default function App() {
             </>
           ) : (
             <button className="theme-opt sel" style={{width:"100%"}} onClick={() => setShowThemePicker(true)}>
-              {chosenTheme || "IA vai escolher"} ✏️
+              {chosenTheme || "Ver o que Deus preparou pra mim"} ✏️
             </button>
           )}
         </div>
@@ -879,8 +886,13 @@ export default function App() {
                 <div className="cd-task">{d.task}</div>
               </div>
             ))}
-            <button className="regen-btn" onClick={() => { setChallenge(null); loadChallenge(true); }}>
-              🔄 Gerar novo desafio
+            <button
+              className="regen-btn"
+              style={{ opacity: challengeLoading ? 0.6 : 1 }}
+              disabled={challengeLoading}
+              onClick={() => regenerateChallenge()}
+            >
+              {challengeLoading ? "Gerando novo desafio..." : "🔄 Gerar novo desafio"}
             </button>
           </div>
         ) : null}
@@ -934,6 +946,14 @@ export default function App() {
               </div>
             ))}
           </div>
+          <button
+            className="regen-btn"
+            style={{ marginTop: 10, opacity: journeyLoading ? 0.6 : 1 }}
+            disabled={journeyLoading}
+            onClick={() => regenerateJourney()}
+          >
+            {journeyLoading ? "Gerando nova jornada..." : "🔄 Gerar nova jornada"}
+          </button>
         </>
       ) : null}
     </>

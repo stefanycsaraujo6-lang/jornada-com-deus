@@ -1,14 +1,28 @@
-// ── MODIFICAÇÃO: hook de domínio do devocional
-// ── DATA: 2026-04-17
+// ── MODIFICAÇÃO: regeneração inédita via utilitário centralizado
+// ── DATA: 2026-05-18
 // ── TASK: TASK-10 (refactor App.jsx com hooks/serviços)
 import { useState } from "react";
+import {
+  buildVersionedCacheKey,
+  readVariant,
+  requestUniqueGeneration,
+  resolveVariant
+} from "../services/aiGeneration.js";
 import { getFriendlyAIErrorMessage } from "../services/gemini.js";
-import { buildShareText, genDevocional, genVerseImage, shareVerseImage } from "../services/devotional.js";
+import { buildShareText, genDevocional, genVerseImage, isSameDevotional, shareVerseImage } from "../services/devotional.js";
 
 const DEV_HISTORY_KEY = "jcd_dev_history_v2";
 const DEV_HISTORY_MAX = 6;
 const DEV_CACHE_PREFIX = "jcd_dev_v2";
 const DEV_VARIANT_PREFIX = "jcd_dev_variant_v2";
+
+function getDevotionalCacheId(todayKey, plan, themeSlice) {
+  return `${todayKey}_${plan}${themeSlice ? `_${themeSlice}` : ""}`;
+}
+
+function getVariantKey(dateKey, themeKey) {
+  return `${DEV_VARIANT_PREFIX}_${dateKey}_${themeKey || "default"}`;
+}
 
 export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   const [dev, setDev] = useState(null);
@@ -16,8 +30,6 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   const [loadMsg, setLoadMsg] = useState("Conectando na rede eterna...");
   const [imgUrl, setImgUrl] = useState(null);
   const [imgLoading, setImgLoading] = useState(false);
-
-  const getVariantKey = (dateKey, themeKey) => `${DEV_VARIANT_PREFIX}_${dateKey}_${themeKey || "default"}`;
 
   const pushHistory = (entry) => {
     try {
@@ -35,10 +47,25 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
   };
 
   const runGeneration = async (theme, { forceNew = false } = {}) => {
-    setImgUrl(null);
+    if (loading) return false;
+
     const themeSlice = theme ? theme.slice(0, 10) : "";
-    const cacheKey = `${DEV_CACHE_PREFIX}_${todayKey}_${plan}${themeSlice ? `_${themeSlice}` : ""}`;
+    const cacheId = getDevotionalCacheId(todayKey, plan, themeSlice);
     const variantKey = getVariantKey(todayKey, themeSlice);
+    const currentVariant = readVariant(ls, variantKey);
+    const previousDevotional = forceNew
+      ? (dev || ls.get(buildVersionedCacheKey(DEV_CACHE_PREFIX, cacheId, currentVariant)))
+      : null;
+
+    const variant = resolveVariant(ls, variantKey, forceNew);
+    const cacheKey = buildVersionedCacheKey(DEV_CACHE_PREFIX, cacheId, variant);
+
+    if (forceNew) {
+      setDev(null);
+      setImgUrl(null);
+    } else {
+      setImgUrl(null);
+    }
 
     if (!forceNew) {
       const cached = ls.get(cacheKey);
@@ -49,12 +76,19 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
     }
 
     setLoading(true);
-    const msgs = [
-      "Conectando na rede eterna...",
-      "Se conectando com Deus para captar melhor...",
-      "Ajustando o coracao na frequencia da graca...",
-      "Compilando fe, esperança e direção para hoje..."
-    ];
+    const msgs = forceNew
+      ? [
+          "Preparando um devocional inédito...",
+          "Buscando um novo versículo para hoje...",
+          "Reescrevendo com um olhar pastoral diferente...",
+          "Quase lá — Deus tem uma palavra nova para você..."
+        ]
+      : [
+          "Conectando na rede eterna...",
+          "Se conectando com Deus para captar melhor...",
+          "Ajustando o coracao na frequencia da graca...",
+          "Compilando fe, esperança e direção para hoje..."
+        ];
     let mi = 0;
     setLoadMsg(msgs[0]);
     const iv = setInterval(() => {
@@ -63,20 +97,32 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
     }, 2000);
 
     try {
-      const currentVariant = Number(ls.get(variantKey, 0) || 0);
-      const nextVariant = forceNew ? currentVariant + 1 : currentVariant;
-      const nonce = Math.random().toString(36).slice(2, 10);
-      const history = readHistory();
-      const data = await genDevocional(plan, userName, theme, {
-        todayKey,
-        variant: nextVariant,
-        nonce,
-        history
+      const { data, fromFallback } = await requestUniqueGeneration({
+        forceNew,
+        previous: previousDevotional,
+        isSame: isSameDevotional,
+        maxRetriesForceNew: 6,
+        generate: (nonce) =>
+          genDevocional(plan, userName, theme, {
+            todayKey,
+            variant,
+            nonce,
+            history: readHistory(),
+            previousDevotional,
+            forceNew
+          })
       });
-      ls.set(variantKey, nextVariant);
+
       ls.set(cacheKey, data);
       pushHistory({ theme: data?.theme, verse: data?.verse, styleLabel: data?.styleLabel });
       setDev(data);
+      if (fromFallback) {
+        onToast(
+          forceNew
+            ? "IA indisponível agora; exibimos uma versão alternativa local."
+            : "IA indisponível; exibimos um devocional reserva."
+        );
+      }
       return true;
     } catch (e) {
       onToast(getFriendlyAIErrorMessage(e, "Erro ao gerar devocional. Tente novamente."));

@@ -4,35 +4,40 @@ const STYLE_LIBRARY = [
     label: "Contemplativo",
     identity: "tom reverente, sensivel e poeticamente simples",
     devotionalGuide: "convide para pausa interior, escuta e adoração silenciosa diante de Deus",
-    challengeGuide: "proponha praticas de silencio, observacao da graca e gratidao atenta no cotidiano"
+    challengeGuide: "proponha praticas de silencio, observacao da graca e gratidao atenta no cotidiano",
+    journeyGuide: "estruture etapas contemplativas com pausas, escuta e adoracao silenciosa"
   },
   {
     id: "confronto-amoroso",
     label: "Confronto Amoroso",
     identity: "tom firme e gentil, verdade com misericordia",
     devotionalGuide: "nomeie areas de autoengano com amor e convide ao arrependimento pratico sem condenacao",
-    challengeGuide: "traga tarefas de honestidade espiritual, confissao e passos concretos de obediencia"
+    challengeGuide: "traga tarefas de honestidade espiritual, confissao e passos concretos de obediencia",
+    journeyGuide: "conduza etapas de autoexame amoroso, verdade e arrependimento pratico"
   },
   {
     id: "cura-emocional",
     label: "Cura Emocional",
     identity: "tom acolhedor, terapeutico pastoral e esperancoso",
     devotionalGuide: "fale com empatia sobre dor, ansiedade, luto e cansaco, apontando para restauracao em Cristo",
-    challengeGuide: "inclua praticas de entrega emocional a Deus, respiracao-oracao, diario e reconstrucao de limites"
+    challengeGuide: "inclua praticas de entrega emocional a Deus, respiracao-oracao, diario e reconstrucao de limites",
+    journeyGuide: "desenhe etapas de cura emocional, acolhimento pastoral e restauracao em Cristo"
   },
   {
     id: "missao-pratica",
     label: "Missao Pratica",
     identity: "tom ativo, encorajador e orientado a acao",
     devotionalGuide: "mostre como a fe se traduz em servico, testemunho e fidelidade nas pequenas rotinas",
-    challengeGuide: "proponha micro-missoes concretas de bondade, reconciliacao e impacto no proximo"
+    challengeGuide: "proponha micro-missoes concretas de bondade, reconciliacao e impacto no proximo",
+    journeyGuide: "monte etapas ativas de servico, testemunho e fe traduzida em acao diaria"
   },
   {
     id: "quietude-com-deus",
     label: "Quietude com Deus",
     identity: "tom calmo, profundo e de descanso espiritual",
     devotionalGuide: "conduza para desaceleracao, confianca e permanencia em Deus no meio da pressa",
-    challengeGuide: "estruture tarefas de desacelerar, desligar ruidos e cultivar presenca com Deus"
+    challengeGuide: "estruture tarefas de desacelerar, desligar ruidos e cultivar presenca com Deus",
+    journeyGuide: "organize etapas de desaceleracao, confianca e permanencia com Deus no cotidiano"
   }
 ];
 
@@ -61,4 +66,8 @@ export function pickDailyDevotionalStyle({ todayKey, userName, theme, plan, vari
 
 export function pickChallengeStyle({ todayKey, variant, userName, nonce }) {
   return pickStyle(`challenge|${todayKey}|${variant || 0}|${userName || ""}|${nonce || ""}`);
+}
+
+export function pickJourneyStyle({ journeyName, variant, userName, nonce }) {
+  return pickStyle(`journey|${journeyName || ""}|${variant || 0}|${userName || ""}|${nonce || ""}`);
 }
