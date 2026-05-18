@@ -14,7 +14,7 @@ const todayStr = () => new Date().toISOString().split("T")[0];
 const greet = () => { const h = new Date().getHours(); return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"; };
 const ls = {
   get: (k, fb = null) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore localStorage write errors */ } }
 };
 const getStreak = (hist) => {
   let s = 0;
@@ -294,7 +294,7 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 
 export default function App() {
   const [dark, setDark] = useState(() => ls.get("jcd_dark", true));
-  const [screen, setScreen] = useState("login");
+  const [screen, setScreen] = useState(() => (ls.get("jcd_user") ? "dashboard" : "login"));
   const [tab, setTab] = useState("home");
   const [user, setUser] = useState(() => ls.get("jcd_user"));
   const [plan, setPlan] = useState(() => ls.get("jcd_plan", "bronze"));
@@ -327,7 +327,6 @@ export default function App() {
   const notificationsAvailable = isNotificationFeatureEnabled();
   const notificationEnv = getNotificationEnvironmentInfo();
 
-  useEffect(() => { if (user) setScreen("dashboard"); }, [user]);
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
   useEffect(() => {
     let active = true;
@@ -1135,7 +1134,7 @@ export default function App() {
     const type = showPhotoModal;
     const label = type==="culto" ? "do culto" : "da Bíblia";
     return (
-      <div className="photo-modal" onClick={() => { setShowPhotoModal(null); setPhotoResult(null); }}>
+      <div className="photo-modal" onClick={resetPhotoModal}>
         <div className="photo-modal-card" onClick={e=>e.stopPropagation()}>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontStyle:"italic",marginBottom:4}}>
             {type==="culto" ? "✝️ Registrar culto" : "📖 Registrar leitura"}

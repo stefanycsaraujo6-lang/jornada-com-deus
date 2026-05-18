@@ -32,6 +32,7 @@ export function useCommunity({
 
   const userAvatar = (user?.name || "EU").slice(0, 2).toUpperCase();
   const userShortName = user?.name?.split(" ")[0] || "Você";
+  const memberKey = (user?.email || user?.name || userShortName).trim().toLowerCase();
 
   const displayUsers = useMemo(() => {
     const comparator = (a, b) => rankPeriod === "week" ? b.pts_week - a.pts_week : b.pts_total - a.pts_total;
@@ -75,7 +76,7 @@ export function useCommunity({
       code,
       name: newPurposeForm.name,
       desc: newPurposeForm.desc,
-      members: [{ name: userShortName, avatar: userAvatar, days: 1 }],
+      members: [{ key: memberKey, name: userShortName, avatar: userAvatar, days: 1 }],
       days_active: 1,
       deadline: newPurposeForm.has_deadline ? newPurposeForm.deadline : null,
       has_deadline: newPurposeForm.has_deadline
@@ -94,7 +95,16 @@ export function useCommunity({
       onToast("Código não encontrado.");
       return;
     }
-    const me = { name: userShortName, avatar: userAvatar, days: 0 };
+    const alreadyJoined = (found.members || []).some((m) => {
+      const existingKey = String(m?.key || m?.name || "").trim().toLowerCase();
+      return existingKey && existingKey === memberKey;
+    });
+    if (alreadyJoined) {
+      onToast("Você já participa deste propósito.");
+      return;
+    }
+
+    const me = { key: memberKey, name: userShortName, avatar: userAvatar, days: 0 };
     const updated = purposes.map((p) => p.id === found.id ? { ...p, members: [...p.members, me] } : p);
     setPurposes(updated);
     ls.set("jcd_purposes", updated);
