@@ -1,0 +1,29 @@
+# Blueprint Render — Opção A (API + webhook Kiwify)
+# Conecte o repo em: https://dashboard.render.com/blueprints
+services:
+  - type: web
+    name: jornada-com-deus-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: KIWIFY_WEBHOOK_SECRET
+        sync: false
+      - key: KIWIFY_PRODUCT_ID_BASIC
+        sync: false
+      - key: KIWIFY_PRODUCT_ID_GOLD
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: ONESIGNAL_APP_ID
+        sync: false
+      - key: ONESIGNAL_REST_API_KEY
+        sync: false
