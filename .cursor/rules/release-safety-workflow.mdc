@@ -9,7 +9,7 @@ Before any push to `main`, follow this checklist:
 
 1. Run `npm run build` locally and only proceed if it succeeds.
 2. Never commit secrets or local env files (especially `.env.local`).
-3. If any `VITE_*` variable was added/changed, update the same variable in Netlify before/with deploy.
+3. If any `VITE_*` variable was added/changed, update the same variable in Vercel (frontend) and no dashboard Convex correspondente antes/durante o deploy.
 4. For large or risky changes, use a branch named `feature/<topic>` and merge to `main` only after validation.
 
 ## Quick examples

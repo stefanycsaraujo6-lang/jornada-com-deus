@@ -6,11 +6,14 @@ Repositorio: [stefanycsaraujo6-lang/jornada-com-deus](https://github.com/stefany
 
 ## Stack atual
 
-- Frontend: React + Vite
-- Persistencia no MVP: `localStorage`
+- Frontend: React + Vite (deploy alvo: Vercel)
+- Dados do app (padrao oficial): **Convex** (Dev/Prod separados)
+- Persistencia atual do MVP: `localStorage` (ate migracao para Convex)
 - IA no app: Gemini (com servicos em `src/services`)
 - PWA: `vite-plugin-pwa`
-- Backend inicial (fase A): Node + Express + PostgreSQL em `backend/`
+- Assinaturas e webhook Kiwify (fase A): Node + Express + PostgreSQL em `backend/`
+
+**Supabase:** legado no codigo (`src/services/supabase*`). Nao usar em features novas; remover quando Convex cobrir auth/sync.
 
 ## Estrutura principal
 
@@ -36,6 +39,15 @@ Repositorio: [stefanycsaraujo6-lang/jornada-com-deus](https://github.com/stefany
 ## Como rodar o backend
 
 Consulte `backend/README.md` para requisitos e configuracao de ambiente.
+
+## Convex (dados do app)
+
+Setup completo: `docs/convex-setup`.
+
+```bash
+npx convex login
+npm run convex:dev
+```
 
 ## Documentacao
 

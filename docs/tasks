@@ -161,7 +161,15 @@ Exemplo: jornadadeusdevo.com.br
 
 ### TASK-17 — Backend com Convex
 ```
-Status: 🔮 Futuro
+Status: 🟡 Em andamento (setup inicial no repo)
+Feito no repo:
+  - convex/schema.ts (profiles)
+  - convex/profiles.ts, convex/health.ts
+  - convex.json + scripts npm + docs/convex-setup
+Pendente (voce no terminal):
+  - npx convex login
+  - npm run convex:dev (gera _generated e .env.local)
+  - segundo deployment Prod + VITE_CONVEX_URL_*
 Objetivo: Sincronizar dados entre dispositivos
 Stack: Convex (Schema TypeScript + Functions/Mutations + Realtime)
 Custo: Conforme plano Convex

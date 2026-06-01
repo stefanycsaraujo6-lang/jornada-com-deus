@@ -1,0 +1,64 @@
+# Convex — setup (passo a passo)
+
+Padrao oficial de dados do app. Dev e Prod devem ser **dois projetos/deployments separados** no dashboard Convex.
+
+## 1. Conta e login (uma vez)
+
+```bash
+npx convex login
+```
+
+## 2. Ambiente de desenvolvimento
+
+Na raiz do repo:
+
+```bash
+npm install
+npx convex dev
+```
+
+O CLI cria/atualiza `.env.local` com `CONVEX_DEPLOYMENT` e gera `convex/_generated/`.
+
+Copie a URL do deployment Dev para `.env.local`:
+
+```
+VITE_CONVEX_URL_DEV=https://SEU-DEV.convex.cloud
+```
+
+## 3. Ambiente de producao
+
+No dashboard Convex, crie um **segundo** deployment (Prod).
+
+```bash
+npx convex deploy
+```
+
+Use o deploy key de Prod no CI/Vercel e defina:
+
+```
+VITE_CONVEX_URL_PROD=https://SEU-PROD.convex.cloud
+```
+
+## 4. Rodar o app
+
+Terminal 1: `npx convex dev`  
+Terminal 2: `npm run dev`
+
+## 5. Funcoes iniciais
+
+| Arquivo | Funcao |
+|---------|--------|
+| `convex/schema.ts` | Tabela `profiles` (email, nome, plano opcional) |
+| `convex/profiles.ts` | `getByEmail`, `upsert` |
+| `convex/health.ts` | `ping` |
+
+## 6. O que ainda nao esta ligado
+
+- `src/App.jsx` ainda usa `localStorage` como fonte principal.
+- `profileSync.js` ainda aponta para Supabase (legado); proxima etapa: `convexProfileSync` + backlog #09–#14 em `docs/tasks`.
+- Assinaturas Kiwify continuam no `backend/` (PostgreSQL).
+
+## Scripts npm
+
+- `npm run convex:dev` — desenvolvimento + codegen
+- `npm run convex:deploy` — publicar funcoes em Prod

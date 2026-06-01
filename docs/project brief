@@ -60,9 +60,12 @@ Assinatura mensal em 3 planos:
 - **Frontend:** React + Vite
 - **Estilo:** CSS-in-JS (makeCSS interno)
 - **IA:** Gemini API (via proxy/servicos)
-- **Armazenamento:** localStorage (MVP)
-- **Deploy:** Netlify ou Vercel
+- **Dados do app (oficial):** Convex (Dev/Prod separados)
+- **Armazenamento hoje:** localStorage (MVP, migrar para Convex)
+- **Assinaturas:** backend Node + PostgreSQL + webhook Kiwify
+- **Deploy:** Vercel (app) + Render (API de assinatura)
 - **PWA:** vite-plugin-pwa
+- **Legado (nao expandir):** Supabase
 
 ## Métricas de sucesso
 
