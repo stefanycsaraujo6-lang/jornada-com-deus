@@ -1,0 +1,81 @@
+# Publicar o app na Cloudflare Pages
+
+Dominio ja na Cloudflare: use **Pages** + o mesmo painel de DNS.
+
+## Onde colar as variaveis (painel em portugues)
+
+1. Abra o projeto em **Workers e Pages**
+2. Aba superior **Configuracoes** (nao "Implantacoes")
+3. Menu lateral **Variaveis e segredos** (ou **Variaveis de ambiente**)
+4. **Adicionar** → tipo **Texto** (nao "Segredo" obrigatorio para VITE_*)
+5. Crie para **Producao** e repita para **Visualizacao** (preview):
+
+| Nome | Valor |
+|------|--------|
+| `VITE_CONVEX_URL` | copiar do `.env.local` (linha `VITE_CONVEX_URL=...` sem espacos) |
+| `VITE_GEMINI_KEY` | copiar do `.env.local` |
+
+6. **Salvar** → volte em **Implantacoes** → **Reimplantar** (Retry deployment)
+
+Dominio proprio: aba **Dominios** → **Configurar dominio personalizado**.
+
+Build (aba Configuracoes → Build):
+
+| Campo | Valor |
+|-------|--------|
+| Comando de build | `npm run build` |
+| Diretorio de saida | `dist` |
+| Preset | **Nenhum** ou **Vite** (site estatico, nao Worker full-stack) |
+
+Se o erro for `Error parsing vite.config.js` na etapa final, confirme preset **Nenhum** + saida `dist` + arquivo `wrangler.jsonc` na raiz do repo (ja incluso).
+
+## Opcao A — Pelo site (recomendado, sem terminal)
+
+1. https://dash.cloudflare.com → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+2. Autorize o GitHub e escolha o repo `jornada-com-deus`
+3. Configuracao do build:
+
+| Campo | Valor |
+|-------|--------|
+| Framework preset | Vite |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | `/` (raiz) |
+
+4. **Environment variables** (Production e Preview):
+
+| Nome | Onde pegar |
+|------|------------|
+| `VITE_CONVEX_URL` | `.env.local` ou dashboard Convex (deployment Prod depois) |
+| `VITE_GEMINI_KEY` | Google AI Studio |
+| `VITE_API_URL` | URL da API no Render (quando estiver no ar) |
+
+5. **Save and Deploy** — aguarde o build verde.
+
+6. **Dominio customizado:** no projeto Pages → **Custom domains** → adicione seu dominio (ex: `app.seudominio.com.br`). A Cloudflare ajusta o DNS sozinha se o dominio ja estiver na conta.
+
+## Opcao B — Wrangler (terminal)
+
+Requer login uma vez: `npx wrangler login`
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name=jornada-com-deus
+```
+
+Variaveis de producao: configure no dashboard Pages → Settings → Environment variables (nao commitar segredos).
+
+## Plugin Cloudflare no Cursor
+
+O plugin existe (docs, builds, bindings) mas **precisa de login seu** no Cursor:
+
+- Command Palette → MCP → servidor Cloudflare → **Authenticate**
+
+Apos autenticar, o agente pode ajudar com builds; o deploy inicial do Pages costuma ser mais simples pela **Opcao A**.
+
+## Checklist pos-deploy
+
+- [ ] Site abre na URL `*.pages.dev`
+- [ ] Login e devocional funcionam
+- [ ] Convex dashboard mostra `profiles` apos login
+- [ ] Dominio proprio apontando para Pages

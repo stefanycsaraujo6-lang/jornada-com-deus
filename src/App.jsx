@@ -6,6 +6,7 @@ import { Stars } from "./components/Stars.jsx";
 import { applyNotificationTags, getNotificationEnvironmentInfo, initOneSignal, isNotificationFeatureEnabled, isOneSignalConfigured, requestPushPermission } from "./services/onesignal.js";
 import { getSupabaseSessionSnapshot, watchSupabaseAuthChanges, sendMagicLinkOtp, isMagicLinkFeatureEnabled } from "./services/supabaseAuth.js";
 import { syncJcdUserWithProfiles, bumpLocalProfileEdited } from "./services/profileSync.js";
+import { syncJcdUserWithConvex } from "./services/convexProfileSync.js";
 import { useDevotional } from "./hooks/useDevotional.js";
 import { useJourney } from "./hooks/useJourney.js";
 import { useCommunity } from "./hooks/useCommunity.js";
@@ -348,10 +349,16 @@ export default function App() {
       if (syncRes.message && !syncRes.skipped) {
         console.warn("[profileSync]", syncRes.message);
       }
-      if (syncRes.user) {
-        setUser(syncRes.user);
+      const convexRes = await syncJcdUserWithConvex(ls);
+      if (!active) return;
+      if (convexRes.message && !convexRes.skipped) {
+        console.warn("[convexProfileSync]", convexRes.message);
+      }
+      const mergedUser = convexRes.user || syncRes.user;
+      if (mergedUser) {
+        setUser(mergedUser);
         setScreen("dashboard");
-        if (notificationsAvailable) initOneSignal(syncRes.user);
+        if (notificationsAvailable) initOneSignal(mergedUser);
         if (syncRes.source === "hydrate" && notificationsAvailable && isOneSignalConfigured()) {
           setShowPushPrompt(true);
         }
@@ -407,6 +414,22 @@ export default function App() {
     syncPlanFromBackend(ls, user.email).then((remotePlan) => {
       if (remotePlan) setPlan(remotePlan);
     });
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    let active = true;
+    void syncJcdUserWithConvex(ls).then((res) => {
+      if (!active || !res?.user) return;
+      setUser((prev) => {
+        if (!prev || prev.email !== res.user.email) return prev;
+        if (prev.name === res.user.name) return prev;
+        return res.user;
+      });
+    });
+    return () => {
+      active = false;
+    };
   }, [user?.email]);
 
   const showToast = (msg, kind = "ok") => {
@@ -478,9 +501,14 @@ export default function App() {
     };
     ls.set("jcd_user", u);
     bumpLocalProfileEdited();
-    setUser(u);
+    const syncRes = await syncJcdUserWithConvex(ls);
+    const finalUser = syncRes.user || u;
+    if (syncRes.message && !syncRes.skipped) {
+      console.warn("[convexProfileSync]", syncRes.message);
+    }
+    setUser(finalUser);
     setScreen("dashboard");
-    if (notificationsAvailable) initOneSignal(u);
+    if (notificationsAvailable) initOneSignal(finalUser);
     if (isOneSignalConfigured()) setShowPushPrompt(true);
   };
 
