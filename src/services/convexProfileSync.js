@@ -1,4 +1,4 @@
-import { api } from "../../convex/_generated/api.js";
+import { api } from "./convexApi.js";
 import { convex } from "./convexClient.js";
 import { validateJcdUser, bumpLocalProfileEdited } from "./profileSync.js";
 import { normalizePlan, readStoredPlan } from "./planAccess.js";
