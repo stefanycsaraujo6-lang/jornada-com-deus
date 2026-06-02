@@ -29,6 +29,8 @@ Build (aba Configuracoes → Build):
 
 Se o erro for `Error parsing vite.config.js` na etapa final, confirme preset **Nenhum** + saida `dist` + arquivo `wrangler.jsonc` na raiz do repo (ja incluso).
 
+Se o erro for `Could not resolve ... convex/_generated/api.js`, o repo precisa ter a pasta `convex/_generated/` commitada (rode `npm run convex:codegen` local e de push).
+
 ## Opcao A — Pelo site (recomendado, sem terminal)
 
 1. https://dash.cloudflare.com → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**

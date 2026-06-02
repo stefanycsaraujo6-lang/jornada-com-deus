@@ -15,7 +15,7 @@ dist-ssr
 .env.local
 backend/.env
 .convex/
-convex/.generated/
+# convex/_generated/ deve ir no git (build Cloudflare/Vite)
 
 # Editor directories and files
 .vscode/*
