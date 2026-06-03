@@ -1,6 +1,6 @@
 const AI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 const RETRYABLE_AI_STATUS = new Set([404, 429, 503]);
-const AI_COOLDOWN_MS = 10 * 60 * 1000;
+const AI_COOLDOWN_MS = 90 * 1000;
 let aiBlockedUntil = 0;
 
 function buildAIError(status, apiMsg, model) {

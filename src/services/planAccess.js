@@ -1,63 +1,123 @@
-// ── MODIFICAÇÃO: controle de acesso Basic/Gold
-// ── DATA: 2026-05-18
+// Controle de acesso: BASICO (R$ 67) | OURO (upgrade +R$ 33)
+
+export const USER_STATUS = {
+  BASICO: "BASICO",
+  OURO: "OURO"
+};
 
 export const PLANS = {
-  basic: {
-    id: "basic",
-    name: "Padrão",
+  BASICO: {
+    id: "BASICO",
+    name: "Básico",
     emoji: "✝️",
     price: "R$ 67,00",
     features: [
-      "Devocional diário padrão",
+      "Devocional diário com IA",
       "Versículo + reflexão + aplicação",
       "Marcar dia concluído e streak",
       "Histórico e desafio semanal",
-      "Compartilhar versículo"
+      "Compartilhar versículo",
+      "Ranking da comunidade"
     ]
   },
-  gold: {
-    id: "gold",
+  OURO: {
+    id: "OURO",
     name: "Ouro",
     emoji: "👑",
-    price: "Upsell exclusivo",
+    price: "+ R$ 33,00",
     popular: true,
     features: [
-      "Jornadas de Fé exclusivas",
-      "Campanhas de Jejum",
-      "Propósitos em comunidade",
+      "Jornadas Temáticas Intensas",
+      "Protocolos de Jejum Bíblico Guiado",
+      "Campanhas e Propósitos semanais",
       "Tema personalizado do devocional",
-      "Devocional aprofundado por IA"
+      "Download de imagens do versículo"
     ]
   }
 };
 
-export const GOLD_REQUIRED_MESSAGE = "Disponível apenas no Plano Ouro";
+export const OURO_REQUIRED_MESSAGE =
+  "Disponível apenas no Nível Ouro. Ative por mais R$ 33,00 na Kiwify.";
 
-export function normalizePlan(plan) {
-  const value = String(plan || "").trim().toLowerCase();
-  if (value === "gold" || value === "ouro") return "gold";
-  return "basic";
+/** @deprecated */
+export const GOLD_REQUIRED_MESSAGE = OURO_REQUIRED_MESSAGE;
+
+export function normalizeStatus(status) {
+  const raw = String(status || "").trim().toUpperCase();
+  if (raw === "OURO" || raw === "GOLD") return USER_STATUS.OURO;
+  if (raw === "BASICO" || raw === "BASIC" || raw === "BRONZE" || raw === "PRATA") return USER_STATUS.BASICO;
+  return USER_STATUS.BASICO;
 }
 
-export function isGold(plan) {
-  return normalizePlan(plan) === "gold";
+/** Compatibilidade com hooks que usam plan id basic/gold */
+export function statusToLegacyPlan(status) {
+  return normalizeStatus(status) === USER_STATUS.OURO ? "gold" : "basic";
 }
 
-export function isBasic(plan) {
-  return normalizePlan(plan) === "basic";
+export function isOuro(status) {
+  return normalizeStatus(status) === USER_STATUS.OURO;
 }
 
-export function readStoredPlan(ls) {
-  const stored = ls?.get?.("jcd_plan", "basic");
-  const normalized = normalizePlan(stored);
-  if (normalized !== stored) {
-    ls?.set?.("jcd_plan", normalized);
+export function isBasico(status) {
+  return normalizeStatus(status) === USER_STATUS.BASICO;
+}
+
+/** @deprecated use isOuro */
+export function isGold(planOrStatus) {
+  return isOuro(planOrStatus);
+}
+
+export function readStoredStatus(ls) {
+  const fromUser = ls?.get?.("jcd_user")?.status;
+  if (fromUser) return normalizeStatus(fromUser);
+  const legacy = ls?.get?.("jcd_status") || ls?.get?.("jcd_plan", "BASICO");
+  const normalized = normalizeStatus(legacy === "gold" ? "OURO" : legacy);
+  ls?.set?.("jcd_status", normalized);
+  return normalized;
+}
+
+export function saveStatus(ls, status) {
+  const normalized = normalizeStatus(status);
+  ls?.set?.("jcd_status", normalized);
+  const user = ls?.get?.("jcd_user");
+  if (user?.email) {
+    ls?.set?.("jcd_user", { ...user, status: normalized });
   }
   return normalized;
 }
 
+/** @deprecated */
+export function normalizePlan(plan) {
+  const raw = String(plan || "").trim().toLowerCase();
+  if (raw === "gold" || raw === "ouro") return "gold";
+  return "basic";
+}
+
+/** @deprecated */
+export function readStoredPlan(ls) {
+  return statusToLegacyPlan(readStoredStatus(ls));
+}
+
+/** @deprecated */
 export function savePlan(ls, plan) {
-  const normalized = normalizePlan(plan);
-  ls?.set?.("jcd_plan", normalized);
-  return normalized;
+  const status = plan === "gold" || plan === "ouro" ? USER_STATUS.OURO : USER_STATUS.BASICO;
+  return statusToLegacyPlan(saveStatus(ls, status));
+}
+
+export function buildKiwifyUpgradeUrl(email) {
+  const base = import.meta.env.VITE_KIWIFY_UPGRADE_URL || "";
+  if (!base) return "";
+  const trimmed = String(email || "").trim().toLowerCase();
+  if (!trimmed) return base;
+  const joiner = base.includes("?") ? "&" : "?";
+  return `${base}${joiner}email=${encodeURIComponent(trimmed)}`;
+}
+
+export function buildKiwifyBasicUrl(email) {
+  const base = import.meta.env.VITE_KIWIFY_BASIC_URL || "";
+  if (!base) return "";
+  const trimmed = String(email || "").trim().toLowerCase();
+  if (!trimmed) return base;
+  const joiner = base.includes("?") ? "&" : "?";
+  return `${base}${joiner}email=${encodeURIComponent(trimmed)}`;
 }

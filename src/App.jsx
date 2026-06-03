@@ -10,8 +10,22 @@ import { syncJcdUserWithConvex } from "./services/convexProfileSync.js";
 import { useDevotional } from "./hooks/useDevotional.js";
 import { useJourney } from "./hooks/useJourney.js";
 import { useCommunity } from "./hooks/useCommunity.js";
-import { GOLD_REQUIRED_MESSAGE, PLANS, isGold, readStoredPlan, savePlan } from "./services/planAccess.js";
-import { syncPlanFromBackend } from "./services/subscriptionApi.js";
+import { PremiumGoldOverlay } from "./components/PremiumGoldOverlay.jsx";
+import { getJourneyCatalogTitles, FASTING_PROTOCOLS } from "./data/journeyCatalog.js";
+import {
+  OURO_REQUIRED_MESSAGE,
+  PLANS,
+  USER_STATUS,
+  buildKiwifyBasicUrl,
+  buildKiwifyUpgradeUrl,
+  isOuro,
+  normalizeStatus,
+  readStoredStatus,
+  saveStatus,
+  statusToLegacyPlan
+} from "./services/planAccess.js";
+import { clearSession, fetchSessionUser, getStoredToken, loginWithPassword } from "./services/authApi.js";
+import { syncStatusFromBackend } from "./services/subscriptionApi.js";
 
 const todayStr = () => new Date().toISOString().split("T")[0];
 const greet = () => { const h = new Date().getHours(); return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"; };
@@ -37,7 +51,7 @@ const THEMES_GOLD = [
   "Propósito de Vida","Perdão e Cura","Gratidão",
   "Mulheres da Bíblia","Promessas de Deus","Força nos Momentos Difíceis","Identidade em Cristo"
 ];
-const JOURNEYS = ["21 Dias de Fé","30 Dias com Deus","Mulheres da Bíblia","Promessas Divinas","Renovação Interior"];
+const JOURNEYS = getJourneyCatalogTitles();
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 const MOCK_USERS = [
@@ -286,25 +300,37 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 .pdm-days{font-size:12px;color:var(--muted)}
 .prog-bar-wrap{background:var(--card2);border-radius:20px;height:6px;margin-top:8px;overflow:hidden}
 .prog-bar{height:6px;border-radius:20px;background:linear-gradient(90deg,#c9a96e,#e8c98a);transition:width .5s ease}
+.premium-lock{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--bdr2);background:var(--card);margin-bottom:16px}
+.premium-lock-video-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
+.premium-lock-video{width:100%;height:100%;object-fit:cover;opacity:.55}
+.premium-lock-video-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,11,24,.2),rgba(8,11,24,.85))}
+.premium-lock-body{padding:20px 18px 22px}
+.premium-lock-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-style:italic;margin-bottom:10px;color:var(--goldl)}
+.premium-lock-copy{font-size:13px;line-height:1.7;color:var(--muted);margin-bottom:18px}
+.premium-lock-cta{width:100%;padding:15px;background:linear-gradient(135deg,#c9a96e,#a07840);border:none;border-radius:14px;color:#fff;font-size:14px;font-weight:700;letter-spacing:.3px;cursor:pointer}
+.landing-cta{width:100%;max-width:320px;padding:14px;background:var(--goldd);border:1px solid var(--bdr2);border-radius:14px;color:var(--goldl);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;text-align:center}
+.auth-loading{min-height:100vh;display:flex;align-items:center;justify-content:center}
 `;
 };
 
 export default function App() {
   const [dark, setDark] = useState(() => ls.get("jcd_dark", true));
-  const [screen, setScreen] = useState(() => (ls.get("jcd_user") ? "dashboard" : "login"));
+  const [authReady, setAuthReady] = useState(false);
+  const [screen, setScreen] = useState("login");
   const [tab, setTab] = useState("home");
   const [user, setUser] = useState(() => ls.get("jcd_user"));
-  const [plan, setPlan] = useState(() => readStoredPlan(ls));
-  const [loginForm, setLoginForm] = useState({ name: "", email: "" });
+  const [userStatus, setUserStatus] = useState(() => readStoredStatus(ls));
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [loginLoading, setLoginLoading] = useState(false);
   const [history, setHistory] = useState(() => ls.get("jcd_history", {}));
   const [notes, setNotes] = useState(() => ls.get("jcd_notes", {}));
   const [noteText, setNoteText] = useState("");
   const [noteSaved, setNoteSaved] = useState(false);
   const [toast, setToast] = useState(null);
-  const [showPlans, setShowPlans] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [showPushPrompt, setShowPushPrompt] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(plan);
+  const [showAccount, setShowAccount] = useState(false);
+  const legacyPlan = statusToLegacyPlan(userStatus);
   const [notifPrefs, setNotifPrefs] = useState(() => ls.get("jcd_notif_prefs", {
     enabled: false,
     hour: "08:00",
@@ -325,6 +351,36 @@ export default function App() {
   const notificationEnv = getNotificationEnvironmentInfo();
 
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const remote = await fetchSessionUser();
+      if (!active) return;
+      if (remote) {
+        setUser(remote);
+        const status = normalizeStatus(remote.status);
+        setUserStatus(status);
+        saveStatus(ls, status);
+        setScreen("dashboard");
+      } else {
+        clearSession();
+        setUser(null);
+        setScreen("login");
+      }
+      setAuthReady(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (screen !== "login" && !user) setScreen("login");
+    if (screen === "devotional" && !user) setScreen("login");
+  }, [authReady, screen, user]);
+
   useEffect(() => {
     let active = true;
 
@@ -343,7 +399,7 @@ export default function App() {
     };
 
     const runProfileSync = async (session) => {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id || !getStoredToken()) return;
       const syncRes = await syncJcdUserWithProfiles(session);
       if (!active) return;
       if (syncRes.message && !syncRes.skipped) {
@@ -410,9 +466,9 @@ export default function App() {
   useEffect(() => { if (user && notificationsAvailable) initOneSignal(user); }, [user, notificationsAvailable]);
 
   useEffect(() => {
-    if (!user?.email) return;
-    syncPlanFromBackend(ls, user.email).then((remotePlan) => {
-      if (remotePlan) setPlan(remotePlan);
+    if (!user?.email || !getStoredToken()) return;
+    syncStatusFromBackend(ls).then((remoteStatus) => {
+      if (remoteStatus) setUserStatus(remoteStatus);
     });
   }, [user?.email]);
 
@@ -448,7 +504,7 @@ export default function App() {
     loadDevotional, regenerateDevotional, generateVerseImage, shareImage
   } = useDevotional({
     ls,
-    plan,
+    plan: legacyPlan,
     userName: user?.name,
     todayKey,
     dark,
@@ -494,22 +550,37 @@ export default function App() {
   });
 
   const handleLogin = async () => {
-    if (!loginForm.name.trim() || !loginForm.email.trim()) return;
-    const u = {
-      name: loginForm.name.trim(),
-      email: loginForm.email.trim().toLowerCase()
-    };
-    ls.set("jcd_user", u);
+    const email = loginForm.email.trim().toLowerCase();
+    const password = loginForm.password;
+    if (!email || !password) return;
+    setLoginLoading(true);
+    const res = await loginWithPassword(email, password);
+    setLoginLoading(false);
+    if (!res.ok) {
+      showToast(res.error || "Não foi possível entrar.", "err");
+      return;
+    }
+    const status = normalizeStatus(res.user.status);
+    setUser(res.user);
+    setUserStatus(status);
+    saveStatus(ls, status);
     bumpLocalProfileEdited();
     const syncRes = await syncJcdUserWithConvex(ls);
-    const finalUser = syncRes.user || u;
     if (syncRes.message && !syncRes.skipped) {
       console.warn("[convexProfileSync]", syncRes.message);
     }
-    setUser(finalUser);
     setScreen("dashboard");
-    if (notificationsAvailable) initOneSignal(finalUser);
+    if (notificationsAvailable) initOneSignal(res.user);
     if (isOneSignalConfigured()) setShowPushPrompt(true);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setUser(null);
+    setUserStatus(USER_STATUS.BASICO);
+    setScreen("login");
+    setTab("home");
+    showToast("Sessão encerrada.");
   };
 
   const handleMagicLink = async () => {
@@ -591,22 +662,18 @@ export default function App() {
   const shareFB = () => window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(shareText)}`, "_blank");
   const shareIG = () => { navigator.clipboard?.writeText(shareText); showToast("Texto copiado! Cole no Instagram."); };
 
-  const confirmPlan = () => {
-    const nextPlan = savePlan(ls, selectedPlan);
-    setPlan(nextPlan);
-    setShowPlans(false);
-    showToast(`${PLANS[nextPlan].emoji} Plano ${PLANS[nextPlan].name} ativado!`);
+  const openOuroUpgrade = () => {
+    const url = buildKiwifyUpgradeUrl(user?.email);
+    if (!url) {
+      showToast("Link de upgrade não configurado.", "err");
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const openGoldUpgrade = () => {
-    setSelectedPlan("gold");
-    setShowPlans(true);
-  };
-
-  const guardGoldAccess = (action) => {
-    if (isGold(plan)) return action?.();
-    showToast(GOLD_REQUIRED_MESSAGE, "err");
-    openGoldUpgrade();
+  const guardOuroAccess = (action) => {
+    if (isOuro(userStatus)) return action?.();
+    showToast(OURO_REQUIRED_MESSAGE, "err");
     return false;
   };
 
@@ -625,8 +692,20 @@ export default function App() {
   };
 
   const CSS = makeCSS(dark);
+  const basicCheckoutUrl = buildKiwifyBasicUrl(loginForm.email);
 
-  // ── LOGIN ──────────────────────────────────────────────────────────────────
+  if (!authReady) {
+    return (
+      <>
+        <style>{CSS}</style>
+        <div className="auth-loading">
+          <div className="spinner" />
+        </div>
+      </>
+    );
+  }
+
+  // ── LOGIN / LANDING ────────────────────────────────────────────────────────
   if (screen === "login") return (
     <>
       <style>{CSS}</style>
@@ -635,52 +714,72 @@ export default function App() {
         <div className="login-wrap">
           <div className="login-sym">✦</div>
           <h1 className="login-title">Jornada<br/>com Deus</h1>
-          <p className="login-sub">Seu devocional diário.<br/>Consistência que transforma.</p>
-          {magicLinkEnabled && (
-            <>
-              <div className="magic-card">
-                <div className="magic-eyebrow">Acesso seguro</div>
-                <h2 className="magic-title">Entre sem senha</h2>
-                <p className="magic-hint">Enviamos um link mágico para seu e-mail. Rapido, sem fricção.</p>
-                <label className="inp-lbl" htmlFor="jcd-magic-email">E-mail</label>
-                <input
-                  id="jcd-magic-email"
-                  className="inp"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="seu@email.com"
-                  value={magicEmail}
-                  onChange={(e) => setMagicEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !magicLoading && handleMagicLink()}
-                />
-                <button
-                  type="button"
-                  className="login-btn"
-                  onClick={() => void handleMagicLink()}
-                  disabled={magicLoading || !magicEmail.trim()}
-                >
-                  <span className="login-btn-inner">
-                    {magicLoading && <span className="spinner-btn" aria-hidden />}
-                    {magicLoading ? "Enviando..." : "Receber link no e-mail"}
-                  </span>
-                </button>
-              </div>
-              <div className="login-divider">ou neste aparelho</div>
-            </>
-          )}
-          <div className="inp-grp">
-            <label className="inp-lbl">Seu nome</label>
-            <input className="inp" placeholder="Como você se chama?" value={loginForm.name} onChange={e => setLoginForm(f=>({...f,name:e.target.value}))} />
-          </div>
+          <p className="login-sub">
+            Plano Básico por <strong>R$ 67,00</strong>. Após a compra, você recebe e-mail com senha de acesso.
+          </p>
+          {basicCheckoutUrl ? (
+            <button
+              type="button"
+              className="landing-cta"
+              onClick={() => window.open(basicCheckoutUrl, "_blank", "noopener,noreferrer")}
+            >
+              Quero começar — R$ 67,00 na Kiwify
+            </button>
+          ) : null}
+          <div className="login-divider">já sou aluna</div>
           <div className="inp-grp">
             <label className="inp-lbl">E-mail</label>
-            <input className="inp" type="email" placeholder="seu@email.com" value={loginForm.email}
-              onChange={e => setLoginForm(f=>({...f,email:e.target.value}))}
-              onKeyDown={e => e.key==="Enter" && handleLogin()} />
+            <input
+              className="inp"
+              type="email"
+              autoComplete="email"
+              placeholder="seu@email.com"
+              value={loginForm.email}
+              onChange={(e) => setLoginForm((f) => ({ ...f, email: e.target.value }))}
+            />
           </div>
-          <button className="login-btn" onClick={handleLogin} disabled={!loginForm.name.trim()||!loginForm.email.trim()}>
-            Começar minha jornada →
+          <div className="inp-grp">
+            <label className="inp-lbl">Senha</label>
+            <input
+              className="inp"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Senha recebida por e-mail"
+              value={loginForm.password}
+              onChange={(e) => setLoginForm((f) => ({ ...f, password: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && !loginLoading && handleLogin()}
+            />
+          </div>
+          <button
+            className="login-btn"
+            onClick={() => void handleLogin()}
+            disabled={loginLoading || !loginForm.email.trim() || !loginForm.password}
+          >
+            <span className="login-btn-inner">
+              {loginLoading && <span className="spinner-btn" aria-hidden />}
+              {loginLoading ? "Entrando..." : "Entrar no app →"}
+            </span>
           </button>
+          {magicLinkEnabled && (
+            <>
+              <div className="login-divider">ou link mágico</div>
+              <input
+                className="inp"
+                type="email"
+                placeholder="E-mail para link mágico"
+                value={magicEmail}
+                onChange={(e) => setMagicEmail(e.target.value)}
+              />
+              <button
+                type="button"
+                className="login-btn--ghost"
+                onClick={() => void handleMagicLink()}
+                disabled={magicLoading || !magicEmail.trim()}
+              >
+                {magicLoading ? "Enviando..." : "Receber link no e-mail"}
+              </button>
+            </>
+          )}
         </div>
         {renderToast()}
       </div>
@@ -688,6 +787,7 @@ export default function App() {
   );
 
   // ── DEVOTIONAL ─────────────────────────────────────────────────────────────
+  if (screen === "devotional" && !user) return null;
   if (screen === "devotional") return (
     <>
       <style>{CSS}</style>
@@ -736,7 +836,7 @@ export default function App() {
                   <button className="sh-btn sf" onClick={shareFB}>Facebook</button>
                   <button className="sh-btn si" onClick={shareIG}>Instagram</button>
                 </div>
-                {isGold(plan) ? (
+                {isOuro(userStatus) ? (
                   <>
                     <button className="gen-img" onClick={handleGenImg} disabled={imgLoading}>
                       {imgLoading ? "Gerando imagem..." : "✨ Gerar imagem do versículo"}
@@ -785,7 +885,7 @@ export default function App() {
           <div className="hdr-name">{user?.name?.split(" ")[0]}</div>
         </div>
         <div className="hdr-actions">
-          <span className="plan-badge">{PLANS[plan].emoji} {PLANS[plan].name}</span>
+          <span className="plan-badge">{PLANS[userStatus].emoji} {PLANS[userStatus].name}</span>
           <button className="icon-btn" onClick={() => { setDark(d => !d); ls.set("jcd_dark", !dark); }} title="Alternar tema">
             {dark ? "☀️" : "🌙"}
           </button>
@@ -796,7 +896,7 @@ export default function App() {
           >
             🔔
           </button>
-          <button className="icon-btn" onClick={() => { setSelectedPlan(plan); setShowPlans(true); }} title="Planos">⚙️</button>
+          <button className="icon-btn" onClick={() => setShowAccount(true)} title="Conta">⚙️</button>
         </div>
       </div>
 
@@ -814,7 +914,7 @@ export default function App() {
         ))}
       </div>
 
-      {isGold(plan) && (
+      {isOuro(userStatus) && (
         <div className="sec" style={{marginBottom:14}}>
           <div className="sec-lbl">🎯 Tema do devocional</div>
           <p style={{fontSize:13,color:"var(--muted)",marginBottom:10}}>Escolha o tema de hoje ou deixe a IA decidir.</p>
@@ -854,21 +954,21 @@ export default function App() {
           <div className="feat-title">Desafio semanal</div>
           <div className="feat-sub">7 dias de crescimento</div>
         </div>
-        <div className="feat" onClick={() => guardGoldAccess(() => setTab("journeys"))}>
+        <div className="feat" onClick={() => guardOuroAccess(() => setTab("journeys"))}>
           <div className="feat-icon">🗺️</div>
           <div className="feat-title">Jornadas especiais</div>
           <div className="feat-sub">Trilhas exclusivas Ouro</div>
-          {!isGold(plan) && <div className="lock-ov">🔒</div>}
+          {!isOuro(userStatus) && <div className="lock-ov">🔒</div>}
         </div>
       </div>
 
-      {!isGold(plan) && (
+      {!isOuro(userStatus) && (
         <div className="upgrade">
           <div className="upgrade-txt">
             <strong>👑 Plano Ouro</strong>
             <span>Jornadas de Fé, Jejum e Propósitos</span>
           </div>
-          <button className="upgrade-btn" onClick={openGoldUpgrade}>Fazer upgrade</button>
+          <button className="upgrade-btn" onClick={openOuroUpgrade}>Fazer upgrade</button>
         </div>
       )}
     </>
@@ -933,19 +1033,36 @@ export default function App() {
     <>
       <div className="section-hdr">
         <div className="section-hdr-eye">Exclusivo Ouro</div>
-        <div className="section-hdr-title">Jornadas Especiais</div>
+        <div className="section-hdr-title">Jornadas de Fé</div>
       </div>
-      {!isGold(plan) ? (
-        <div className="upgrade">
-          <div className="upgrade-txt"><strong>🗺️ Jornadas Especiais</strong><span>Disponível apenas no Plano Ouro</span></div>
-          <button className="upgrade-btn" onClick={openGoldUpgrade}>Upgrade para Ouro</button>
-        </div>
+      {!isOuro(userStatus) ? (
+        <PremiumGoldOverlay userEmail={user?.email} title="🗺️ Jornadas Temáticas Intensas" />
       ) : (
         JOURNEYS.map(j => (
           <div key={j} className="cta" onClick={() => openJourney(j)} style={{marginBottom:10}}>
-            <div className="cta-eye">Jornada Especial</div>
+            <div className="cta-eye">Jornada Temática</div>
             <div className="cta-title">{j}</div>
             <span className="cta-arr">→</span>
+          </div>
+        ))
+      )}
+    </>
+  );
+
+  const renderFasting = () => (
+    <>
+      <div className="section-hdr">
+        <div className="section-hdr-eye">Exclusivo Ouro</div>
+        <div className="section-hdr-title">Jejuns Bíblicos Guiados</div>
+      </div>
+      {!isOuro(userStatus) ? (
+        <PremiumGoldOverlay userEmail={user?.email} title="🕯️ Protocolos de Jejum" />
+      ) : (
+        FASTING_PROTOCOLS.map((protocol) => (
+          <div key={protocol.id} className="sec" style={{ marginBottom: 12 }}>
+            <div className="sec-lbl">{protocol.title}</div>
+            <p style={{ fontSize: 14, color: "var(--txt)", lineHeight: 1.65, marginBottom: 6 }}>{protocol.focus}</p>
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>Duração sugerida: {protocol.days} dias</p>
           </div>
         ))
       )}
@@ -999,7 +1116,7 @@ export default function App() {
             <div className="hdr-name">Comunidade</div>
           </div>
           <div className="hdr-actions">
-            <span className="plan-badge">{PLANS[plan].emoji} {PLANS[plan].name}</span>
+            <span className="plan-badge">{PLANS[userStatus].emoji} {PLANS[userStatus].name}</span>
           </div>
         </div>
 
@@ -1071,14 +1188,11 @@ export default function App() {
           </>
         )}
 
-        {commTab === "purposes" && !isGold(plan) && (
-          <div className="upgrade">
-            <div className="upgrade-txt"><strong>🕊️ Propósitos e Jejum</strong><span>{GOLD_REQUIRED_MESSAGE}</span></div>
-            <button className="upgrade-btn" onClick={openGoldUpgrade}>Upgrade para Ouro</button>
-          </div>
+        {commTab === "purposes" && !isOuro(userStatus) && (
+          <PremiumGoldOverlay userEmail={user?.email} title="🕊️ Campanhas e Propósitos" />
         )}
 
-        {commTab === "purposes" && isGold(plan) && (
+        {commTab === "purposes" && isOuro(userStatus) && (
           <>
             <div className="sec" style={{marginBottom:14}}>
               <div className="sec-lbl">🔗 Entrar em um propósito</div>
@@ -1088,7 +1202,7 @@ export default function App() {
               </div>
             </div>
 
-            {isGold(plan) ? (
+            {isOuro(userStatus) ? (
               showNewPurpose ? (
                 <div className="new-purpose-form">
                   <div className="sec-lbl">🕊️ Novo propósito</div>
@@ -1118,7 +1232,7 @@ export default function App() {
             ) : (
               <div className="upgrade" style={{marginBottom:14}}>
                 <div className="upgrade-txt"><strong>🕊️ Criar propósitos</strong><span>Disponível no Plano Ouro</span></div>
-                <button className="upgrade-btn" onClick={openGoldUpgrade}>Upgrade</button>
+                <button className="upgrade-btn" onClick={openOuroUpgrade}>Upgrade</button>
               </div>
             )}
 
@@ -1238,44 +1352,51 @@ export default function App() {
           {tab === "history"        && renderHistory()}
           {tab === "challenge"      && renderChallenge()}
           {tab === "journeys"       && renderJourneys()}
+          {tab === "fasting"        && renderFasting()}
           {tab === "journey-detail" && renderJourneyDetail()}
           {tab === "community"      && renderCommunity()}
         </div>
 
         <nav className="nav">
-          {[["home","🏠","Início"],["history","📅","Histórico"],["challenge","🏆","Desafio"],["community","👥","Comunidade"],["journeys","🗺️","Jornadas"]].map(([id,ico,lbl]) => (
+          {[["home","🏠","Início"],["history","📅","Histórico"],["challenge","🏆","Desafio"],["community","👥","Comunidade"],["journeys","🗺️","Jornadas"],["fasting","🕯️","Jejuns"]].map(([id,ico,lbl]) => (
             <button key={id}
               className={`nav-btn${(tab===id||(tab==="journey-detail"&&id==="journeys"))?" active":""}`}
               onClick={() => {
+                if ((id === "journeys" || id === "fasting") && !isOuro(userStatus)) {
+                  setTab(id);
+                  return;
+                }
                 setTab(id);
                 if (id==="challenge" && !challenge) loadChallenge();
-                if (id==="journeys" && !isGold(plan)) guardGoldAccess();
               }}>
               <span className="nav-ico">{ico}</span>{lbl}
             </button>
           ))}
         </nav>
 
-        {showPlans && (
-          <div className="overlay" onClick={() => setShowPlans(false)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-title">Escolha seu plano</div>
-              <p className="modal-sub">Invista na sua jornada espiritual 🙏</p>
-              {Object.values(PLANS).map(p => (
-                <div key={p.id} className={`plan-card${selectedPlan===p.id?" sel":""}`} onClick={() => setSelectedPlan(p.id)}>
-                  {p.popular && <div className="plan-popular">Mais popular</div>}
-                  <div className="plan-name">{p.emoji} {p.name}</div>
-                  <div>
-                    <span className="plan-price">{p.price}</span>
-                    <span className="plan-period">/mês</span>
-                  </div>
-                  <div className="plan-feats">{p.features.map((f,i) => <div key={i}>✓ {f}</div>)}</div>
+        {showAccount && (
+          <div className="overlay" onClick={() => setShowAccount(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-title">Minha conta</div>
+              <p className="modal-sub">{user?.email}</p>
+              <div className="plan-card sel">
+                <div className="plan-name">{PLANS[userStatus].emoji} Nível {PLANS[userStatus].name}</div>
+                <div className="plan-price">{PLANS[userStatus].price}</div>
+                <div className="plan-feats">
+                  {PLANS[userStatus].features.map((f, i) => (
+                    <div key={i}>✓ {f}</div>
+                  ))}
                 </div>
-              ))}
-              <button className="plan-cta" onClick={confirmPlan}>
-                Confirmar — {PLANS[selectedPlan].emoji} {PLANS[selectedPlan].name}
+              </div>
+              {!isOuro(userStatus) && (
+                <button className="plan-cta" onClick={openOuroUpgrade}>
+                  Quero Ativar Meu Nível Ouro (+ R$ 33,00)
+                </button>
+              )}
+              <button className="modal-close" onClick={handleLogout}>Sair da conta</button>
+              <button className="modal-close" style={{ marginTop: 8 }} onClick={() => setShowAccount(false)}>
+                Fechar
               </button>
-              <button className="modal-close" onClick={() => setShowPlans(false)}>Fechar</button>
             </div>
           </div>
         )}

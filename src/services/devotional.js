@@ -9,29 +9,29 @@ const AI_VISION_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
 const FALLBACK_DEVOTIONALS = [
   {
-    theme: "Confiança em Deus",
-    verse: "Provérbios 3:5-6",
-    verseText: "Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento."
+    theme: "O Deus que não tem pressa",
+    verse: "Salmo 130:5-6",
+    verseText: "Aguardo o Senhor; a minha alma o aguarda, e espero na sua palavra. A minha alma anseia pelo Senhor, mais do que os guardas pelo romper da manhã."
   },
   {
-    theme: "Paz no meio da tempestade",
-    verse: "João 14:27",
-    verseText: "Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá."
+    theme: "Quando a fé pesa",
+    verse: "Marcos 9:24",
+    verseText: "Imediatamente o pai do menino exclamou: Eu creio! Ajuda-me na minha falta de fé!"
   },
   {
-    theme: "Força renovada",
-    verse: "Isaías 40:31",
-    verseText: "Os que esperam no Senhor renovarão as suas forças e subirão com asas de águias."
+    theme: "Força que vem da fraqueza",
+    verse: "2 Coríntios 12:9",
+    verseText: "A minha graça te basta, porque o meu poder se aperfeiçoa na fraqueza."
   },
   {
-    theme: "Presença que sustenta",
-    verse: "Salmo 46:1",
-    verseText: "Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia."
+    theme: "O chão debaixo dos pés",
+    verse: "Salmo 40:1-2",
+    verseText: "Esperei com paciência no Senhor, e ele se inclinou para mim, e ouviu o meu clamor. Tirou-me de um lago horrível, do charco de lodo; pôs os meus pés sobre uma rocha e firmou os meus passos."
   },
   {
-    theme: "Esperança viva",
-    verse: "Romanos 15:13",
-    verseText: "O Deus da esperança vos encha de toda alegria e paz na fé."
+    theme: "Deus nas coisas pequenas",
+    verse: "Zacarias 4:10",
+    verseText: "Pois quem despreza o dia das coisas pequenas?"
   }
 ];
 
@@ -50,17 +50,17 @@ function fallbackDevocional(plan, userName, theme, variant = 0) {
   const isGoldPlan = plan === "gold" || plan === "ouro";
   const reflection = isGoldPlan
     ? [
-        `Hoje, ${userName ? `${userName}, ` : ""}Deus convida você a descansar em ${base.verse}, sem exigir que você entenda tudo agora.`,
-        "A paz de Cristo não nega a dor; ela caminha com você quando as respostas demoram a chegar.",
-        "Confiar é abrir as mãos sobre o que você tenta controlar e receber o cuidado do Pai no presente.",
-        "Quando você lembra da fidelidade de Deus no passado, ganha coragem para obedecer no agora.",
-        "Esta palavra é um convite gentil: permaneça perto dEle, um passo de fé de cada vez."
+        `${userName ? `${userName}, ` : ""}existe um tipo de coragem que o mundo não reconhece: a coragem de quem continua orando quando o céu parece mudo. ${base.verse} foi escrito por alguém que conhecia essa espera — não de longe, mas de dentro.`,
+        "A Bíblia não disfarça o cansaço dos que creem. Davi gritou, Jeremias chorou, Elias quis desistir. Nenhum deles perdeu a fé por sentir o peso da vida — e Deus não os amou menos por serem honestos.",
+        "Talvez você esteja num daqueles dias em que a fé não vem como certeza, mas como decisão. Uma decisão quieta de não soltar a mão, mesmo sem enxergar o caminho. Isso não é fé fraca — é fé madura.",
+        "Deus não espera que você chegue inteiro diante dEle. Ele conhece o cansaço que você não posta, a dúvida que você não confessa, o medo que aparece às 3 da manhã. E mesmo assim, Ele se inclina para ouvir.",
+        "Hoje não precisa ser o dia da grande virada. Pode ser apenas o dia em que você respira fundo e diz: 'Ainda estou aqui, Senhor.' E isso já é o suficiente."
       ]
     : [
-        "Deus vê sua luta de hoje e não minimiza sua dor.",
-        "Ele permanece perto de você no processo, mesmo quando tudo parece lento.",
-        "Um passo de fé hoje vale mais do que promessas vazias para amanhã.",
-        "Ore com sinceridade e entregue a Cristo o que está pesando no seu coração."
+        `${userName ? `${userName}, ` : ""}este versículo não é decoração de parede — é palavra de alguém que já passou pelo vale e encontrou Deus lá dentro, não sobrevoando de longe.`,
+        "Você não precisa fingir que está forte para Deus ouvir sua oração. Ele já sabe o que pesa. O que Ele espera é honestidade, não performance.",
+        "A fé cristã não é sobre nunca cair — é sobre saber a quem chamar quando o chão some. E Ele sempre atende, mesmo quando a resposta vem diferente do esperado.",
+        "Hoje, faça uma coisa simples: pare por dois minutos, respire, e diga ao Pai o que você realmente precisa. Sem filtro, sem clichê. Só verdade."
       ];
 
   return {
@@ -68,7 +68,7 @@ function fallbackDevocional(plan, userName, theme, variant = 0) {
     verse: base.verse,
     verseText: base.verseText,
     reflection,
-    application: "Separe 5 minutos hoje para orar com este versículo. Anote uma decisão prática de fé e viva esse passo ainda hoje."
+    application: "Antes de dormir hoje, escreva uma frase honesta para Deus — não o que você acha que deveria sentir, mas o que realmente sente. Depois releia o versículo em voz baixa e fique em silêncio por 60 segundos. Só isso."
   };
 }
 
@@ -93,7 +93,8 @@ export async function genDevocional(plan, userName, theme, options = {}) {
     .join(" | ");
   const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante e inesperado para hoje (evite repetir temas batidos).";
   const personClause = userName ? `Personalize sutilmente para ${userName}.` : "";
-  const depth = isGoldPlan
+  const goldPlan = plan === "gold" || plan === "ouro";
+  const depth = goldPlan
     ? "5 parágrafos densos, humanos e teologicamente profundos"
     : "4 parágrafos curtos, claros e emocionalmente reais";
   const historyBlock = history.length
@@ -110,27 +111,31 @@ export async function genDevocional(plan, userName, theme, options = {}) {
   const generationConfig = getGenerationConfig(options.forceNew);
 
   try {
-    const parsed = await callAI(`Você é um escritor devocional cristão brasileiro, biblicamente fiel, pastoral e humano.
-Objetivo: gerar UM devocional inédito (ID unico: ${todayKey}-${variant}-${nonce}), com profundidade espiritual, aplicação concreta e linguagem natural.
+    const parsed = await callAI(`Você é um pastor cristão brasileiro com 30 anos de ministério — alguém que já orou no hospital de madrugada, aconselhou casais à beira do divórcio, celebrou batismos em rios e consolou famílias no velório. Você não escreve "conteúdo religioso"; você pastoreia pessoas reais com palavras que vêm de quem já viveu o que fala.
 
-REGRAS DE QUALIDADE (obrigatórias):
-1) Nada genérico, nada de frases prontas vazias, nada de "religiosês".
-2) Tom conversacional, acolhedor, verdadeiro, com empatia para dores reais (ansiedade, culpa, cansaço, perdas, recomeços).
-3) Fundamente na Escritura: o texto bíblico deve guiar a reflexão, não o contrário.
-4) Traga esperança realista: sem triunfalismo, sem promessas fáceis.
-5) Use imagens e linguagem vivas, com criatividade e inteligência pastoral.
-6) Escreva para hoje (devocional diário), sem repetir estrutura engessada.
-7) Traga um versiculo DIFERENTE dos ultimos usados. Evite classicos repetidos (ex.: Jeremias 29:11, Filipenses 4:13, Provérbios 3:5-6) se eles aparecerem no historico.
-8) Varie o livro biblico (Antigo e Novo Testamento), tom e metaforas a cada geracao.
+TAREFA: escrever UM devocional diário inédito (ID: ${todayKey}-${variant}-${nonce}).
 
-BIBLIOTECA DE ESTILOS DISPONIVEIS:
-${styleCatalog}
+QUEM VAI LER: brasileiros comuns — gente que acorda cansada, lida com boleto, cria filho sozinha, enfrenta ansiedade, duvida de si mesma, quer acreditar em Deus mas às vezes não sente nada. Escreva para essa pessoa, não para um seminário.
 
-ESTILO OBRIGATORIO DE HOJE:
-- id: ${style.id}
-- nome: ${style.label}
+PRINCÍPIOS INEGOCIÁVEIS:
+1) AUTENTICIDADE RADICAL: escreva como quem conversa no gabinete pastoral, não como quem posta devocional de Instagram. Frases que um pastor real diria olhando nos olhos — sem jargão evangélico vazio ("derramar bençãos", "nova estação", "tomar posse"), sem positivismo tóxico, sem fórmulas mágicas de fé.
+2) A ESCRITURA CONDUZ: parta do texto bíblico. Leia-o no contexto original — quem escreveu, para quem, em que circunstância — e só então aplique. Nunca use a Bíblia como pretexto para uma moral que você já decidiu pregar.
+3) TENSÃO HONESTA: a vida cristã tem paradoxos (fé e dúvida, alegria e lamento, força e fraqueza). Habite essa tensão em vez de resolvê-la com clichês. Deus não precisa de advogado de defesa — Ele sustenta a honestidade.
+4) LINGUAGEM VIVA: use imagens do cotidiano brasileiro (o café da manhã, o ônibus lotado, a louça na pia, o cheiro de terra molhada), metáforas que grudam na memória, ritmo de conversa — não de artigo teológico.
+5) ESPERANÇA COM CICATRIZ: a esperança cristã não ignora a dor — ela a atravessa. Como Paulo que tinha o espinho, como Davi que chorou pelo filho, como Jesus que suou sangue no Getsêmani. Nunca prometa que "vai ficar tudo bem" — prometa que Deus não solta a mão.
+6) APLICAÇÃO QUE CUSTA: a ação prática deve ser específica, executável em minutos, e exigir algo real do leitor (vulnerabilidade, perdão, conversa difícil, renúncia, presença) — não apenas "ore mais" ou "confie em Deus".
+
+VARIEDADE OBRIGATÓRIA:
+- Escolha um versículo DIFERENTE dos anteriores. Mergulhe em livros menos explorados: Rute, Eclesiastes, Habacuque, Oséias, Filemom, 2 Coríntios, Marcos, Tiago, Lamentações.
+- Varie o ângulo: nem sempre comece pela dor; às vezes comece pela beleza, pelo espanto, pelo humor de Deus, pela pergunta incômoda.
+- Alterne entre Antigo e Novo Testamento a cada geração.
+
+VOZ ESTILÍSTICA DE HOJE:
+- estilo: ${style.label}
 - identidade: ${style.identity}
-- diretriz de escrita: ${style.devotionalGuide}
+- diretriz: ${style.devotionalGuide}
+
+ESTILOS DISPONÍVEIS NO SISTEMA: ${styleCatalog}
 ${historyBlock}
 ${previousBlock}
 
@@ -138,8 +143,8 @@ ${themeClause}
 ${personClause}
 Reflexão com ${depth}.
 
-Responda APENAS com JSON válido, sem markdown, neste formato:
-{"theme":"título curto e marcante","verse":"Livro cap:v","verseText":"texto bíblico em português","reflection":["p1","p2","p3","p4"],"application":"passos práticos para hoje em 2-3 frases, específicos e executáveis","styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
+Responda APENAS com JSON válido, sem markdown:
+{"theme":"título curto e marcante (que provoque curiosidade, não que resuma)","verse":"Livro cap:v","verseText":"texto bíblico completo em português","reflection":["parágrafo 1 — ancoragem no texto bíblico com contexto vivo","parágrafo 2 — tensão honesta com a vida real do leitor","parágrafo 3 — desenvolvimento teológico-pastoral acessível","parágrafo 4 — síntese com esperança enraizada"],"application":"ação concreta, específica e executável para hoje — algo que envolva outra pessoa, um gesto real ou uma decisão que custe algo","styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
     return parsed;
   } catch {
     return {

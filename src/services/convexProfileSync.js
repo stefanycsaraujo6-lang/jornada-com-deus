@@ -1,7 +1,7 @@
 import { api } from "./convexApi.js";
 import { convex } from "./convexClient.js";
 import { validateJcdUser, bumpLocalProfileEdited } from "./profileSync.js";
-import { normalizePlan, readStoredPlan } from "./planAccess.js";
+import { normalizeStatus, readStoredStatus } from "./planAccess.js";
 
 const LS_USER = "jcd_user";
 const LS_SYNC = "jcd_profile_sync";
@@ -48,14 +48,14 @@ export async function syncJcdUserWithConvex(ls) {
   const lastConvexRemoteTs = Number(sync.lastConvexUpdatedAt) || 0;
 
   try {
-    const remote = await convex.query(api.profiles.getByEmail, { email: local.email });
-    const plan = normalizePlan(readStoredPlan(ls));
+    const remote = await convex.query(api.users.getByEmail, { email: local.email });
+    const status = normalizeStatus(readStoredStatus(ls));
 
     if (!remote) {
       await convex.mutation(api.profiles.upsert, {
         email: local.email,
         displayName: local.name,
-        plan: plan === "gold" ? "gold" : "basic"
+        plan: status === "OURO" ? "gold" : "basic"
       });
       const now = Date.now();
       storeSet(ls, LS_SYNC, { ...sync, lastConvexUpdatedAt: now });
@@ -83,7 +83,7 @@ export async function syncJcdUserWithConvex(ls) {
       await convex.mutation(api.profiles.upsert, {
         email: local.email,
         displayName: local.name,
-        plan: plan === "gold" ? "gold" : "basic"
+        plan: status === "OURO" ? "gold" : "basic"
       });
       const now = Date.now();
       storeSet(ls, LS_SYNC, { ...sync, lastConvexUpdatedAt: now });

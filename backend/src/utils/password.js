@@ -13,3 +13,14 @@ export async function hashPassword(password) {
   const derived = await scrypt(String(password), salt, 64);
   return `${salt}:${derived.toString("hex")}`;
 }
+
+export async function verifyPassword(password, storedHash) {
+  if (!storedHash || !String(password)) return false;
+  const [salt, hashHex] = String(storedHash).split(":");
+  if (!salt || !hashHex) return false;
+  const derived = await scrypt(String(password), salt, 64);
+  const a = Buffer.from(hashHex, "hex");
+  const b = Buffer.from(derived);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}

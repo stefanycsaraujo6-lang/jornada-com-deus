@@ -1,15 +1,42 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-/**
- * Schema inicial — perfil do usuario (migracao futura a partir de jcd_user / localStorage).
- * Plano de assinatura continua no backend PostgreSQL + Kiwify ate integracao unificada.
- */
+/** Stack oficial: Convex (dados + auth + webhook) | Cloudflare (host) | Kiwify (pagamento) */
 export default defineSchema({
-  profiles: defineTable({
+  users: defineTable({
     email: v.string(),
     displayName: v.string(),
-    plan: v.optional(v.union(v.literal("basic"), v.literal("gold"))),
+    status: v.union(v.literal("BASICO"), v.literal("OURO")),
+    accessStatus: v.union(
+      v.literal("active"),
+      v.literal("inactive"),
+      v.literal("refunded")
+    ),
+    passwordHash: v.optional(v.string()),
+    mustChangePassword: v.boolean(),
+    kiwifyCustomerId: v.optional(v.string()),
     updatedAt: v.number(),
-  }).index("by_email", ["email"]),
+  })
+    .index("by_email", ["email"]),
+
+  sessions: defineTable({
+    token: v.string(),
+    userId: v.id("users"),
+    expiresAt: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_user", ["userId"]),
+
+  webhookEvents: defineTable({
+    provider: v.string(),
+    eventId: v.string(),
+    eventType: v.string(),
+    status: v.union(
+      v.literal("processing"),
+      v.literal("processed"),
+      v.literal("failed")
+    ),
+    processedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_provider_event", ["provider", "eventId"]),
 });

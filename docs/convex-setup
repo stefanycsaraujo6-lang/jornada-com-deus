@@ -1,64 +1,82 @@
-# Convex — setup (passo a passo)
+# Convex + Cloudflare + Kiwify (stack oficial)
 
-Padrao oficial de dados do app. Dev e Prod devem ser **dois projetos/deployments separados** no dashboard Convex.
+**Sem Neon / PostgreSQL.** Tudo que era backend Node+SQL agora é Convex.
 
-## 1. Conta e login (uma vez)
+| Papel | Tecnologia |
+|-------|------------|
+| Banco + auth + webhook | **Convex** |
+| Frontend | **Cloudflare Pages** (`dist/`) |
+| Pagamento | **Kiwify** |
 
-```bash
+## 1. Login Convex (uma vez)
+
+```powershell
 npx convex login
 ```
 
-## 2. Ambiente de desenvolvimento
+## 2. Desenvolvimento local
 
-Na raiz do repo:
+**Terminal 1:**
 
-```bash
-npm install
+```powershell
 npx convex dev
 ```
 
-O CLI cria/atualiza `.env.local` com `CONVEX_DEPLOYMENT` e gera `convex/_generated/`.
+Isso gera `convex/_generated/` e preenche `.env.local` com `CONVEX_DEPLOYMENT`.
 
-Copie a URL do deployment Dev para `.env.local`:
+**Terminal 2:**
 
+```powershell
+npm run dev
 ```
+
+No `.env.local` (raiz):
+
+```env
 VITE_CONVEX_URL_DEV=https://SEU-DEV.convex.cloud
+VITE_GEMINI_KEY=sua_chave
+VITE_KIWIFY_BASIC_URL=https://pay.kiwify.com.br/link-67
+VITE_KIWIFY_UPGRADE_URL=https://pay.kiwify.com.br/link-33
 ```
 
-## 3. Ambiente de producao
+## 3. Variáveis no dashboard Convex
 
-No dashboard Convex, crie um **segundo** deployment (Prod).
+Em **Settings → Environment Variables** (Dev e Prod):
 
-```bash
+| Variável | Uso |
+|----------|-----|
+| `KIWIFY_WEBHOOK_SECRET` | Validar HMAC do webhook |
+| `KIWIFY_PRODUCT_ID_BASICO` | Produto R$ 67,00 |
+| `KIWIFY_PRODUCT_ID_UPGRADE` | Upgrade +R$ 33,00 |
+| `APP_URL` | Link no e-mail de boas-vindas |
+| `RESEND_API_KEY` | E-mail com senha (opcional) |
+| `EMAIL_FROM` | Remetente |
+
+## 4. URL do webhook na Kiwify
+
+Após `npx convex dev` ou deploy, use:
+
+```
+https://SEU-DEPLOYMENT.convex.site/kiwify
+```
+
+(Aparece no dashboard Convex → HTTP Actions.)
+
+## 5. Tabelas
+
+- `users` — email, senha (hash), `status` BASICO | OURO
+- `sessions` — token de login
+- `webhookEvents` — idempotência Kiwify
+
+## 6. Produção
+
+```powershell
 npx convex deploy
 ```
 
-Use o deploy key de Prod no CI/Vercel e defina:
+Cloudflare Pages: build `npm run build`, pasta `dist`.  
+Defina `VITE_CONVEX_URL_PROD` no painel Cloudflare.
 
-```
-VITE_CONVEX_URL_PROD=https://SEU-PROD.convex.cloud
-```
+## Pasta `backend/` (legado)
 
-## 4. Rodar o app
-
-Terminal 1: `npx convex dev`  
-Terminal 2: `npm run dev`
-
-## 5. Funcoes iniciais
-
-| Arquivo | Funcao |
-|---------|--------|
-| `convex/schema.ts` | Tabela `profiles` (email, nome, plano opcional) |
-| `convex/profiles.ts` | `getByEmail`, `upsert` |
-| `convex/health.ts` | `ping` |
-
-## 6. O que ainda nao esta ligado
-
-- `src/App.jsx` ainda usa `localStorage` como fonte principal.
-- `profileSync.js` ainda aponta para Supabase (legado); proxima etapa: `convexProfileSync` + backlog #09–#14 em `docs/tasks`.
-- Assinaturas Kiwify continuam no `backend/` (PostgreSQL).
-
-## Scripts npm
-
-- `npm run convex:dev` — desenvolvimento + codegen
-- `npm run convex:deploy` — publicar funcoes em Prod
+Não é necessária com Convex. Pode ignorar `DATABASE_URL` e `npm run db:migrate`.

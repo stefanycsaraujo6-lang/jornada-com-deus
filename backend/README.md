@@ -1,6 +1,6 @@
-# Backend (Fase A)
+# Backend — assinatura Kiwify
 
-Backend para assinatura Kiwify com planos **Basic** e **Gold**.
+Controle de acesso com **status** `BASICO` (R$ 67,00) ou `OURO` (upgrade +R$ 33,00).
 
 ## Requisitos
 
@@ -10,35 +10,33 @@ Backend para assinatura Kiwify com planos **Basic** e **Gold**.
 ## Setup
 
 1. Copie `.env.example` para `.env`.
-2. Configure `DATABASE_URL`, `KIWIFY_WEBHOOK_SECRET`, `KIWIFY_PRODUCT_ID_BASIC`, `KIWIFY_PRODUCT_ID_GOLD`, `CRON_SECRET`, `ONESIGNAL_APP_ID` e `ONESIGNAL_REST_API_KEY`.
-3. Aplique schema:
-   - `psql "$DATABASE_URL" -f sql/schema.sql`
-   - Se já existia banco antigo: `psql "$DATABASE_URL" -f sql/migration_002_basic_gold.sql`
-4. Instale dependências:
-   - `npm install`
-5. Rode em desenvolvimento:
-   - `npm run dev`
+2. Configure `DATABASE_URL`, `AUTH_JWT_SECRET`, `KIWIFY_WEBHOOK_SECRET`, `KIWIFY_PRODUCT_ID_BASICO`, `KIWIFY_PRODUCT_ID_UPGRADE`, `APP_URL`, `RESEND_API_KEY` (opcional), `CRON_SECRET`, OneSignal.
+3. Migre o banco (sem `psql` — funciona no Windows):
+   ```powershell
+   cd backend
+   npm run db:migrate
+   ```
+   Requer `DATABASE_URL` em `backend/.env`.
+4. `npm install` e `npm run dev`
 
 ## Endpoints
 
-- `GET /health` -> valida API e banco.
-- `GET /api/me` -> plano do usuário (header `X-User-Email`).
-- `POST /api/webhooks/kiwify` -> webhook Kiwify (também em `/webhooks/kiwify`).
-- `POST /api/premium/journeys` -> exige Gold.
-- `POST /api/premium/fasting` -> exige Gold.
-- `POST /api/premium/purposes` -> exige Gold.
-- `POST /notifications/campaigns/*` -> campanhas OneSignal (cron).
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/health` | Healthcheck |
+| POST | `/api/auth/login` | Login e-mail + senha → JWT |
+| GET | `/api/me` | Sessão (`Authorization: Bearer`) |
+| POST | `/api/webhooks/kiwify` | Webhook Kiwify (também `/webhooks/kiwify`) |
+| POST | `/api/premium/*` | Módulos Ouro (journeys, fasting, purposes) |
 
-### Webhook Kiwify
+## Webhook Kiwify
 
-- Processa apenas pagamentos **approved/paid**.
-- Produto Basic: cria/atualiza usuário como `basic`.
-- Produto Gold: atualiza para `gold` (`is_gold=true`).
-- Reembolso/chargeback: rebaixa para `basic`.
-- Conta nova Basic recebe senha temporária (log no servidor; enviar por e-mail em produção).
+- **approved/paid** + produto Básico (R$ 67): cria usuário `BASICO`, gera senha temporária, envia e-mail de boas-vindas com link do app.
+- **approved/paid** + produto Upgrade (R$ 33): localiza usuário pelo e-mail e define `OURO`.
+- **refund/chargeback**: rebaixa para `BASICO` e marca acesso `refunded`.
+- Resposta **HTTP 200** para eventos válidos processados.
 
-### Segurança
+## Frontend (Vite)
 
-- Assinatura HMAC quando `KIWIFY_WEBHOOK_SECRET` está configurado.
-- Idempotência por `provider + event_id`.
-- Rotas premium retornam `403` com `GOLD_REQUIRED` para upgrade no frontend.
+- `VITE_KIWIFY_BASIC_URL` — checkout R$ 67,00
+- `VITE_KIWIFY_UPGRADE_URL` — checkout upgrade; o app anexa `?email=` automaticamente

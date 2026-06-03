@@ -77,7 +77,7 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
 
   const loadChallenge = async (forceNew = false) => {
     if (challengeLoading) return false;
-    const dayKey = todayKey || new Date().toISOString().split(0, 10);
+    const dayKey = todayKey || new Date().toISOString().split("T")[0];
     const variantKey = getChallengeVariantKey(dayKey);
     const currentVariant = readVariant(ls, variantKey);
     const blockedChallenges = readVersionedCaches(CHALLENGE_CACHE_PREFIX, dayKey);

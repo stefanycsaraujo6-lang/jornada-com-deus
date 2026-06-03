@@ -1,15 +1,24 @@
-// ── MODIFICAÇÃO: planos Basic/Gold e IDs de produto Kiwify
-// ── DATA: 2026-05-18
+// Planos oficiais: Básico R$ 67,00 | Upgrade Ouro +R$ 33,00
 
-export const PLANS = {
-  BASIC: "basic",
-  GOLD: "gold"
+export const USER_STATUS = {
+  BASICO: "BASICO",
+  OURO: "OURO"
 };
 
-export const KIWIFY_PRODUCT_ID_BASIC =
-  process.env.KIWIFY_PRODUCT_ID_BASIC || process.env.KIWIFY_PRODUCT_BASIC_ID || "";
-export const KIWIFY_PRODUCT_ID_GOLD =
-  process.env.KIWIFY_PRODUCT_ID_GOLD || process.env.KIWIFY_PRODUCT_GOLD_ID || "";
+/** @deprecated use USER_STATUS */
+export const PLANS = USER_STATUS;
+
+export const KIWIFY_PRODUCT_ID_BASICO =
+  process.env.KIWIFY_PRODUCT_ID_BASICO ||
+  process.env.KIWIFY_PRODUCT_ID_BASIC ||
+  process.env.KIWIFY_PRODUCT_BASIC_ID ||
+  "";
+
+export const KIWIFY_PRODUCT_ID_UPGRADE =
+  process.env.KIWIFY_PRODUCT_ID_UPGRADE ||
+  process.env.KIWIFY_PRODUCT_ID_GOLD ||
+  process.env.KIWIFY_PRODUCT_GOLD_ID ||
+  "";
 
 const APPROVED_STATUSES = new Set([
   "paid",
@@ -34,23 +43,36 @@ export function normalizeProductId(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-export function resolvePlanByProductId(productId) {
+export function resolveStatusByProductId(productId) {
   const normalized = normalizeProductId(productId);
   if (!normalized) return null;
 
-  if (KIWIFY_PRODUCT_ID_GOLD && normalized === normalizeProductId(KIWIFY_PRODUCT_ID_GOLD)) {
-    return PLANS.GOLD;
+  if (KIWIFY_PRODUCT_ID_UPGRADE && normalized === normalizeProductId(KIWIFY_PRODUCT_ID_UPGRADE)) {
+    return USER_STATUS.OURO;
   }
-  if (KIWIFY_PRODUCT_ID_BASIC && normalized === normalizeProductId(KIWIFY_PRODUCT_ID_BASIC)) {
-    return PLANS.BASIC;
+  if (KIWIFY_PRODUCT_ID_BASICO && normalized === normalizeProductId(KIWIFY_PRODUCT_ID_BASICO)) {
+    return USER_STATUS.BASICO;
   }
 
-  if (normalized.includes("gold") || normalized.includes("ouro")) return PLANS.GOLD;
-  if (normalized.includes("basic") || normalized.includes("padrao") || normalized.includes("padrão")) {
-    return PLANS.BASIC;
+  if (normalized.includes("upgrade") || normalized.includes("ouro") || normalized.includes("gold")) {
+    return USER_STATUS.OURO;
+  }
+  if (
+    normalized.includes("basico") ||
+    normalized.includes("básico") ||
+    normalized.includes("basic") ||
+    normalized.includes("principal")
+  ) {
+    return USER_STATUS.BASICO;
   }
 
   return null;
+}
+
+export function normalizeUserStatus(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  if (raw === "OURO" || raw === "GOLD") return USER_STATUS.OURO;
+  return USER_STATUS.BASICO;
 }
 
 export function extractPaymentStatus(payload) {
@@ -92,4 +114,8 @@ export function mapSubscriptionStatus(paymentStatus) {
   if (isRefundPaymentStatus(paymentStatus)) return "refunded";
   if (isApprovedPaymentStatus(paymentStatus)) return "active";
   return "canceled";
+}
+
+export function isUpgradeProduct(productId) {
+  return resolveStatusByProductId(productId) === USER_STATUS.OURO && Boolean(KIWIFY_PRODUCT_ID_UPGRADE);
 }

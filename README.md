@@ -11,7 +11,8 @@ Repositorio: [stefanycsaraujo6-lang/jornada-com-deus](https://github.com/stefany
 - Persistencia atual do MVP: `localStorage` (ate migracao para Convex)
 - IA no app: Gemini (com servicos em `src/services`)
 - PWA: `vite-plugin-pwa`
-- Assinaturas e webhook Kiwify (fase A): Node + Express + PostgreSQL em `backend/`
+- Assinaturas e webhook Kiwify: **Convex HTTP** (`/kiwify` em `*.convex.site`)
+- Pasta `backend/` — legado (PostgreSQL); **não usar** na stack atual
 
 **Supabase:** legado no codigo (`src/services/supabase*`). Nao usar em features novas; remover quando Convex cobrir auth/sync.
 
@@ -36,11 +37,7 @@ Repositorio: [stefanycsaraujo6-lang/jornada-com-deus](https://github.com/stefany
 5. Preview local do build:
    - `npm run preview`
 
-## Como rodar o backend
-
-Consulte `backend/README.md` para requisitos e configuracao de ambiente.
-
-## Convex (dados do app)
+## Convex (dados + auth + Kiwify)
 
 Setup completo: `docs/convex-setup`.
 

@@ -1,59 +1,44 @@
-// ── MODIFICAÇÃO: sincronização de plano com backend
-// ── DATA: 2026-05-18
-import { normalizePlan, savePlan } from "./planAccess.js";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "./convexApi.js";
+import { convexUrl } from "./convexClient.js";
+import { normalizeStatus, saveStatus, isOuro } from "./planAccess.js";
+import { getStoredToken } from "./authApi.js";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8787";
+function getClient() {
+  if (!convexUrl) return null;
+  return new ConvexHttpClient(convexUrl);
+}
 
-export async function fetchUserPlan(email) {
-  const trimmed = String(email || "").trim().toLowerCase();
-  if (!trimmed) return null;
+export async function fetchUserStatus() {
+  const token = getStoredToken();
+  const client = getClient();
+  if (!token || !client) return null;
 
   try {
-    const response = await fetch(`${API_BASE}/api/me`, {
-      headers: {
-        "Content-Type": "application/json",
-        "X-User-Email": trimmed
-      }
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return null;
-
-    const plan = data?.user?.is_gold ? "gold" : normalizePlan(data?.user?.plan);
-    return plan;
+    const user = await client.query(api.users.getSession, { token });
+    if (!user) return null;
+    return normalizeStatus(user.status);
   } catch {
     return null;
   }
 }
 
-export async function syncPlanFromBackend(ls, email) {
-  const remotePlan = await fetchUserPlan(email);
-  if (!remotePlan) return null;
-  return savePlan(ls, remotePlan);
+export async function syncStatusFromBackend(ls) {
+  const remote = await fetchUserStatus();
+  if (!remote) return null;
+  return saveStatus(ls, remote);
 }
 
-export async function requestGoldFeature(email, moduleName) {
-  const trimmed = String(email || "").trim().toLowerCase();
-  const routes = {
-    journeys: "/api/premium/journeys",
-    fasting: "/api/premium/fasting",
-    purposes: "/api/premium/purposes"
-  };
-  const path = routes[moduleName];
-  if (!path || !trimmed) {
-    return { ok: false, code: "INVALID_REQUEST" };
-  }
-
-  try {
-    const response = await fetch(`${API_BASE}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-User-Email": trimmed
-      }
-    });
-    const data = await response.json().catch(() => ({}));
-    return { ok: response.ok, status: response.status, ...data };
-  } catch {
-    return { ok: false, code: "NETWORK_ERROR" };
-  }
+export async function requestOuroFeature(moduleName) {
+  const status = await fetchUserStatus();
+  if (!status) return { ok: false, code: "AUTH_REQUIRED" };
+  if (!isOuro(status)) return { ok: false, code: "OURO_REQUIRED", status: 403 };
+  return { ok: true, module: moduleName };
 }
+
+/** @deprecated */
+export const fetchUserPlan = fetchUserStatus;
+/** @deprecated */
+export const syncPlanFromBackend = syncStatusFromBackend;
+/** @deprecated */
+export const requestGoldFeature = requestOuroFeature;

@@ -11,17 +11,18 @@ Este diretorio concentra os documentos de produto e de execucao do projeto.
 - `docs/tasks`: plano de implementacao e checklist operacional.
 - `docs/kiwify-blueprint`: blueprint de evolucao SaaS, Kiwify, seguranca e LGPD.
 - `docs/convex-setup`: login, Dev/Prod e comandos Convex.
+- `docs/cloudflare-deploy`: publicar o frontend na Cloudflare Pages.
 
 ## Padrao oficial de dados (2026)
 
 | Papel | Tecnologia |
 |-------|------------|
 | App (usuarios, historico, comunidade) | **Convex** |
-| Pagamento / plano Basic-Gold | **PostgreSQL** (`backend/` + Kiwify) |
+| Pagamento / plano BASICO-OURO | **Convex** + webhook Kiwify |
 | MVP ate migrar | `localStorage` (temporario) |
 | Nao usar em codigo novo | Supabase (legado) |
 
-Deploy frontend: **Vercel**. API de assinatura: **Render** (ver `render.yaml`).
+Deploy frontend: **Cloudflare Pages**. API/dados: **Convex** (sem Render/Neon).
 
 ## Observacao de padronizacao
 

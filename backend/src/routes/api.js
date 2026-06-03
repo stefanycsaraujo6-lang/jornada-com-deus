@@ -1,7 +1,6 @@
-// ── MODIFICAÇÃO: rotas API com proteção Basic/Gold
-// ── DATA: 2026-05-18
 import { Router } from "express";
-import { attachUser, requireAuth, requireGold } from "../middleware/auth.js";
+import { attachUser, requireAuth, requireOuro } from "../middleware/auth.js";
+import { normalizeUserStatus } from "../config/plans.js";
 
 const router = Router();
 
@@ -14,8 +13,8 @@ router.get("/me", requireAuth, (req, res) => {
       id: req.user.id,
       email: req.user.email,
       name: req.user.name,
-      plan: req.user.plan,
-      is_gold: req.user.is_gold
+      status: normalizeUserStatus(req.user.status),
+      mustChangePassword: Boolean(req.user.must_change_password)
     }
   });
 });
@@ -23,20 +22,20 @@ router.get("/me", requireAuth, (req, res) => {
 router.get("/devotional/today", requireAuth, (_req, res) => {
   res.status(200).json({
     ok: true,
-    access: "basic",
-    message: "Devocional diário disponível para usuários logados."
+    access: "devotional",
+    message: "Devocional diário disponível para usuários autenticados."
   });
 });
 
-router.post("/premium/journeys", requireAuth, requireGold, (_req, res) => {
+router.post("/premium/journeys", requireAuth, requireOuro, (_req, res) => {
   res.status(200).json({ ok: true, module: "journeys" });
 });
 
-router.post("/premium/fasting", requireAuth, requireGold, (_req, res) => {
+router.post("/premium/fasting", requireAuth, requireOuro, (_req, res) => {
   res.status(200).json({ ok: true, module: "fasting" });
 });
 
-router.post("/premium/purposes", requireAuth, requireGold, (_req, res) => {
+router.post("/premium/purposes", requireAuth, requireOuro, (_req, res) => {
   res.status(200).json({ ok: true, module: "purposes" });
 });
 

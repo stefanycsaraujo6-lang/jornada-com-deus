@@ -17,9 +17,15 @@ services:
         sync: false
       - key: KIWIFY_WEBHOOK_SECRET
         sync: false
-      - key: KIWIFY_PRODUCT_ID_BASIC
+      - key: AUTH_JWT_SECRET
         sync: false
-      - key: KIWIFY_PRODUCT_ID_GOLD
+      - key: KIWIFY_PRODUCT_ID_BASICO
+        sync: false
+      - key: KIWIFY_PRODUCT_ID_UPGRADE
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
         sync: false
       - key: CRON_SECRET
         sync: false

@@ -10,6 +10,7 @@ import {
   pickDistinctFallback,
   slugifyId
 } from "./aiGeneration.js";
+import { getJourneyByTitle } from "../data/journeyCatalog.js";
 
 const FALLBACK_CHALLENGES = [
   {
@@ -286,33 +287,32 @@ export async function genChallenge(userName, options = {}) {
   ];
 
   try {
-    const parsed = await callAI(`Crie um desafio espiritual semanal (7 dias) INEDITO, CRIATIVO e INOVADOR para ${userName || "um cristão"}.
-ID unico desta geracao: ${todayKey}-${variant}-${nonce}.
-Objetivo: profundo, humano, praticável na vida real e espiritualmente consistente.
+    const parsed = await callAI(`Você é um diretor espiritual cristão brasileiro — alguém que acompanha pessoas reais na caminhada com Deus, semana a semana, conhecendo suas lutas, rotina e limitações. Você não cria "listas de tarefas religiosas"; você desenha uma semana que transforma de dentro para fora.
 
-REGRAS OBRIGATORIAS:
-1) PROIBIDO repetir qualquer desafio listado em "DESAFIO IMEDIATAMENTE ANTERIOR", "DESAFIOS BLOQUEADOS" ou "HISTORICO RECENTE".
-2) Cada um dos 7 dias precisa ter tarefa unica, especifica e executavel em 10 a 25 minutos.
-3) Misture: Biblia, oracao, silencio, autoexame, reconciliacao, gratidao, servico ao proximo.
-4) Linguagem pastoral, calorosa e realista, sem culpa toxica e sem legalismo.
-5) Sequencia progressiva: do interior para a pratica.
-6) Inclua micro-acoes concretas (ex.: "enviar mensagem de perdao", "anotar 3 medos e orar por eles").
-7) Varie tema central, metaforas, livros biblicos citados e tipo de pratica.
-8) Traga criatividade intuitiva: desafios inteligentes para rotina real (trabalho, familia, cansaco, decisoes).
-9) Se parecer similar a qualquer versao anterior, reescreva completamente antes de responder.
+TAREFA: criar um desafio espiritual de 7 dias para ${userName || "um cristão brasileiro comum"}.
+ID único: ${todayKey}-${variant}-${nonce}.
 
-BIBLIOTECA DE ESTILOS DISPONIVEIS:
-${styleCatalog}
+QUEM VAI VIVER ISSO: alguém que trabalha, cuida de família, lida com cansaço, nem sempre tem tempo longo para Deus, mas quer viver a fé de forma real — não performática.
 
-ESTILO OBRIGATORIO DESTA GERACAO:
-- id: ${style.id}
-- nome: ${style.label}
+PRINCÍPIOS DO DESAFIO:
+1) PROGRESSÃO ORGÂNICA: comece pelo interior (escuta, autoconhecimento, entrega) e avance para o exterior (ação, reconciliação, serviço). O dia 1 deve ser acessível e gentil; o dia 7 deve exigir coragem real.
+2) TAREFAS CONCRETAS E ESPECÍFICAS: "ore mais" não é tarefa. "Às 7h da manhã, antes de abrir o celular, sente-se em silêncio por 5 minutos e diga a Deus o que mais te preocupa usando suas próprias palavras" — isso é tarefa. Cada dia precisa ter ação clara, executável em 10-25 minutos, com horário ou gatilho sugerido.
+3) VARIEDADE DE PRÁTICAS: misture leitura bíblica contextualizada (não genérica), oração com formato definido, silêncio intencional, escrita reflexiva, ação com outras pessoas (reconciliação, serviço, presença), renúncia a algo concreto, e ritual simbólico de entrega.
+4) LINGUAGEM PASTORAL: escreva como quem senta ao lado, não como quem prega do púlpito. Tom de conversa franca entre amigos que levam a fé a sério — sem culpa tóxica, sem legalismo, sem religiosês, sem infantilização.
+5) PROFUNDIDADE BÍBLICA: cada tarefa deve ter raiz na Escritura (cite o texto), mas aplicada com inteligência — não como decoração, mas como espelho da vida real.
+6) SURPRESA CRIATIVA: pelo menos 2 tarefas devem ser inesperadas — algo que o leitor nunca viu em devocional de app. Pense em práticas monásticas adaptadas, exercícios ignacianos simplificados, rituais judaicos de gratidão, ou gestos proféticos do cotidiano.
+7) INEDITISMO: se parecer com qualquer versão anterior (título, estrutura, tarefas), reescreva completamente.
+
+VOZ ESTILÍSTICA:
+- estilo: ${style.label}
 - identidade: ${style.identity}
-- diretriz de escrita: ${style.challengeGuide}
+- diretriz: ${style.challengeGuide}
+
+ESTILOS DO SISTEMA: ${styleCatalog}
 ${previousSummary}${blockedSummary}${historyBlock}
 
 Responda APENAS com JSON válido:
-{"title":"título motivador e criativo","description":"2 frases com sentido espiritual e humano","days":[{"day":1,"task":"tarefa específica"},{"day":2,"task":"tarefa específica"},{"day":3,"task":"tarefa específica"},{"day":4,"task":"tarefa específica"},{"day":5,"task":"tarefa específica"},{"day":6,"task":"tarefa específica"},{"day":7,"task":"tarefa específica"}],"styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
+{"title":"título que provoque curiosidade e compromisso (não genérico)","description":"2 frases que expliquem o coração do desafio — por que esta semana importa, o que pode mudar","days":[{"day":1,"task":"tarefa detalhada com ação, contexto bíblico e duração"},{"day":2,"task":"..."},{"day":3,"task":"..."},{"day":4,"task":"..."},{"day":5,"task":"..."},{"day":6,"task":"..."},{"day":7,"task":"..."}],"styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
     return parsed;
   } catch {
     return {
@@ -343,38 +343,47 @@ export async function genJourney(name, userName, options = {}) {
     ? `\nHISTORICO RECENTE (NAO REPETIR angulos, estruturas nem frases centrais):\n${history.map((h, i) => `- ${i + 1}. jornada="${h.journeyName || ""}", etapa1="${h.firstStepTitle || ""}"`).join("\n")}`
     : "";
   const personClause = userName ? `Personalize sutilmente para ${userName}.` : "";
+  const catalog = getJourneyByTitle(name);
+  const catalogBlock = catalog
+    ? `
+CATÁLOGO OFICIAL DA TRILHA (obrigatório seguir foco e tópicos):
+- Subtítulo: ${catalog.subtitle}
+- Intensidade: ${catalog.intensity}
+- Tópicos específicos (distribua nas 5 etapas, uma etapa pode fundir 2 tópicos):
+${catalog.topics.map((t, i) => `  ${i + 1}. ${t}`).join("\n")}
+Cada etapa deve citar explicitamente o tópico trabalhado e uma referência bíblica aplicada.`
+    : "";
   const generationConfig = getGenerationConfig(options.forceNew);
 
   try {
-    const parsed = await callAI(`Você é um designer de jornadas espirituais cristãs brasileiras, biblicamente fiel, criativo e pastoral.
-Crie a jornada especial "${name}" para ${userName || "um cristão"} com 5 etapas progressivas.
-ID unico desta geracao: ${slugifyId(name)}-${variant}-${nonce}.
+    const parsed = await callAI(`Você é um formador espiritual cristão — alguém que já conduziu retiros, acompanhou pessoas em crises de fé, e sabe que transformação real não acontece num único momento de êxtase, mas no acúmulo fiel de pequenas decisões ao longo de dias. Você pensa como os pais do deserto, os jesuítas e os pastores de comunidades de base: profundidade com simplicidade.
 
-OBJETIVO: jornada INÉDITA, profunda, humana, inovadora e praticável — nunca genérica.
+TAREFA: criar a jornada espiritual INTENSA "${name}" para ${userName || "um cristão brasileiro"} com 5 etapas progressivas.
+ID único: ${slugifyId(name)}-${variant}-${nonce}.
+${catalogBlock}
 
-REGRAS OBRIGATORIAS:
-1) Cada etapa precisa ter título marcante e preview específico (ação concreta em 1-2 frases).
-2) Progressão clara: do interior (oração, autoconhecimento) para prática (missão, relacionamento, obediência).
-3) Linguagem acolhedora, inteligente e realista — sem religiosês vazio.
-4) Traga criatividade: metáforas vivas, desafios originais e conexão com rotina real (família, trabalho, cansaço).
-5) Esta versão deve ser CLARAMENTE diferente de qualquer jornada anterior em estrutura, tom e propostas.
-6) Evite repetir fórmulas batidas ("defina um horário", "leia a bíblia" sem contexto) — inove com tarefas surpreendentes.
-7) Mantenha fidelidade bíblica e esperança realista (sem triunfalismo).
-8) O título da jornada pode reinterpretar "${name}" com criatividade, sem perder o tema central.
+QUEM VAI VIVER ISSO: alguém que quer ir mais fundo com Deus, mas não tem formação teológica. Sente que a fé virou rotina, ou está num momento de busca real. Precisa de orientação prática, não de teoria.
 
-BIBLIOTECA DE ESTILOS DISPONIVEIS:
-${styleCatalog}
+ARQUITETURA DA JORNADA:
+1) ARCO NARRATIVO: a jornada deve ter uma história — começo (despertar), meio (confronto/aprofundamento) e fim (envio/compromisso). Não é lista de atividades, é peregrinação interior com destino claro.
+2) CADA ETAPA = MOVIMENTO COMPLETO: título evocativo (não descritivo) + preview que seja uma instrução concreta e específica (o que fazer, como, com que atitude). O preview deve bastar como orientação — sem precisar de explicação adicional.
+3) PROGRESSÃO: do recolhimento íntimo ao envio missionário. Etapa 1 deve ser introspectiva e acessível. Etapa 5 deve exigir coragem e envolver outras pessoas.
+4) ENRAIZAMENTO BÍBLICO: cada etapa deve brotar de um texto bíblico (citado no preview), não como decoração, mas como fundamento orgânico da prática proposta.
+5) ORIGINALIDADE CONCRETA: evite fórmulas genéricas ("ore mais", "leia a Bíblia", "defina um horário"). Proponha práticas que surpreendam: lectio divina adaptada, exame de consciência inaciano, jejum de uma atividade específica, carta a Deus, caminhada meditativa, ritual de perdão, silêncio cronometrado sem exceção.
+6) BELEZA E PESO: os títulos das etapas devem ser poéticos mas não vazios — como nomes de capítulos de um livro que você quer continuar lendo. A descrição da jornada deve convencer o leitor de que vale a pena investir dias nisso.
+7) O título pode reinterpretar "${name}" com liberdade criativa, sem perder o tema central.
 
-ESTILO OBRIGATORIO DESTA GERACAO:
-- id: ${style.id}
-- nome: ${style.label}
+VOZ ESTILÍSTICA:
+- estilo: ${style.label}
 - identidade: ${style.identity}
-- diretriz de escrita: ${style.journeyGuide}
+- diretriz: ${style.journeyGuide}
+
+ESTILOS DO SISTEMA: ${styleCatalog}
 ${previousSummary}${historyBlock}
 ${personClause}
 
 Responda APENAS com JSON válido:
-{"title":"título criativo da jornada","description":"2-3 frases inspiradoras e específicas","steps":[{"step":1,"title":"título da etapa","preview":"ação concreta"},{"step":2,"title":"título","preview":"ação concreta"},{"step":3,"title":"título","preview":"ação concreta"},{"step":4,"title":"título","preview":"ação concreta"},{"step":5,"title":"título","preview":"ação concreta"}],"styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
+{"title":"título da jornada (poético, memorável, que gere desejo de começar)","description":"2-3 frases que pintem o destino desta jornada — o que o leitor será diferente ao final","steps":[{"step":1,"title":"título evocativo","preview":"instrução concreta com referência bíblica e atitude interior"},{"step":2,"title":"...","preview":"..."},{"step":3,"title":"...","preview":"..."},{"step":4,"title":"...","preview":"..."},{"step":5,"title":"...","preview":"..."}],"styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
     return parsed;
   } catch {
     return {

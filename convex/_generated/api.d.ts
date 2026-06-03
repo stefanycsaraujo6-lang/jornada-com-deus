@@ -8,8 +8,14 @@
  * @module
  */
 
+import type * as authActions from "../authActions.js";
 import type * as health from "../health.js";
+import type * as http from "../http.js";
+import type * as kiwify from "../kiwify.js";
+import type * as kiwifyHttp from "../kiwifyHttp.js";
+import type * as lib_kiwify from "../lib/kiwify.js";
 import type * as profiles from "../profiles.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -18,8 +24,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  authActions: typeof authActions;
   health: typeof health;
+  http: typeof http;
+  kiwify: typeof kiwify;
+  kiwifyHttp: typeof kiwifyHttp;
+  "lib/kiwify": typeof lib_kiwify;
   profiles: typeof profiles;
+  users: typeof users;
 }>;
 
 /**

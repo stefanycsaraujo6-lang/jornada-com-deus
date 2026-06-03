@@ -1,13 +1,12 @@
-// ── MODIFICAÇÃO: processamento automático Kiwify Basic/Gold
-// ── DATA: 2026-05-18
 import {
-  PLANS,
+  USER_STATUS,
   extractPaymentStatus,
   isApprovedPaymentStatus,
   isRefundPaymentStatus,
   mapSubscriptionStatus,
-  resolvePlanByProductId
+  resolveStatusByProductId
 } from "../config/plans.js";
+import { sendWelcomeAccessEmail } from "./email.js";
 import { generateTempPassword, hashPassword } from "../utils/password.js";
 
 function pickEmail(payload) {
@@ -77,7 +76,7 @@ export function logKiwifyWebhook(payload, meta = {}) {
   });
 }
 
-async function upsertUserWithPlan(client, { email, name, plan, isGold, customerId, tempPassword }) {
+async function upsertUserBasico(client, { email, name, customerId, tempPassword }) {
   const passwordHash = tempPassword ? await hashPassword(tempPassword) : null;
 
   const result = await client.query(
@@ -85,19 +84,20 @@ async function upsertUserWithPlan(client, { email, name, plan, isGold, customerI
       insert into users (
         email,
         name,
-        plan,
-        is_gold,
+        status,
         access_status,
         password_hash,
         must_change_password,
         kiwify_customer_id
       )
-      values ($1, $2, $3, $4, 'active', $5, $6, $7)
+      values ($1, $2, 'BASICO', 'active', $3, $4, $5)
       on conflict (email)
       do update set
         name = excluded.name,
-        plan = excluded.plan,
-        is_gold = excluded.is_gold,
+        status = case
+          when users.status = 'OURO' then users.status
+          else 'BASICO'
+        end,
         access_status = 'active',
         password_hash = coalesce(excluded.password_hash, users.password_hash),
         must_change_password = case
@@ -107,7 +107,7 @@ async function upsertUserWithPlan(client, { email, name, plan, isGold, customerI
         kiwify_customer_id = coalesce(excluded.kiwify_customer_id, users.kiwify_customer_id)
       returning id, (xmax = 0) as inserted
     `,
-    [email, name, plan, isGold, passwordHash, Boolean(passwordHash), customerId || null]
+    [email, name, passwordHash, Boolean(passwordHash), customerId || null]
   );
 
   return {
@@ -116,12 +116,25 @@ async function upsertUserWithPlan(client, { email, name, plan, isGold, customerI
   };
 }
 
-async function downgradeUserToBasic(client, userId) {
+async function upgradeUserToOuro(client, email) {
+  const result = await client.query(
+    `
+      update users
+      set status = 'OURO',
+          access_status = 'active'
+      where email = $1
+      returning id
+    `,
+    [email]
+  );
+  return result.rows[0]?.id || null;
+}
+
+async function downgradeUserToBasico(client, userId) {
   await client.query(
     `
       update users
-      set plan = 'basic',
-          is_gold = false,
+      set status = 'BASICO',
           access_status = 'refunded'
       where id = $1
     `,
@@ -129,9 +142,9 @@ async function downgradeUserToBasic(client, userId) {
   );
 }
 
-async function upsertSubscription(client, userId, payload, plan, paymentStatus) {
+async function upsertSubscription(client, userId, payload, planStatus, paymentStatus) {
   const providerCustomerId = pickCustomerId(payload) || null;
-  const providerSubscriptionId = pickSubscriptionId(payload) || `manual:${userId}:${plan}`;
+  const providerSubscriptionId = pickSubscriptionId(payload) || `manual:${userId}:${planStatus}`;
   const providerProductId = pickProductId(payload) || null;
   const status = mapSubscriptionStatus(paymentStatus);
 
@@ -154,7 +167,7 @@ async function upsertSubscription(client, userId, payload, plan, paymentStatus) 
         provider_product_id = excluded.provider_product_id,
         updated_at = now()
     `,
-    [userId, providerCustomerId, providerSubscriptionId, providerProductId, plan, status]
+    [userId, providerCustomerId, providerSubscriptionId, providerProductId, planStatus, status]
   );
 }
 
@@ -168,14 +181,7 @@ export async function processKiwifyWebhook(client, payload) {
 
   const paymentStatus = extractPaymentStatus(payload);
   const productId = pickProductId(payload);
-  const resolvedPlan = resolvePlanByProductId(productId);
-
-  if (!resolvedPlan && !isRefundPaymentStatus(paymentStatus)) {
-    throw new Error(`Produto Kiwify não mapeado: ${productId || "desconhecido"}`);
-  }
-
-  const name = pickName(payload, email);
-  const customerId = pickCustomerId(payload);
+  const resolvedStatus = resolveStatusByProductId(productId);
 
   if (isRefundPaymentStatus(paymentStatus)) {
     const existing = await client.query(`select id from users where email = $1`, [email]);
@@ -184,44 +190,64 @@ export async function processKiwifyWebhook(client, payload) {
     }
 
     const userId = existing.rows[0].id;
-    await downgradeUserToBasic(client, userId);
-    await upsertSubscription(client, userId, payload, PLANS.BASIC, paymentStatus);
-    return { action: "downgraded_to_basic", email, userId };
+    await downgradeUserToBasico(client, userId);
+    await upsertSubscription(client, userId, payload, USER_STATUS.BASICO, paymentStatus);
+    return { action: "downgraded_to_basico", email, userId };
   }
 
   if (!isApprovedPaymentStatus(paymentStatus)) {
     return { action: "ignored_non_approved", email, paymentStatus };
   }
 
-  const isGold = resolvedPlan === PLANS.GOLD;
-  const existing = await client.query(`select id from users where email = $1 limit 1`, [email]);
+  if (!resolvedStatus) {
+    throw new Error(`Produto Kiwify não mapeado: ${productId || "desconhecido"}`);
+  }
+
+  const name = pickName(payload, email);
+  const customerId = pickCustomerId(payload);
+
+  if (resolvedStatus === USER_STATUS.OURO) {
+    const userId = await upgradeUserToOuro(client, email);
+    if (!userId) {
+      throw new Error(`Upgrade Ouro: usuário não encontrado para ${email}`);
+    }
+    await upsertSubscription(client, userId, payload, USER_STATUS.OURO, paymentStatus);
+    return { action: "upgraded_to_ouro", email, userId };
+  }
+
+  const existing = await client.query(`select id, password_hash from users where email = $1 limit 1`, [email]);
   const isNewUser = existing.rowCount === 0;
-  const tempPassword = !isGold && isNewUser ? generateTempPassword(12) : null;
-  const { userId, created } = await upsertUserWithPlan(client, {
+  const tempPassword = isNewUser || !existing.rows[0]?.password_hash ? generateTempPassword(12) : null;
+
+  const { userId, created } = await upsertUserBasico(client, {
     email,
     name,
-    plan: resolvedPlan,
-    isGold,
     customerId,
     tempPassword
   });
 
-  await upsertSubscription(client, userId, payload, resolvedPlan, paymentStatus);
+  await upsertSubscription(client, userId, payload, USER_STATUS.BASICO, paymentStatus);
 
   if (tempPassword) {
-    console.log("[kiwify:webhook] conta basica criada", {
-      email,
-      tempPassword,
-      warning: "ENVIAR_SENHA_POR_EMAIL_EM_PRODUCAO"
-    });
+    try {
+      await sendWelcomeAccessEmail({
+        email,
+        name,
+        tempPassword,
+        loginUrl: process.env.APP_URL
+      });
+    } catch (err) {
+      console.error("[kiwify:webhook] falha ao enviar e-mail de boas-vindas", err?.message || err);
+      console.log("[kiwify:webhook] credenciais temporárias (fallback log)", { email, tempPassword });
+    }
   }
 
   return {
-    action: isGold ? "upgraded_to_gold" : "activated_basic",
+    action: created ? "activated_basico_new" : "activated_basico_existing",
     email,
     userId,
-    plan: resolvedPlan,
+    status: USER_STATUS.BASICO,
     created,
-    tempPasswordIssued: Boolean(tempPassword)
+    welcomeEmailSent: Boolean(tempPassword)
   };
 }

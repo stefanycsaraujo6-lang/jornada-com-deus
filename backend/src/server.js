@@ -8,6 +8,7 @@ import cors from "cors";
 import { z } from "zod";
 import { pool, healthcheckDb } from "./db.js";
 import apiRouter from "./routes/api.js";
+import authRouter from "./routes/auth.js";
 import { createKiwifyWebhookRouter } from "./routes/webhooks.js";
 
 const app = express();
@@ -157,6 +158,7 @@ app.get("/health", async (_req, res) => {
   }
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api", apiRouter);
 app.use("/api/webhooks", createKiwifyWebhookRouter({ verifySignature: isValidKiwifySignature }));
 app.use("/webhooks", createKiwifyWebhookRouter({ verifySignature: isValidKiwifySignature }));
