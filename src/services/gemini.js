@@ -15,10 +15,10 @@ function buildAIError(status, apiMsg, model) {
 export function getFriendlyAIErrorMessage(err, fallback) {
   const msg = `${err?.apiMsg || err?.message || ""}`.toLowerCase();
   if (err?.status === 429 || msg.includes("quota") || msg.includes("rate limit")) {
-    return "Limite de uso da IA atingido no momento. Tente novamente em alguns minutos.";
+    return "Limite de uso atingido no momento. Tente novamente em alguns minutos.";
   }
   if (err?.status === 404 || msg.includes("not found for api version")) {
-    return "Modelo de IA indisponível agora. Tente novamente em instantes.";
+    return "Serviço temporariamente indisponível. Tente novamente em instantes.";
   }
   return fallback;
 }

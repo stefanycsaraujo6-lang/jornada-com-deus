@@ -122,8 +122,8 @@ export function useDevotional({ ls, plan, userName, userEmail, todayKey, dark, o
       if (fromFallback) {
         onToast(
           forceNew
-            ? "IA indisponível agora; exibimos uma versão alternativa local."
-            : "IA indisponível; exibimos um devocional reserva."
+            ? "Conteúdo temporariamente indisponível; exibimos uma versão alternativa."
+            : "Exibimos um devocional reserva para você continuar hoje."
         );
       }
       return true;

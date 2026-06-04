@@ -138,8 +138,8 @@ export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
       if (fromFallback) {
         onToast(
           forceNew
-            ? "IA indisponível agora; exibimos um desafio alternativo local."
-            : "IA indisponível; exibimos um desafio reserva."
+            ? "Conteúdo temporariamente indisponível; exibimos um desafio alternativo."
+            : "Exibimos um desafio reserva para você continuar."
         );
       }
       return true;
@@ -207,8 +207,8 @@ export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
       if (fromFallback) {
         onToast(
           forceNew
-            ? "IA indisponível agora; exibimos uma jornada alternativa local."
-            : "IA indisponível; exibimos uma jornada reserva."
+            ? "Conteúdo temporariamente indisponível; exibimos uma jornada alternativa."
+            : "Exibimos uma jornada reserva para você continuar."
         );
       }
       return true;

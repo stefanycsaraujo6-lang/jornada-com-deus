@@ -746,7 +746,7 @@ export default function App() {
           <div className="login-sym">✦</div>
           <h1 className="login-title">Jornada<br/>com Deus</h1>
           <p className="login-sub">
-            Plano Básico por <strong>R$ 67,00</strong>. Após a compra, você recebe e-mail com senha de acesso.
+            Plano Básico: <strong>R$ 67,00 vitalício</strong> ou em até 10x. Após a compra, você recebe e-mail com senha de acesso.
           </p>
           {basicCheckoutUrl ? (
             <button
@@ -754,7 +754,7 @@ export default function App() {
               className="landing-cta"
               onClick={() => window.open(basicCheckoutUrl, "_blank", "noopener,noreferrer")}
             >
-              Quero começar — R$ 67,00 na Kiwify
+              Quero começar — R$ 67,00 vitalício
             </button>
           ) : null}
           <div className="login-divider">já sou aluna</div>
@@ -961,7 +961,7 @@ export default function App() {
       {isOuro(userStatus) && (
         <div className="sec" style={{marginBottom:14}}>
           <div className="sec-lbl">🎯 Tema do devocional</div>
-          <p style={{fontSize:13,color:"var(--muted)",marginBottom:10}}>Escolha o tema de hoje ou deixe a IA decidir.</p>
+          <p style={{fontSize:13,color:"var(--muted)",marginBottom:10}}>Escolha o tema de hoje ou deixe o app sugerir um para você.</p>
           {showThemePicker ? (
             <>
               <div className="theme-grid">
@@ -973,7 +973,7 @@ export default function App() {
               </div>
               <button style={{width:"100%",marginTop:8,background:"none",border:"1px solid var(--bdr)",borderRadius:10,padding:10,color:"var(--muted)",fontSize:12,cursor:"pointer"}}
                 onClick={() => { setChosenTheme(null); setShowThemePicker(false); }}>
-                Deixar a IA escolher
+                Deixar o app escolher
               </button>
             </>
           ) : (
@@ -1196,7 +1196,7 @@ export default function App() {
                   <span className="checkin-pts">{isToday ? "✓ +3pts" : "+3pts"}</span>
                 </div>
               </div>
-              <p style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:6}}>🔥 Streak bônus: +{streakBonus}pts por ação</p>
+              <p style={{fontSize:11,color:"var(--muted)",textAlign:"center",marginTop:6}}>🔥 Bônus de constância: +{streakBonus}pts por ação</p>
             </div>
 
             <div className="my-rank-banner">
@@ -1361,7 +1361,7 @@ export default function App() {
             {type==="culto" ? "✝️ Registrar culto" : "📖 Registrar leitura"}
           </div>
           <p style={{fontSize:13,color:"var(--muted)",lineHeight:1.55}}>
-            Tire uma foto {label}. A IA vai verificar automaticamente.
+            Tire uma foto {label}. O app confere automaticamente se está certo.
           </p>
           {photoValidating ? (
             <div className="validating">
@@ -1456,7 +1456,7 @@ export default function App() {
             <div className="modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-title">Ativar lembretes diários?</div>
               <p className="modal-sub">
-                Receba notificações elegantes para manter seu devocional, streak e desafios em dia. Você pode ajustar horário e silêncio depois.
+                Receba notificações elegantes para manter seu devocional, sua sequência de dias e desafios em dia. Você pode ajustar horário e silêncio depois.
               </p>
               <button className="plan-cta" onClick={() => handlePushPrompt(true)}>🔔 Ativar notificações</button>
               <button className="modal-close" onClick={() => handlePushPrompt(false)}>Agora não</button>
@@ -1468,7 +1468,7 @@ export default function App() {
           <div className="overlay" onClick={() => setShowNotifSettings(false)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
               <div className="modal-title">Notificações</div>
-              <p className="modal-sub">Configure lembretes diários, streak e desafio semanal.</p>
+              <p className="modal-sub">Configure lembretes diários, sequência de dias e desafio semanal.</p>
 
               <div className="new-purpose-form" style={{ marginBottom: 0 }}>
                 <div className="form-row" style={{display:"flex",alignItems:"center",gap:10}}>

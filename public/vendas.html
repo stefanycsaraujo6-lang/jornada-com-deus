@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Jornada com Deus — Seu devocional diário</title>
+  <meta name="description" content="Devocional diário para cristãos brasileiros. Consistência que transforma. Acesso vitalício por R$ 67,00 ou em até 10x." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --card: #111827;
+      --gold: #c9a84c;
+      --gold2: #e8c97a;
+      --txt: #f0ebe3;
+      --muted: #8a9ab0;
+      --bdr: rgba(201, 168, 76, 0.2);
+      --grn: #4caf82;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Lato", sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 420px; margin: 0 auto; padding: 0 20px 100px; }
+    .top {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; background: rgba(10, 15, 30, 0.92);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--bdr);
+    }
+    .logo { font-family: "Cormorant Garamond", serif; font-size: 18px; font-weight: 600; }
+    .logo span { color: var(--gold); margin-right: 6px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #0a0f1e; font-weight: 700; font-size: 12px;
+      padding: 10px 16px; border-radius: 999px; border: none; cursor: pointer;
+      letter-spacing: 0.3px;
+    }
+    .btn--lg {
+      width: 100%; padding: 16px 20px; font-size: 15px; border-radius: 14px;
+    }
+    .hero { text-align: center; padding: 36px 0 28px; }
+    .hero h1 {
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(36px, 9vw, 44px); font-weight: 300; font-style: italic;
+      line-height: 1.15; margin-bottom: 12px;
+    }
+    .hero p { font-size: 14px; color: var(--muted); max-width: 300px; margin: 0 auto 24px; }
+    .step {
+      background: var(--card); border: 1px solid var(--bdr); border-radius: 16px;
+      padding: 20px; margin-bottom: 12px;
+    }
+    .step-n {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold); color: #0a0f1e; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+    }
+    .step h3 {
+      font-family: "Cormorant Garamond", serif; font-size: 22px; color: var(--gold);
+      margin-bottom: 8px; font-weight: 600;
+    }
+    .step p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+    .checks { margin: 28px 0; }
+    .checks h2 {
+      font-family: "Cormorant Garamond", serif; font-size: 20px; text-align: center;
+      margin-bottom: 16px; font-weight: 600;
+    }
+    .check {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 14px; margin-bottom: 10px; color: var(--muted);
+    }
+    .check strong { color: var(--txt); font-weight: 600; }
+    .check-ico { color: var(--grn); flex-shrink: 0; font-size: 16px; }
+    .sec-title {
+      font-family: "Cormorant Garamond", serif; font-size: 24px; text-align: center;
+      margin: 32px 0 18px; font-weight: 600; line-height: 1.3;
+    }
+    .feat {
+      background: var(--card); border: 1px solid var(--bdr); border-radius: 16px;
+      padding: 18px; margin-bottom: 10px;
+    }
+    .feat-ico { font-size: 28px; margin-bottom: 8px; }
+    .feat h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .feat p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .price-card {
+      background: linear-gradient(160deg, #141c2e, #0d1220);
+      border: 1px solid var(--bdr); border-radius: 20px;
+      padding: 28px 22px; text-align: center; margin-top: 28px;
+    }
+    .price-card .tag {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 8px;
+    }
+    .price-card .amount {
+      font-family: "Cormorant Garamond", serif; font-size: 42px; font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .price-card .sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+    .price-list { text-align: left; margin-bottom: 20px; }
+    .sticky {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+      padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+      background: linear-gradient(transparent, rgba(10, 15, 30, 0.95) 30%);
+    }
+    .sticky .wrap { padding: 0; max-width: 420px; }
+    .app-link {
+      display: block; text-align: center; margin-top: 16px;
+      font-size: 12px; color: var(--muted);
+    }
+    .app-link a { color: var(--gold); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="logo"><span>✦</span> Jornada com Deus</div>
+    <a class="btn js-checkout" href="#">Começar →</a>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Seu devocional diário.<br/>Consistência que transforma.</h1>
+      <p>exatamente o que você precisa para começar o dia com Deus.</p>
+      <a class="btn btn--lg js-checkout" href="#">Quero começar →</a>
+      <p class="app-link">Já comprou? <a href="https://jornada-com-deus.pages.dev">Entrar no app</a></p>
+    </section>
+
+    <article class="step">
+      <div class="step-n">1</div>
+      <h3>Abre o app todo dia</h3>
+      <p>Um gesto simples de manhã — antes do celular virar distração — para colocar Deus em primeiro lugar.</p>
+    </article>
+    <article class="step">
+      <div class="step-n">2</div>
+      <h3>Lê seu devocional do dia</h3>
+      <p>Um versículo escolhido para o seu momento + uma reflexão que fala com sua vida real + uma ação prática simples pra levar no coração o dia inteiro.</p>
+    </article>
+    <article class="step">
+      <div class="step-n">3</div>
+      <h3>Marca &ldquo;feito&rdquo; e cresce</h3>
+      <p>Sua sequência de dias cresce. Você vê seu progresso. A comunidade te acompanha. A consistência vira hábito. O hábito vira transformação.</p>
+    </article>
+
+    <section class="checks">
+      <h2>O que você recebe</h2>
+      <div class="check"><span class="check-ico">✓</span><span><strong>Versículo do dia</strong> — relevante para a sua semana</span></div>
+      <div class="check"><span class="check-ico">✓</span><span>Reflexão curta que conecta com sua vida real</span></div>
+      <div class="check"><span class="check-ico">✓</span><span>Ação prática pra levar no coração</span></div>
+      <div class="check"><span class="check-ico">✓</span><span><strong>Dias seguidos</strong> que te motivam a não parar</span></div>
+      <div class="check"><span class="check-ico">✓</span><span>Compartilhe o versículo no WhatsApp com um toque</span></div>
+    </section>
+
+    <h2 class="sec-title">Tudo que você precisa — nada que você não precisa</h2>
+
+    <article class="feat">
+      <div class="feat-ico">📖</div>
+      <h3>Devocional diário único</h3>
+      <p>Cada dia é diferente. Versículo, reflexão e ação prática com base bíblica sólida — feitos para a sua jornada.</p>
+    </article>
+    <article class="feat">
+      <div class="feat-ico">🔥</div>
+      <h3>Dias seguidos que motivam</h3>
+      <p>Veja seus dias acumulando. Aquele &ldquo;não vou quebrar hoje&rdquo; vira força espiritual de verdade.</p>
+    </article>
+    <article class="feat">
+      <div class="feat-ico">📊</div>
+      <h3>Progresso visual</h3>
+      <p>Histórico, desafio semanal e ranking leve para celebrar constância sem competir com ninguém.</p>
+    </article>
+
+    <section class="price-card" id="plano">
+      <div class="tag">Plano Básico</div>
+      <div class="amount">R$ 67,00</div>
+      <p class="sub">vitalício · ou em até 10x</p>
+      <div class="price-list">
+        <div class="check"><span class="check-ico">✓</span><span>Devocional diário personalizado</span></div>
+        <div class="check"><span class="check-ico">✓</span><span>Versículo + reflexão + aplicação prática</span></div>
+        <div class="check"><span class="check-ico">✓</span><span>Marcar dia concluído e ver sua sequência</span></div>
+        <div class="check"><span class="check-ico">✓</span><span>Histórico visual do seu progresso</span></div>
+        <div class="check"><span class="check-ico">✓</span><span>Desafio semanal</span></div>
+        <div class="check"><span class="check-ico">✓</span><span>Compartilhar versículo</span></div>
+      </div>
+      <a class="btn btn--lg js-checkout" href="#">Garantir meu acesso →</a>
+    </section>
+  </main>
+
+  <div class="sticky">
+    <div class="wrap">
+      <a class="btn btn--lg js-checkout" href="#">Quero começar — R$ 67,00 vitalício →</a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var checkout =
+        params.get("checkout") ||
+        "https://pay.kiwify.com.br/seu-link-basico";
+      document.querySelectorAll(".js-checkout").forEach(function (el) {
+        el.href = checkout;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+      });
+    })();
+  </script>
+</body>
+</html>

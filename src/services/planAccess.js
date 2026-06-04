@@ -10,11 +10,12 @@ export const PLANS = {
     id: "BASICO",
     name: "Básico",
     emoji: "✝️",
-    price: "R$ 67,00",
+    price: "R$ 67,00 vitalício",
+    priceNote: "ou em até 10x",
     features: [
-      "Devocional diário com IA",
+      "Devocional diário personalizado",
       "Versículo + reflexão + aplicação",
-      "Marcar dia concluído e streak",
+      "Marcar dia concluído e sequência de dias",
       "Histórico e desafio semanal",
       "Compartilhar versículo",
       "Ranking da comunidade"
