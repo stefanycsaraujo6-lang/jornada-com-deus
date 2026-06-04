@@ -25,6 +25,7 @@ import {
   statusToLegacyPlan
 } from "./services/planAccess.js";
 import { checkRegistrationStatus, clearSession, fetchSessionUser, getStoredToken, loginWithPassword } from "./services/authApi.js";
+import { pullProgressFromConvex, pushProgressToConvex } from "./services/progressSync.js";
 import { isValidEmail, registrationBlockMessage, validateLoginCredentials } from "./services/authValidation.js";
 import { syncStatusFromBackend } from "./services/subscriptionApi.js";
 
@@ -364,6 +365,8 @@ export default function App() {
         const status = normalizeStatus(remote.status);
         setUserStatus(status);
         saveStatus(ls, status);
+        const prog = await pullProgressFromConvex(ls);
+        if (prog.history) setHistory(prog.history);
         setScreen("dashboard");
       } else {
         clearSession();
@@ -586,6 +589,8 @@ export default function App() {
     if (syncRes.message && !syncRes.skipped) {
       console.warn("[convexProfileSync]", syncRes.message);
     }
+    const prog = await pullProgressFromConvex(ls);
+    if (prog.history) setHistory(prog.history);
     setScreen("dashboard");
     if (notificationsAvailable) initOneSignal(res.user);
     if (isOneSignalConfigured()) setShowPushPrompt(true);
@@ -662,7 +667,9 @@ export default function App() {
 
   const markDone = () => {
     const h = { ...history, [todayKey]: true };
-    setHistory(h); ls.set("jcd_history", h);
+    setHistory(h);
+    ls.set("jcd_history", h);
+    void pushProgressToConvex(ls);
     showToast("🙏 Dia concluído! Que Deus abençoe você.");
   };
 

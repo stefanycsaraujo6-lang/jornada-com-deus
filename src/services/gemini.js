@@ -1,7 +1,6 @@
 const AI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 const RETRYABLE_AI_STATUS = new Set([404, 429, 503]);
 const AI_COOLDOWN_MS = 45 * 1000;
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY;
 let aiBlockedUntil = 0;
 
 function buildAIError(status, apiMsg, model) {
@@ -20,57 +19,39 @@ export function getFriendlyAIErrorMessage(err, fallback) {
   if (err?.status === 404 || msg.includes("not found for api version")) {
     return "Serviço temporariamente indisponível. Tente novamente em instantes.";
   }
+  if (err?.status === 401) {
+    return "Faça login novamente para usar este recurso.";
+  }
   return fallback;
 }
 
-async function callGeminiDirect(model, payload) {
-  const versions = ["v1beta", "v1"];
-  let lastError = null;
-
-  for (const version of versions) {
-    const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_KEY
-      },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json().catch(() => ({ error: "Resposta inválida da API Gemini." }));
-    if (res.ok) return data;
-
-    const apiMsg = data?.error?.message || data?.error || JSON.stringify(data);
-    lastError = buildAIError(res.status, apiMsg, model);
-    if (res.status === 404) continue;
-    throw lastError;
+function getSessionToken() {
+  try {
+    return localStorage.getItem("jcd_auth_token") || "";
+  } catch {
+    return "";
   }
-
-  throw lastError || new Error("Modelo Gemini indisponível.");
 }
 
 async function callGeminiProxy(model, payload) {
+  const token = getSessionToken();
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["X-Session-Token"] = token;
+
   const res = await fetch("/api/gemini", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ model, payload })
   });
-  const data = await res.json().catch(() => ({ error: "Resposta inválida do proxy Gemini." }));
+  const data = await res.json().catch(() => ({ error: "Resposta inválida do proxy de IA." }));
   if (res.ok) return data;
 
   const apiMsg = data?.error?.message || data?.error || JSON.stringify(data);
   throw buildAIError(res.status, apiMsg, model);
 }
 
+/** Em dev, proxy local (vite) ou Pages Function; em prod, só /api/gemini (chave no servidor). */
 async function callGeminiOnce(model, payload) {
-  if (GEMINI_KEY) {
-    try {
-      return await callGeminiDirect(model, payload);
-    } catch (directErr) {
-      if (!import.meta.env.DEV) throw directErr;
-      console.warn("[gemini] Direct falhou em dev, tentando proxy local...", directErr?.message);
-    }
-  }
   return callGeminiProxy(model, payload);
 }
 
@@ -117,5 +98,5 @@ export async function requestGemini(payload, models = AI_MODELS, tag = "callAI")
     }
   }
 
-  throw quotaError || lastError || new Error("Falha ao chamar a API Gemini.");
+  throw quotaError || lastError || new Error("Falha ao chamar a API de IA.");
 }

@@ -27,6 +27,14 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_user", ["userId"]),
 
+  userProgress: defineTable({
+    userId: v.id("users"),
+    history: v.any(),
+    pointsWeek: v.number(),
+    pointsTotal: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   webhookEvents: defineTable({
     provider: v.string(),
     eventId: v.string(),

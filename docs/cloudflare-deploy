@@ -12,8 +12,9 @@ Dominio ja na Cloudflare: use **Pages** + o mesmo painel de DNS.
 
 | Nome | Valor |
 |------|--------|
-| `VITE_CONVEX_URL` | copiar do `.env.local` (linha `VITE_CONVEX_URL=...` sem espacos) |
-| `VITE_GEMINI_KEY` | copiar do `.env.local` |
+| `VITE_CONVEX_URL` | URL do deployment Convex (`.convex.cloud`) |
+| `GEMINI_KEY` | **Segredo** — Google AI Studio (nunca `VITE_GEMINI_KEY` em producao) |
+| `CONVEX_SITE_URL` | URL HTTP do Convex (`.convex.site`, ex: `https://insightful-tern-334.convex.site`) |
 
 6. **Salvar** → volte em **Implantacoes** → **Reimplantar** (Retry deployment)
 
@@ -53,7 +54,8 @@ Se o erro for `Could not resolve ... convex/_generated/api.js`, o repo precisa t
 | Nome | Onde pegar |
 |------|------------|
 | `VITE_CONVEX_URL` | `.env.local` ou dashboard Convex (deployment Prod depois) |
-| `VITE_GEMINI_KEY` | Google AI Studio |
+| `GEMINI_KEY` | Google AI Studio (tipo **Segredo**) |
+| `CONVEX_SITE_URL` | `.convex.site` do deployment Prod |
 | `VITE_API_URL` | URL da API no Render (quando estiver no ar) |
 
 5. **Save and Deploy** — aguarde o build verde.

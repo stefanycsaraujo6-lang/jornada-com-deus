@@ -34,6 +34,13 @@ function timingSafeEqual(a: string, b: string) {
   return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
+function normalizeWebhookSignature(signature: string | null) {
+  const raw = String(signature || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("sha256=")) return raw.slice(7);
+  return raw;
+}
+
 async function sendWelcomeEmail(email: string, name: string, tempPassword: string) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "Jornada com Deus <noreply@jornadacomdeus.com.br>";
@@ -67,13 +74,20 @@ export const handleWebhook = internalAction({
     signature: v.union(v.string(), v.null()),
   },
   handler: async (ctx, args) => {
-    const secret = process.env.KIWIFY_WEBHOOK_SECRET;
-    if (secret) {
-      if (!args.signature) return { status: 401, body: { ok: false, error: "invalid signature" } };
-      const expected = crypto.createHmac("sha256", secret).update(args.rawBody).digest("hex");
-      if (!timingSafeEqual(args.signature, expected)) {
-        return { status: 401, body: { ok: false, error: "invalid signature" } };
-      }
+    const secret = process.env.KIWIFY_WEBHOOK_SECRET?.trim();
+    if (!secret) {
+      console.error("[kiwify:webhook] KIWIFY_WEBHOOK_SECRET ausente — rejeitando requisição.");
+      return { status: 503, body: { ok: false, error: "webhook not configured" } };
+    }
+
+    const received = normalizeWebhookSignature(args.signature);
+    if (!received) {
+      return { status: 401, body: { ok: false, error: "missing signature" } };
+    }
+
+    const expected = crypto.createHmac("sha256", secret).update(args.rawBody).digest("hex");
+    if (!timingSafeEqual(received, expected)) {
+      return { status: 401, body: { ok: false, error: "invalid signature" } };
     }
 
     let payload: Record<string, unknown>;

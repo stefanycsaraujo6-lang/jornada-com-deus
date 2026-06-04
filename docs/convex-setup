@@ -34,10 +34,12 @@ No `.env.local` (raiz):
 
 ```env
 VITE_CONVEX_URL_DEV=https://SEU-DEV.convex.cloud
-VITE_GEMINI_KEY=sua_chave
-VITE_KIWIFY_BASIC_URL=https://pay.kiwify.com.br/link-67
-VITE_KIWIFY_UPGRADE_URL=https://pay.kiwify.com.br/link-33
+# Dev: opcional VITE_GEMINI_KEY no .env.local (proxy vite). Producao: GEMINI_KEY no Cloudflare.
+VITE_KIWIFY_BASIC_URL=https://pay.kiwify.com.br/fDiPMgJ
+VITE_KIWIFY_UPGRADE_URL=https://pay.kiwify.com.br/seu-link-upgrade
 ```
+
+Valores completos da Kiwify: ver `docs/kiwify-config.md`.
 
 ## 3. Variáveis no dashboard Convex
 
@@ -46,8 +48,8 @@ Em **Settings → Environment Variables** (Dev e Prod):
 | Variável | Uso |
 |----------|-----|
 | `KIWIFY_WEBHOOK_SECRET` | Validar HMAC do webhook |
-| `KIWIFY_PRODUCT_ID_BASICO` | Produto R$ 67,00 |
-| `KIWIFY_PRODUCT_ID_UPGRADE` | Upgrade +R$ 33,00 |
+| `KIWIFY_PRODUCT_ID_BASICO` | `0e63c120-5488-11f1-adb2-dfc45ee7e920` |
+| `KIWIFY_PRODUCT_ID_UPGRADE` | Upgrade +R$ 33,00 (pendente) |
 | `APP_URL` | Link no e-mail de boas-vindas |
 | `RESEND_API_KEY` | E-mail com senha (opcional) |
 | `EMAIL_FROM` | Remetente |
@@ -57,7 +59,7 @@ Em **Settings → Environment Variables** (Dev e Prod):
 Após `npx convex dev` ou deploy, use:
 
 ```
-https://SEU-DEPLOYMENT.convex.site/kiwify
+https://insightful-tern-334.convex.site/kiwify
 ```
 
 (Aparece no dashboard Convex → HTTP Actions.)

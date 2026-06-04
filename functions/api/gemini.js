@@ -1,3 +1,44 @@
+const MAX_BODY_BYTES = 120_000;
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_PER_IP = 30;
+const rateMap = new Map();
+
+function clientIp(request) {
+  return (
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown"
+  );
+}
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateMap.get(ip);
+  if (!entry || now - entry.start > RATE_WINDOW_MS) {
+    rateMap.set(ip, { start: now, count: 1 });
+    return false;
+  }
+  entry.count += 1;
+  if (entry.count > RATE_MAX_PER_IP) return true;
+  return false;
+}
+
+async function validateSession(token, convexSiteUrl) {
+  if (!token || !convexSiteUrl) return false;
+  try {
+    const res = await fetch(`${convexSiteUrl}/session/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Boolean(data?.ok);
+  } catch {
+    return false;
+  }
+}
+
 async function callGemini(key, version, model, payload) {
   const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent`;
   return fetch(url, {
@@ -34,19 +75,7 @@ async function callWorkersAI(ai, promptText) {
     messages: [
       {
         role: "system",
-        content: `Você é um pastor cristão brasileiro com décadas de experiência em aconselhamento, pregação e direção espiritual. Sua voz é a de quem já sentou no gabinete com gente real — gente com ansiedade, luto, dúvidas de fé, casamentos em crise, filhos que se afastaram, contas atrasadas e medo do futuro.
-
-COMO VOCÊ ESCREVE:
-- Com autenticidade radical: sem jargão evangélico vazio, sem positivismo tóxico, sem clichês religiosos ("nova estação", "Deus tem um plano", "declare vitória").
-- Com profundidade bíblica: o texto sagrado guia a reflexão, nunca é usado como decoração ou pretexto.
-- Com empatia que vem da experiência: você reconhece a dor antes de apontar a saída, porque sabe que Deus habita o vale e não apenas o topo.
-- Com linguagem viva e brasileira: imagens do cotidiano (café da manhã, ônibus lotado, noite de insônia), ritmo de conversa franca, frases que grudam na memória.
-- Com esperança que tem cicatriz: nunca promete que vai ficar tudo bem — promete que Deus não solta a mão.
-
-REGRAS TÉCNICAS:
-- Sempre em português do Brasil, polido e acessível.
-- Quando solicitado JSON, responda APENAS com JSON válido, sem markdown, sem explicações fora do JSON.
-- Varie versículos, livros bíblicos, metáforas e abordagens a cada geração.`,
+        content: `Você é um pastor cristão brasileiro. Responda em português do Brasil. Quando solicitado JSON, responda APENAS com JSON válido, sem markdown.`,
       },
       { role: "user", content: promptText },
     ],
@@ -57,11 +86,41 @@ REGRAS TÉCNICAS:
 }
 
 export async function onRequestPost(context) {
-  const geminiKey = context.env.GEMINI_KEY;
-  const ai = context.env.AI;
+  const { request, env } = context;
+  const ip = clientIp(request);
+
+  if (isRateLimited(ip)) {
+    return Response.json({ error: "Muitas requisições. Aguarde um minuto." }, { status: 429 });
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return Response.json({ error: "Payload muito grande." }, { status: 413 });
+  }
+
+  const sessionToken = request.headers.get("x-session-token") || "";
+  let convexSite = String(env.CONVEX_SITE_URL || "").replace(/\/$/, "");
+  if (!convexSite && env.VITE_CONVEX_URL) {
+    convexSite = String(env.VITE_CONVEX_URL).replace(".convex.cloud", ".convex.site").replace(/\/$/, "");
+  }
+  const requireAuth = env.REQUIRE_AI_AUTH !== "false";
+
+  if (requireAuth) {
+    const ok = await validateSession(sessionToken, convexSite);
+    if (!ok) {
+      return Response.json({ error: "Não autorizado. Faça login no app." }, { status: 401 });
+    }
+  }
+
+  const geminiKey = env.GEMINI_KEY;
 
   try {
-    const { model, payload } = await context.request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return Response.json({ error: "Payload muito grande." }, { status: 413 });
+    }
+
+    const { model, payload } = JSON.parse(raw);
 
     if (geminiKey) {
       const modelName = model || "gemini-2.0-flash";
@@ -78,23 +137,16 @@ export async function onRequestPost(context) {
       }
     }
 
-    if (ai) {
+    if (env.AI) {
       const promptText = extractPromptText(payload);
       if (promptText) {
-        const aiResponse = await callWorkersAI(ai, promptText);
-        const formatted = workersAIResponseToGeminiFormat(aiResponse);
-        return Response.json(formatted, { status: 200 });
+        const aiResponse = await callWorkersAI(env.AI, promptText);
+        return Response.json(workersAIResponseToGeminiFormat(aiResponse), { status: 200 });
       }
     }
 
-    return Response.json(
-      { error: "Nenhum provedor de IA disponível." },
-      { status: 503 }
-    );
+    return Response.json({ error: "Serviço de IA indisponível." }, { status: 503 });
   } catch (e) {
-    return Response.json(
-      { error: e?.message || "Erro no proxy de IA." },
-      { status: 500 }
-    );
+    return Response.json({ error: e?.message || "Erro no proxy de IA." }, { status: 500 });
   }
 }
