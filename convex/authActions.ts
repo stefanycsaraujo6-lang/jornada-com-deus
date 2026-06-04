@@ -5,6 +5,7 @@ import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import crypto from "node:crypto";
 import { promisify } from "node:util";
+import { isValidEmail, isValidPassword, normalizeEmail } from "./lib/validation";
 
 const scrypt = promisify(crypto.scrypt);
 
@@ -71,23 +72,40 @@ export const login = action({
     password: v.string(),
   },
   handler: async (ctx, { email, password }) => {
-    const normalized = email.trim().toLowerCase();
+    const normalized = normalizeEmail(email);
+
+    if (!isValidEmail(normalized)) {
+      return { ok: false as const, error: "Informe um e-mail válido." };
+    }
+
+    if (!isValidPassword(password)) {
+      return { ok: false as const, error: "Senha inválida. Use a senha recebida por e-mail (mín. 6 caracteres)." };
+    }
+
     const user = await ctx.runQuery(internal.users.getByEmailInternal, {
       email: normalized,
     });
 
-    if (!user?.passwordHash) {
+    if (!user) {
       return {
         ok: false as const,
         error:
-          "Conta não encontrada ou sem senha. Verifique o e-mail de boas-vindas após a compra na Kiwify.",
+          "Este e-mail não está cadastrado. Faça sua compra na Kiwify para receber o acesso.",
+      };
+    }
+
+    if (!user.passwordHash) {
+      return {
+        ok: false as const,
+        error:
+          "Acesso ainda não liberado. Aguarde o e-mail de boas-vindas após a compra na Kiwify.",
       };
     }
 
     if (user.accessStatus === "refunded" || user.accessStatus === "inactive") {
       return {
         ok: false as const,
-        error: "Seu acesso está inativo. Verifique sua assinatura.",
+        error: "Seu acesso está inativo. Verifique sua assinatura na Kiwify.",
       };
     }
 

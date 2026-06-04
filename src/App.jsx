@@ -24,7 +24,8 @@ import {
   saveStatus,
   statusToLegacyPlan
 } from "./services/planAccess.js";
-import { clearSession, fetchSessionUser, getStoredToken, loginWithPassword } from "./services/authApi.js";
+import { checkRegistrationStatus, clearSession, fetchSessionUser, getStoredToken, loginWithPassword } from "./services/authApi.js";
+import { isValidEmail, registrationBlockMessage, validateLoginCredentials } from "./services/authValidation.js";
 import { syncStatusFromBackend } from "./services/subscriptionApi.js";
 
 const todayStr = () => new Date().toISOString().split("T")[0];
@@ -185,6 +186,8 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 .login-title{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;font-style:italic;text-align:center;margin-bottom:4px}
 .login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:36px;line-height:1.65;max-width:280px}
 .inp-grp{width:100%;max-width:320px;margin-bottom:12px}
+.inp-hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45;max-width:320px}
+.inp-hint--err{color:#c45c5c}
 .inp-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;display:block}
 .inp{width:100%;background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;color:var(--txt);font-family:'Lato',sans-serif;font-size:15px;outline:none;transition:border-color .2s}
 .inp:focus{border-color:var(--bdr2)}
@@ -321,6 +324,7 @@ export default function App() {
   const [user, setUser] = useState(() => ls.get("jcd_user"));
   const [userStatus, setUserStatus] = useState(() => readStoredStatus(ls));
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [loginErrors, setLoginErrors] = useState({ email: "", password: "" });
   const [loginLoading, setLoginLoading] = useState(false);
   const [history, setHistory] = useState(() => ls.get("jcd_history", {}));
   const [notes, setNotes] = useState(() => ls.get("jcd_notes", {}));
@@ -550,11 +554,24 @@ export default function App() {
   });
 
   const handleLogin = async () => {
-    const email = loginForm.email.trim().toLowerCase();
-    const password = loginForm.password;
-    if (!email || !password) return;
+    const check = validateLoginCredentials(loginForm.email, loginForm.password);
+    if (!check.ok) {
+      setLoginErrors({ email: check.field === "email" ? check.message : "", password: check.field === "password" ? check.message : "" });
+      showToast(check.message, "err");
+      return;
+    }
+    setLoginErrors({ email: "", password: "" });
+
+    const reg = await checkRegistrationStatus(check.email);
+    if (!reg?.ok) {
+      const msg = registrationBlockMessage(reg?.reason);
+      setLoginErrors({ email: msg, password: "" });
+      showToast(msg, "err");
+      return;
+    }
+
     setLoginLoading(true);
-    const res = await loginWithPassword(email, password);
+    const res = await loginWithPassword(check.email, loginForm.password);
     setLoginLoading(false);
     if (!res.ok) {
       showToast(res.error || "Não foi possível entrar.", "err");
@@ -585,8 +602,13 @@ export default function App() {
 
   const handleMagicLink = async () => {
     const em = magicEmail.trim().toLowerCase();
-    if (!em || !em.includes("@")) {
-      showToast("Informe um e-mail valido.", "err");
+    if (!isValidEmail(em)) {
+      showToast("Informe um e-mail válido.", "err");
+      return;
+    }
+    const reg = await checkRegistrationStatus(em);
+    if (!reg?.ok) {
+      showToast(registrationBlockMessage(reg?.reason), "err");
       return;
     }
     setMagicLoading(true);
@@ -744,8 +766,12 @@ export default function App() {
               autoComplete="email"
               placeholder="seu@email.com"
               value={loginForm.email}
-              onChange={(e) => setLoginForm((f) => ({ ...f, email: e.target.value }))}
+              onChange={(e) => {
+                setLoginForm((f) => ({ ...f, email: e.target.value }));
+                if (loginErrors.email) setLoginErrors((err) => ({ ...err, email: "" }));
+              }}
             />
+            {loginErrors.email ? <p className="inp-hint inp-hint--err">{loginErrors.email}</p> : null}
           </div>
           <div className="inp-grp">
             <label className="inp-lbl">Senha</label>
@@ -755,14 +781,23 @@ export default function App() {
               autoComplete="current-password"
               placeholder="Senha recebida por e-mail"
               value={loginForm.password}
-              onChange={(e) => setLoginForm((f) => ({ ...f, password: e.target.value }))}
+              onChange={(e) => {
+                setLoginForm((f) => ({ ...f, password: e.target.value }));
+                if (loginErrors.password) setLoginErrors((err) => ({ ...err, password: "" }));
+              }}
               onKeyDown={(e) => e.key === "Enter" && !loginLoading && handleLogin()}
             />
+            {loginErrors.password ? <p className="inp-hint inp-hint--err">{loginErrors.password}</p> : null}
           </div>
           <button
             className="login-btn"
             onClick={() => void handleLogin()}
-            disabled={loginLoading || !loginForm.email.trim() || !loginForm.password}
+            disabled={
+              loginLoading ||
+              !isValidEmail(loginForm.email) ||
+              !loginForm.password ||
+              loginForm.password.length < 6
+            }
           >
             <span className="login-btn-inner">
               {loginLoading && <span className="spinner-btn" aria-hidden />}

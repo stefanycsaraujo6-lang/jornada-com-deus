@@ -1,9 +1,35 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, query } from "./_generated/server";
+import { isValidEmail, normalizeEmail } from "./lib/validation";
 
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
+export const checkRegistration = query({
+  args: { email: v.string() },
+  handler: async (ctx, { email }) => {
+    const normalized = normalizeEmail(email);
+    if (!isValidEmail(normalized)) {
+      return { ok: false as const, reason: "invalid_email" as const };
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", normalized))
+      .unique();
+
+    if (!user) {
+      return { ok: false as const, reason: "not_registered" as const };
+    }
+
+    if (!user.passwordHash) {
+      return { ok: false as const, reason: "pending_activation" as const };
+    }
+
+    if (user.accessStatus === "refunded" || user.accessStatus === "inactive") {
+      return { ok: false as const, reason: "inactive" as const };
+    }
+
+    return { ok: true as const };
+  },
+});
 
 export const getByEmailInternal = internalQuery({
   args: { email: v.string() },

@@ -54,6 +54,19 @@ export function clearSession() {
   }
 }
 
+export async function checkRegistrationStatus(email) {
+  const client = getClient();
+  if (!client) return { ok: false, reason: "invalid_email" };
+
+  try {
+    return await client.query(api.users.checkRegistration, {
+      email: String(email || "").trim().toLowerCase(),
+    });
+  } catch {
+    return { ok: false, reason: "invalid_email" };
+  }
+}
+
 export async function loginWithPassword(email, password) {
   const client = getClient();
   if (!client) {
@@ -64,6 +77,24 @@ export async function loginWithPassword(email, password) {
   }
 
   try {
+    const reg = await client.query(api.users.checkRegistration, {
+      email: email.trim().toLowerCase(),
+    });
+    if (!reg?.ok) {
+      const messages = {
+        invalid_email: "Informe um e-mail válido.",
+        not_registered:
+          "Este e-mail não está cadastrado. Faça sua compra na Kiwify para receber o acesso.",
+        pending_activation:
+          "Acesso ainda não liberado. Aguarde o e-mail de boas-vindas após a compra.",
+        inactive: "Seu acesso está inativo. Verifique sua assinatura na Kiwify.",
+      };
+      return {
+        ok: false,
+        error: messages[reg?.reason] || "Não foi possível validar o acesso.",
+      };
+    }
+
     const data = await client.action(api.authActions.login, {
       email: email.trim().toLowerCase(),
       password,
