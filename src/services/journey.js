@@ -7,6 +7,7 @@ import { getStyleLibrary, pickChallengeStyle, pickJourneyStyle } from "./styleLi
 import {
   contentFingerprint,
   getGenerationConfig,
+  parseAiJson,
   pickDistinctFallback,
   slugifyId
 } from "./aiGeneration.js";
@@ -244,7 +245,7 @@ function hashUserSeed(parts) {
   return Math.abs(hash);
 }
 
-function fallbackJourney(name, variant = 0, userName = "", userEmail = "", nonce = "") {
+export function getJourneyFallback(name, variant = 0, userName = "", userEmail = "", nonce = "") {
   const seed = hashUserSeed([name, userName, userEmail, variant, nonce]);
   const base = FALLBACK_JOURNEY_TEMPLATES[seed % FALLBACK_JOURNEY_TEMPLATES.length];
   return {
@@ -254,14 +255,52 @@ function fallbackJourney(name, variant = 0, userName = "", userEmail = "", nonce
   };
 }
 
+function normalizeChallengePayload(parsed) {
+  const days = (parsed?.days || parsed?.dias || [])
+    .map((day, index) => ({
+      day: Number(day?.day ?? day?.dia ?? index + 1),
+      task: String(day?.task || day?.tarefa || day?.texto || "").trim()
+    }))
+    .filter((day) => day.task);
+
+  if (days.length < 3) return null;
+
+  return {
+    title: String(parsed?.title || parsed?.titulo || "Desafio semanal").trim(),
+    description: String(parsed?.description || parsed?.descricao || "").trim(),
+    days: days.slice(0, 7),
+    styleId: parsed?.styleId,
+    styleLabel: parsed?.styleLabel
+  };
+}
+
+function normalizeJourneyPayload(parsed, journeyName) {
+  const steps = (parsed?.steps || parsed?.etapas || parsed?.stages || [])
+    .map((step, index) => ({
+      step: Number(step?.step ?? step?.etapa ?? step?.stage ?? index + 1),
+      title: String(step?.title || step?.titulo || step?.name || "").trim(),
+      preview: String(step?.preview || step?.previa || step?.description || step?.descricao || "").trim()
+    }))
+    .filter((step) => step.title || step.preview);
+
+  if (steps.length < 3) return null;
+
+  return {
+    title: String(parsed?.title || parsed?.titulo || journeyName).trim(),
+    description: String(parsed?.description || parsed?.descricao || "").trim(),
+    steps: steps.slice(0, 5),
+    styleId: parsed?.styleId,
+    styleLabel: parsed?.styleLabel
+  };
+}
+
 async function callAI(prompt, generationConfig) {
   const data = await requestGemini({
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig
   });
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
+  return parseAiJson(text);
 }
 
 export async function genChallenge(userName, options = {}) {
@@ -325,7 +364,9 @@ ${previousSummary}${blockedSummary}${historyBlock}
 
 Responda APENAS com JSON válido:
 {"title":"título que provoque curiosidade e compromisso (não genérico)","description":"2 frases que expliquem o coração do desafio — por que esta semana importa, o que pode mudar","days":[{"day":1,"task":"tarefa detalhada com ação, contexto bíblico e duração"},{"day":2,"task":"..."},{"day":3,"task":"..."},{"day":4,"task":"..."},{"day":5,"task":"..."},{"day":6,"task":"..."},{"day":7,"task":"..."}],"styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
-    return parsed;
+    const normalized = normalizeChallengePayload(parsed);
+    if (!normalized) throw new Error("Desafio inválido");
+    return normalized;
   } catch {
     return {
       ...fallbackChallenge(userName, variant, nonce, blockedForFallback),
@@ -399,10 +440,12 @@ ${personClause}
 
 Responda APENAS com JSON válido:
 {"title":"título da jornada (poético, memorável, que gere desejo de começar)","description":"2-3 frases que pintem o destino desta jornada — o que o leitor será diferente ao final","steps":[{"step":1,"title":"título evocativo","preview":"instrução concreta com referência bíblica e atitude interior"},{"step":2,"title":"...","preview":"..."},{"step":3,"title":"...","preview":"..."},{"step":4,"title":"...","preview":"..."},{"step":5,"title":"...","preview":"..."}],"styleId":"${style.id}","styleLabel":"${style.label}"}`, generationConfig);
-    return parsed;
+    const normalized = normalizeJourneyPayload(parsed, name);
+    if (!normalized) throw new Error("Jornada inválida");
+    return normalized;
   } catch {
     return {
-      ...fallbackJourney(name, variant, userName, userEmail, nonce),
+      ...getJourneyFallback(name, variant, userName, userEmail, nonce),
       styleId: style.id,
       styleLabel: style.label,
       fromFallback: true

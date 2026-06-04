@@ -709,7 +709,7 @@ export default function App() {
     const ok = await loadJourney(name);
     if (!ok) {
       setTab("journeys");
-      showToast("Não foi possível gerar a jornada. Verifique a conexão e tente de novo.", "err");
+      showToast("Não foi possível abrir esta jornada agora. Tente novamente em instantes.", "err");
     }
   };
 
@@ -1117,7 +1117,7 @@ export default function App() {
     <>
       <button className="back" style={{marginTop:50}} onClick={() => setTab("journeys")}>← Jornadas</button>
       {journeyLoading ? (
-        <div className="loading"><div className="spinner"/><p className="loading-txt">Criando sua jornada...</p></div>
+        <div className="loading"><div className="spinner"/><p className="loading-txt">Preparando sua jornada...</p></div>
       ) : journey ? (
         <>
           <div className="dev-eye">Jornada Especial</div>

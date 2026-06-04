@@ -1,7 +1,7 @@
 // ── MODIFICAÇÃO: desafios sem repetição com bloqueio de caches e fingerprint
 // ── DATA: 2026-05-18
 // ── TASK: TASK-10 (refactor App.jsx com hooks/serviços)
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   buildVersionedCacheKey,
   readVariant,
@@ -15,6 +15,7 @@ import {
   challengeFingerprint,
   genChallenge,
   genJourney,
+  getJourneyFallback,
   isSameChallenge,
   isSameJourney,
   isSimilarChallenge
@@ -49,6 +50,7 @@ export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
   const [journey, setJourney] = useState(null);
   const [journeyLoading, setJourneyLoading] = useState(false);
   const [activeJourneyName, setActiveJourneyName] = useState(null);
+  const journeyLoadSeq = useRef(0);
 
   const readChallengeHistory = () => {
     const list = ls?.get(CHALLENGE_HISTORY_KEY);
@@ -155,23 +157,27 @@ export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
   const regenerateChallenge = () => loadChallenge(true);
 
   const loadJourney = async (name, forceNew = false) => {
-    if (!name || journeyLoading) return false;
+    if (!name) return false;
+
+    const loadId = journeyLoadSeq.current + 1;
+    journeyLoadSeq.current = loadId;
 
     setActiveJourneyName(name);
+    const cacheId = journeyCacheId(name, userEmail || userName);
     const variantKey = getJourneyVariantKey(name);
     const currentVariant = readVariant(ls, variantKey);
     const previousJourney = forceNew
-      ? (journey || ls?.get(buildVersionedCacheKey(JOURNEY_CACHE_PREFIX, name, currentVariant)))
+      ? (journey || ls?.get(buildVersionedCacheKey(JOURNEY_CACHE_PREFIX, cacheId, currentVariant)))
       : null;
 
     const variant = resolveVariant(ls, variantKey, forceNew);
-    const cacheKey = buildVersionedCacheKey(JOURNEY_CACHE_PREFIX, journeyCacheId(name, userEmail || userName), variant);
+    const cacheKey = buildVersionedCacheKey(JOURNEY_CACHE_PREFIX, cacheId, variant);
 
     if (forceNew) setJourney(null);
 
     if (!forceNew) {
       const cached = ls?.get(cacheKey);
-      if (cached?.steps?.length) {
+      if (Array.isArray(cached?.steps) && cached.steps.length >= 3) {
         setJourney(cached);
         return true;
       }
@@ -196,14 +202,20 @@ export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
           })
       });
 
-      if (!data?.steps?.length) throw new Error("Resposta inválida");
-      ls?.set(cacheKey, data);
+      if (loadId !== journeyLoadSeq.current) return false;
+
+      let resolved = data;
+      if (!Array.isArray(resolved?.steps) || resolved.steps.length < 3) {
+        resolved = getJourneyFallback(name, variant, userName, userEmail, `recover_${Date.now()}`);
+      }
+
+      ls?.set(cacheKey, resolved);
       pushJourneyHistory({
         journeyName: name,
-        firstStepTitle: data?.steps?.[0]?.title,
-        styleLabel: data?.styleLabel
+        firstStepTitle: resolved?.steps?.[0]?.title,
+        styleLabel: resolved?.styleLabel
       });
-      setJourney(data);
+      setJourney(resolved);
       if (fromFallback) {
         onToast(
           forceNew
@@ -213,11 +225,23 @@ export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
       }
       return true;
     } catch (e) {
+      if (loadId !== journeyLoadSeq.current) return false;
+
+      const recovered = getJourneyFallback(name, variant, userName, userEmail, `recover_${Date.now()}`);
+      if (recovered?.steps?.length) {
+        ls?.set(cacheKey, recovered);
+        setJourney(recovered);
+        onToast("Exibimos uma jornada reserva para você continuar.");
+        return true;
+      }
+
       onToast(getFriendlyAIErrorMessage(e, "Erro ao gerar jornada. Verifique sua conexão."));
-      console.error("[loadJourney] Falha ao chamar Gemini:", { message: e?.message, stack: e?.stack });
+      console.error("[loadJourney] Falha ao gerar jornada:", { message: e?.message, stack: e?.stack });
       return false;
     } finally {
-      setJourneyLoading(false);
+      if (loadId === journeyLoadSeq.current) {
+        setJourneyLoading(false);
+      }
     }
   };
 

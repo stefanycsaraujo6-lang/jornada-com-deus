@@ -2,6 +2,22 @@
 // ── DATA: 2026-05-18
 // ── TASK: TASK-10 (anti-repetição global em devocional, desafio e jornada)
 
+export function parseAiJson(text) {
+  const raw = String(text || "").replace(/```json|```/gi, "").trim();
+  if (!raw) throw new Error("Resposta vazia da API.");
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(raw.slice(start, end + 1));
+    }
+    throw new Error("JSON inválido na resposta da API.");
+  }
+}
+
 export function slugifyId(value) {
   return (
     String(value || "default")
