@@ -27,6 +27,22 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       {
+        name: 'vendas-static-separation',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const pathOnly = (req.url || '').split('?')[0]
+            if (pathOnly.startsWith('/vendas')) {
+              if (pathOnly === '/vendas' || pathOnly === '/vendas/') {
+                const qs = req.url?.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''
+                req.url = `/vendas.html${qs}`
+              }
+              return next()
+            }
+            next()
+          })
+        }
+      },
+      {
         name: 'gemini-local-proxy',
         configureServer(server) {
           server.middlewares.use('/api/gemini', async (req, res) => {
@@ -92,6 +108,7 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
           navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/vendas/],
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
@@ -107,7 +124,16 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       host: true,
-      port: 5173
+      port: 5173,
+      // /vendas → HTML estático em public/vendas.html (sem React)
+      middlewares: [
+        (req, res, next) => {
+          if (req.url?.startsWith('/vendas')) {
+            return next()
+          }
+          next()
+        }
+      ]
     }
   }
 })

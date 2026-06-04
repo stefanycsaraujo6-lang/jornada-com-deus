@@ -4,10 +4,13 @@ import './index.css'
 import App from './App.jsx'
 import { ConvexProviderGate } from './components/ConvexProviderGate.jsx'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <ConvexProviderGate>
-      <App />
-    </ConvexProviderGate>
-  </StrictMode>,
-)
+// LP estática em /vendas — não monta React
+if (!window.location.pathname.includes('/vendas')) {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <ConvexProviderGate>
+        <App />
+      </ConvexProviderGate>
+    </StrictMode>,
+  )
+}

@@ -318,6 +318,9 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 };
 
 export default function App() {
+  // PROTEÇÃO: Se for /vendas, não carrega o App React
+  const isVendasRoute = window.location.pathname.includes("/vendas");
+
   const [dark, setDark] = useState(() => ls.get("jcd_dark", false));
   const [authReady, setAuthReady] = useState(false);
   const [screen, setScreen] = useState("login");
@@ -1398,6 +1401,8 @@ export default function App() {
       </div>
     );
   };
+
+  if (isVendasRoute) return null;
 
   return (
     <>
