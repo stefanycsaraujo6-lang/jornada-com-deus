@@ -16,8 +16,8 @@ Como conferir no painel: Produtos → abrir o Básico → URL contém
 
 | Campo | Valor |
 |-------|--------|
-| Checkout | _pendente_ |
-| ID do produto (`KIWIFY_PRODUCT_ID_UPGRADE`) | _pendente_ |
+| Checkout | `https://pay.kiwify.com.br/23ZHFIT` |
+| ID do produto (`KIWIFY_PRODUCT_ID_UPGRADE`) | conferir em Produtos → URL `.../edit/...` |
 
 ## Webhook
 
@@ -33,7 +33,7 @@ Sem o secret configurado, o webhook é **rejeitado** (ninguém ganha acesso fake
 **Cloudflare Pages**
 
 - `VITE_KIWIFY_BASIC_URL` = `https://pay.kiwify.com.br/fDiPMgJ`
-- `VITE_KIWIFY_UPGRADE_URL` = (quando tiver o link do upgrade)
+- `VITE_KIWIFY_UPGRADE_URL` = `https://pay.kiwify.com.br/23ZHFIT`
 
 **Convex → Settings → Environment Variables (Production)**
 
@@ -41,3 +41,5 @@ Sem o secret configurado, o webhook é **rejeitado** (ninguém ganha acesso fake
 - `KIWIFY_PRODUCT_ID_UPGRADE` = (quando criar o produto Ouro)
 - `KIWIFY_WEBHOOK_SECRET` = segredo gerado na Kiwify
 - `APP_URL` = `https://jornada-com-deus.pages.dev`
+- `META_PIXEL_ID` = `705462081984189`
+- `META_CONVERSIONS_TOKEN` = token da API de Conversões (server-side `Purchase`)

@@ -10,6 +10,7 @@ import {
   isApprovedPaymentStatus,
   pickEmail,
   pickName,
+  pickOrderId,
   pickProductId,
   resolveStatusByProductId,
   USER_STATUS,
@@ -140,6 +141,17 @@ export const handleWebhook = internalAction({
 
       if (result.sendWelcome && tempPassword && email) {
         await sendWelcomeEmail(email, pickName(payload, email), tempPassword);
+      }
+
+      if (result.action === "activated_basico_new" && email) {
+        const customerEmail = email;
+        const orderId = pickOrderId(payload) || eventId;
+        await ctx.runAction(internal.metaConversions.trackPurchase, {
+          email: customerEmail,
+          value: 67.0,
+          transactionId: orderId,
+          productName: "Jornada com Deus Básico",
+        });
       }
 
       await ctx.runMutation(internal.kiwify.recordWebhookEvent, {

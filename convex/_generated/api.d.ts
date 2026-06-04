@@ -15,6 +15,7 @@ import type * as kiwify from "../kiwify.js";
 import type * as kiwifyHttp from "../kiwifyHttp.js";
 import type * as lib_kiwify from "../lib/kiwify.js";
 import type * as lib_validation from "../lib/validation.js";
+import type * as metaConversions from "../metaConversions.js";
 import type * as profiles from "../profiles.js";
 import type * as progress from "../progress.js";
 import type * as users from "../users.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   kiwifyHttp: typeof kiwifyHttp;
   "lib/kiwify": typeof lib_kiwify;
   "lib/validation": typeof lib_validation;
+  metaConversions: typeof metaConversions;
   profiles: typeof profiles;
   progress: typeof progress;
   users: typeof users;

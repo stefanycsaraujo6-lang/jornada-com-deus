@@ -60,6 +60,49 @@ export function pickProductId(payload: Record<string, unknown>) {
   );
 }
 
+export function pickOrderId(payload: Record<string, unknown>) {
+  const order = payload.Order as Record<string, unknown> | undefined;
+  const orderLower = payload.order as Record<string, unknown> | undefined;
+  const data = payload.data as Record<string, unknown> | undefined;
+
+  return String(
+    payload.order_id ||
+      order?.id ||
+      order?.order_id ||
+      orderLower?.id ||
+      orderLower?.order_id ||
+      data?.order_id ||
+      ""
+  ).trim();
+}
+
+export function pickOrderAmount(payload: Record<string, unknown>): number | null {
+  const order = payload.Order as Record<string, unknown> | undefined;
+  const orderLower = payload.order as Record<string, unknown> | undefined;
+  const data = payload.data as Record<string, unknown> | undefined;
+  const candidates = [
+    payload.order_amount,
+    payload.amount,
+    order?.amount,
+    order?.value,
+    orderLower?.amount,
+    data?.amount,
+    data?.order_amount,
+  ];
+
+  for (const raw of candidates) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+export function defaultOrderValueForAction(action: string): number {
+  if (action === "upgraded_to_ouro") return 33;
+  if (action === "activated_basico_new") return 67;
+  return 67;
+}
+
 export function pickCustomerId(payload: Record<string, unknown>) {
   const customer = payload.Customer as Record<string, unknown> | undefined;
   const customerLower = payload.customer as Record<string, unknown> | undefined;

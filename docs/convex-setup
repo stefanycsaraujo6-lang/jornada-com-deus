@@ -53,6 +53,8 @@ Em **Settings → Environment Variables** (Dev e Prod):
 | `APP_URL` | Link no e-mail de boas-vindas |
 | `RESEND_API_KEY` | E-mail com senha (opcional) |
 | `EMAIL_FROM` | Remetente |
+| `META_PIXEL_ID` | `705462081984189` (Conversions API + LP) |
+| `META_CONVERSIONS_TOKEN` | Token da API de Conversões Meta |
 
 ## 4. URL do webhook na Kiwify
 

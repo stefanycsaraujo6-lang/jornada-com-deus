@@ -1,214 +1,1210 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Jornada com Deus — Seu devocional diário</title>
-  <meta name="description" content="Devocional diário para cristãos brasileiros. Consistência que transforma. Acesso vitalício por R$ 67,00 ou em até 10x." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0a0f1e;
-      --card: #111827;
-      --gold: #c9a84c;
-      --gold2: #e8c97a;
-      --txt: #f0ebe3;
-      --muted: #8a9ab0;
-      --bdr: rgba(201, 168, 76, 0.2);
-      --grn: #4caf82;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: "Lato", sans-serif;
-      background: var(--bg);
-      color: var(--txt);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: inherit; text-decoration: none; }
-    .wrap { max-width: 420px; margin: 0 auto; padding: 0 20px 100px; }
-    .top {
-      position: sticky; top: 0; z-index: 20;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 20px; background: rgba(10, 15, 30, 0.92);
-      backdrop-filter: blur(12px); border-bottom: 1px solid var(--bdr);
-    }
-    .logo { font-family: "Cormorant Garamond", serif; font-size: 18px; font-weight: 600; }
-    .logo span { color: var(--gold); margin-right: 6px; }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      color: #0a0f1e; font-weight: 700; font-size: 12px;
-      padding: 10px 16px; border-radius: 999px; border: none; cursor: pointer;
-      letter-spacing: 0.3px;
-    }
-    .btn--lg {
-      width: 100%; padding: 16px 20px; font-size: 15px; border-radius: 14px;
-    }
-    .hero { text-align: center; padding: 36px 0 28px; }
-    .hero h1 {
-      font-family: "Cormorant Garamond", serif;
-      font-size: clamp(36px, 9vw, 44px); font-weight: 300; font-style: italic;
-      line-height: 1.15; margin-bottom: 12px;
-    }
-    .hero p { font-size: 14px; color: var(--muted); max-width: 300px; margin: 0 auto 24px; }
-    .step {
-      background: var(--card); border: 1px solid var(--bdr); border-radius: 16px;
-      padding: 20px; margin-bottom: 12px;
-    }
-    .step-n {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--gold); color: #0a0f1e; font-weight: 700; font-size: 13px;
-      display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
-    }
-    .step h3 {
-      font-family: "Cormorant Garamond", serif; font-size: 22px; color: var(--gold);
-      margin-bottom: 8px; font-weight: 600;
-    }
-    .step p { font-size: 14px; color: var(--muted); line-height: 1.65; }
-    .checks { margin: 28px 0; }
-    .checks h2 {
-      font-family: "Cormorant Garamond", serif; font-size: 20px; text-align: center;
-      margin-bottom: 16px; font-weight: 600;
-    }
-    .check {
-      display: flex; gap: 10px; align-items: flex-start;
-      font-size: 14px; margin-bottom: 10px; color: var(--muted);
-    }
-    .check strong { color: var(--txt); font-weight: 600; }
-    .check-ico { color: var(--grn); flex-shrink: 0; font-size: 16px; }
-    .sec-title {
-      font-family: "Cormorant Garamond", serif; font-size: 24px; text-align: center;
-      margin: 32px 0 18px; font-weight: 600; line-height: 1.3;
-    }
-    .feat {
-      background: var(--card); border: 1px solid var(--bdr); border-radius: 16px;
-      padding: 18px; margin-bottom: 10px;
-    }
-    .feat-ico { font-size: 28px; margin-bottom: 8px; }
-    .feat h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-    .feat p { font-size: 13px; color: var(--muted); line-height: 1.55; }
-    .price-card {
-      background: linear-gradient(160deg, #141c2e, #0d1220);
-      border: 1px solid var(--bdr); border-radius: 20px;
-      padding: 28px 22px; text-align: center; margin-top: 28px;
-    }
-    .price-card .tag {
-      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--gold); margin-bottom: 8px;
-    }
-    .price-card .amount {
-      font-family: "Cormorant Garamond", serif; font-size: 42px; font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .price-card .sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
-    .price-list { text-align: left; margin-bottom: 20px; }
-    .sticky {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-      padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
-      background: linear-gradient(transparent, rgba(10, 15, 30, 0.95) 30%);
-    }
-    .sticky .wrap { padding: 0; max-width: 420px; }
-    .app-link {
-      display: block; text-align: center; margin-top: 16px;
-      font-size: 12px; color: var(--muted);
-    }
-    .app-link a { color: var(--gold); text-decoration: underline; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Jornada com Deus — Devocional diário para cristãos evangélicos. Crie o hábito de orar todos os dias com versículos, reflexões e comunidade.">
+    <meta name="theme-color" content="#f8f6f1">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jornada-com-deus.pages.dev">
+    <meta property="og:title" content="Jornada com Deus — E se você nunca mais esquecesse de orar?">
+    <meta property="og:description" content="Devocional diário. Versículo + reflexão + aplicação prática. Comunidade e desafios.">
+    <title>Jornada com Deus — Devocional Diário</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:#f8f6f1;
+            --bg2:#ffffff;
+            --bg3:#faf9f7;
+            --gold:#c9a96e;
+            --gold-light:#e2c992;
+            --gold-dark:#a07840;
+            --white:#080b18;
+            --muted:#5a5a5a;
+            --border:#e8e6e0;
+            --green:#5cb888;
+            --green-bg:rgba(92,184,136,0.08);
+            --red-soft:#c0392b;
+        }
+        html{scroll-behavior:smooth}
+        body{
+            font-family:'DM Sans',sans-serif;
+            background:var(--bg);
+            color:var(--white);
+            line-height:1.65;
+            overflow-x:hidden;
+            -webkit-font-smoothing:antialiased;
+        }
+        ::selection{background:var(--gold);color:var(--bg)}
+
+        /* TIPOGRAFIA */
+        .serif{font-family:'Cormorant Garamond',serif}
+        h1,h2,h3,.serif-heading{font-family:'Cormorant Garamond',serif;font-weight:700}
+        h1{font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.05;letter-spacing:-0.02em}
+        h2{font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.15}
+        h3{font-size:1.3rem;line-height:1.3}
+        p{color:var(--muted);font-size:1.05rem;margin-bottom:1.2rem}
+        .gold{color:var(--gold)}
+        .small{font-size:0.9rem}
+
+        /* LAYOUT */
+        .wrap{max-width:1100px;margin:0 auto;padding:0 clamp(1.2rem,4vw,2.5rem)}
+        .section{padding:clamp(3.5rem,8vw,6rem) 0}
+        .text-center{text-align:center}
+        .mb-1{margin-bottom:1rem}
+        .mb-2{margin-bottom:2rem}
+        .mb-3{margin-bottom:3rem}
+
+        /* BOTÕES */
+        .btn{
+            display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;
+            padding:1rem 2.2rem;border-radius:8px;font-size:1.05rem;font-weight:600;
+            text-decoration:none;border:none;cursor:pointer;
+            transition:all 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+            font-family:'DM Sans',sans-serif;position:relative;overflow:hidden;
+        }
+        .btn-gold{
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            color:var(--bg);box-shadow:0 4px 24px rgba(201,169,110,0.25);
+        }
+        .btn-gold:hover{
+            transform:translateY(-3px);
+            box-shadow:0 8px 40px rgba(201,169,110,0.35);
+        }
+        .btn-gold::after{
+            content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+            transition:left 0.6s;
+        }
+        .btn-gold:hover::after{left:100%}
+        .btn-outline{
+            background:transparent;color:var(--gold);
+            border:2px solid rgba(201,169,110,0.4);
+        }
+        .btn-outline:hover{
+            border-color:var(--gold);background:rgba(201,169,110,0.06);
+            transform:translateY(-2px);
+        }
+        .btn-lg{padding:1.15rem 2.8rem;font-size:1.1rem}
+        .btn-block{width:100%;max-width:380px}
+
+        /* NAVBAR */
+        .nav{
+            position:fixed;top:0;left:0;right:0;z-index:100;
+            padding:1rem 0;
+            background:rgba(248,246,241,0.95);backdrop-filter:blur(20px);
+            border-bottom:1px solid rgba(201,169,110,0.15);
+            transition:all 0.3s;
+        }
+        .nav .wrap{display:flex;align-items:center;justify-content:space-between}
+        .nav-logo{
+            font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;
+            color:var(--gold);text-decoration:none;letter-spacing:0.03em;
+        }
+        .nav-logo span{color:var(--white)}
+        .nav-cta{
+            padding:0.6rem 1.5rem;border-radius:6px;font-size:0.9rem;font-weight:500;
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            color:var(--bg);text-decoration:none;transition:all 0.3s;
+        }
+        .nav-cta:hover{box-shadow:0 4px 20px rgba(201,169,110,0.3);transform:translateY(-1px)}
+
+        /* HERO */
+        .hero{
+            min-height:100vh;display:flex;align-items:center;
+            padding-top:5rem;
+            position:relative;overflow:hidden;
+        }
+        .hero::before{
+            content:'';position:absolute;inset:0;
+            background:
+                radial-gradient(ellipse 600px 500px at 80% 20%, rgba(201,169,110,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 400px at 20% 80%, rgba(92,184,136,0.05) 0%, transparent 70%);
+        }
+        .hero::after{
+            content:'✦';position:absolute;top:15%;right:12%;
+            font-size:8rem;color:rgba(201,169,110,0.03);
+        }
+        .hero-inner{position:relative;z-index:2;max-width:720px}
+        .hero-badge{
+            display:inline-flex;align-items:center;gap:0.5rem;
+            background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.15);
+            border-radius:99px;padding:0.45rem 1.2rem;margin-bottom:2rem;
+            font-size:0.85rem;color:var(--gold);
+        }
+        .hero-badge .dot{
+            width:7px;height:7px;border-radius:50%;background:var(--green);
+            animation:pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        .hero h1{margin-bottom:1.5rem}
+        .hero h1 em{
+            font-style:italic;
+            background:linear-gradient(135deg,var(--gold-light),var(--gold));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .hero-sub{
+            font-size:1.15rem;color:var(--muted);margin-bottom:2.5rem;
+            max-width:560px;line-height:1.8;
+        }
+        .hero-ctas{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem}
+        .hero-proof{
+            display:flex;align-items:center;gap:1rem;
+            font-size:0.9rem;color:var(--muted);
+        }
+        .hero-avatars{display:flex}
+        .hero-avatars span{
+            width:36px;height:36px;border-radius:50%;
+            border:2px solid var(--bg);margin-right:-10px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.75rem;font-weight:600;color:var(--bg);
+        }
+        .hero-avatars span:nth-child(1){background:var(--gold)}
+        .hero-avatars span:nth-child(2){background:var(--green)}
+        .hero-avatars span:nth-child(3){background:#7c6fbd}
+        .hero-avatars span:nth-child(4){background:var(--gold-dark)}
+
+        /* SEÇÃO DE IDENTIFICAÇÃO */
+        .identify{background:var(--bg2)}
+        .identify-intro{max-width:650px;margin:0 auto 3rem}
+        .identify-intro h2{margin-bottom:1rem}
+        .pain-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:1.2rem;
+        }
+        .pain-card{
+            background:var(--bg);border:1px solid var(--border);
+            border-radius:12px;padding:1.5rem 1.8rem;
+            position:relative;overflow:hidden;
+            transition:border-color 0.3s;
+        }
+        .pain-card:hover{border-color:rgba(201,169,110,0.3)}
+        .pain-card::before{
+            content:'';position:absolute;top:0;left:0;right:0;height:3px;
+            background:linear-gradient(90deg,var(--gold),transparent);
+            opacity:0;transition:opacity 0.3s;
+        }
+        .pain-card:hover::before{opacity:1}
+        .pain-emoji{font-size:1.6rem;margin-bottom:0.8rem;display:block}
+        .pain-card h3{color:var(--white);font-family:'DM Sans',sans-serif;font-weight:600;font-size:1.05rem;margin-bottom:0.6rem}
+        .pain-card p{font-size:0.95rem;margin:0;color:var(--muted)}
+
+        .solution-banner{
+            margin-top:3rem;
+            background:linear-gradient(135deg,rgba(201,169,110,0.06),rgba(92,184,136,0.04));
+            border:1px solid rgba(201,169,110,0.12);
+            border-radius:16px;padding:2.5rem;text-align:center;
+        }
+        .solution-banner h3{
+            font-size:clamp(1.4rem,3vw,1.8rem);
+            color:var(--white);margin-bottom:0.8rem;
+        }
+        .solution-banner p{max-width:550px;margin:0 auto;font-size:1.05rem}
+
+        /* COMO FUNCIONA */
+        .how{background:var(--bg)}
+        .steps{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+            gap:2rem;margin-top:3rem;
+            counter-reset:step;
+        }
+        .step{
+            position:relative;padding:2rem 1.8rem;
+            background:var(--bg2);border-radius:14px;
+            border:1px solid var(--border);
+            counter-increment:step;
+            transition:all 0.3s;
+        }
+        .step:hover{border-color:rgba(201,169,110,0.25);transform:translateY(-4px)}
+        .step::before{
+            content:counter(step);
+            display:flex;align-items:center;justify-content:center;
+            width:44px;height:44px;border-radius:50%;
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            color:var(--bg);font-weight:700;font-size:1.1rem;
+            margin-bottom:1.2rem;
+        }
+        .step h3{color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:1.4rem}
+
+        /* BENEFÍCIOS */
+        .benefits{background:var(--bg2)}
+        .bene-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:1.2rem;margin-top:3rem;
+        }
+        .bene{
+            display:flex;gap:1rem;align-items:flex-start;
+            padding:1.5rem;background:var(--bg);
+            border-radius:12px;border:1px solid var(--border);
+            transition:all 0.3s;
+        }
+        .bene:hover{border-color:rgba(201,169,110,0.2);transform:translateY(-2px)}
+        .bene-icon{
+            flex-shrink:0;width:48px;height:48px;
+            border-radius:10px;display:flex;align-items:center;justify-content:center;
+            font-size:1.4rem;
+            background:linear-gradient(135deg,rgba(201,169,110,0.1),rgba(201,169,110,0.03));
+            border:1px solid rgba(201,169,110,0.12);
+        }
+        .bene h3{color:var(--white);font-family:'DM Sans',sans-serif;font-weight:600;font-size:1rem;margin-bottom:0.3rem}
+        .bene p{font-size:0.92rem;margin:0}
+
+        /* MOCKUP / DEMO */
+        .demo{background:var(--bg);position:relative;overflow:hidden}
+        .demo::before{
+            content:'';position:absolute;
+            width:500px;height:500px;
+            background:radial-gradient(circle,rgba(201,169,110,0.05),transparent 70%);
+            border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);
+        }
+        .demo-layout{
+            display:grid;grid-template-columns:1fr 1.1fr;
+            gap:3rem;align-items:center;position:relative;z-index:2;
+        }
+        .phone-frame{
+            background:var(--bg3);border-radius:28px;
+            border:2px solid var(--border);
+            padding:0.8rem;max-width:320px;margin:0 auto;
+            box-shadow:0 20px 60px rgba(0,0,0,0.4);
+        }
+        .phone-notch{
+            width:100px;height:5px;background:var(--border);
+            border-radius:99px;margin:0 auto 0.8rem;
+        }
+        .phone-screen{
+            background:var(--bg);border-radius:20px;overflow:hidden;
+        }
+        .screen-header{
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            padding:1.2rem 1rem 1rem;text-align:center;color:var(--bg);
+        }
+        .screen-header .day{font-size:0.8rem;opacity:0.7;margin-bottom:0.2rem}
+        .screen-header h4{font-size:1.1rem;font-family:'Cormorant Garamond',serif}
+        .screen-body{padding:1rem}
+        .screen-verse{
+            background:var(--bg2);border-left:3px solid var(--gold);
+            padding:1rem;border-radius:0 8px 8px 0;margin-bottom:0.8rem;
+            font-style:italic;font-size:0.88rem;color:var(--white);line-height:1.5;
+        }
+        .screen-verse cite{
+            display:block;margin-top:0.5rem;font-style:normal;
+            font-size:0.8rem;color:var(--gold);font-weight:600;
+        }
+        .screen-section{
+            background:var(--bg2);border-radius:8px;padding:0.9rem;margin-bottom:0.7rem;
+        }
+        .screen-section strong{
+            display:block;font-size:0.75rem;color:var(--gold);
+            text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;
+        }
+        .screen-section p{font-size:0.85rem;margin:0;color:var(--muted);line-height:1.5}
+        .screen-streak{
+            background:linear-gradient(135deg,var(--green),#3d9e6e);
+            color:var(--bg);padding:0.8rem;border-radius:8px;
+            text-align:center;font-weight:700;font-size:0.95rem;
+            margin-top:0.5rem;
+        }
+        .screen-actions{
+            display:flex;gap:0.5rem;margin-top:0.7rem;
+        }
+        .screen-actions span{
+            flex:1;text-align:center;padding:0.5rem;
+            border-radius:6px;font-size:0.75rem;font-weight:500;
+            border:1px solid var(--border);color:var(--muted);
+        }
+        .screen-actions span:first-child{
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            color:var(--bg);border:none;
+        }
+
+        .demo-text h2{margin-bottom:1.2rem}
+        .demo-text .check-list{list-style:none;margin:1.5rem 0 2rem}
+        .demo-text .check-list li{
+            padding:0.6rem 0;font-size:1rem;color:var(--muted);
+            display:flex;align-items:flex-start;gap:0.7rem;
+        }
+        .demo-text .check-list li::before{
+            content:'✓';color:var(--green);font-weight:700;font-size:1.1rem;flex-shrink:0;
+        }
+        /* TRANSFORMAÇÃO */
+        .transform{background:var(--bg2)}
+        .transform-grid{
+            display:grid;grid-template-columns:1fr auto 1fr;
+            gap:2rem;align-items:stretch;margin-top:3rem;
+        }
+        .transform-col{
+            background:var(--bg);border-radius:14px;
+            border:1px solid var(--border);padding:2rem;
+        }
+        .transform-col.before{border-top:3px solid var(--red-soft)}
+        .transform-col.after{border-top:3px solid var(--green)}
+        .transform-col h3{
+            font-family:'DM Sans',sans-serif;font-weight:600;
+            margin-bottom:1.5rem;font-size:1.1rem;
+        }
+        .transform-col.before h3{color:var(--red-soft)}
+        .transform-col.after h3{color:var(--green)}
+        .transform-item{
+            display:flex;align-items:flex-start;gap:0.6rem;
+            margin-bottom:1rem;font-size:0.95rem;color:var(--muted);
+        }
+        .transform-item .icon{flex-shrink:0;font-size:1rem}
+        .transform-col.before .icon{color:var(--red-soft)}
+        .transform-col.after .icon{color:var(--green)}
+        .transform-arrow{
+            display:flex;align-items:center;justify-content:center;
+            color:var(--gold);font-size:2rem;
+        }
+
+        /* QUEM É */
+        .audience{background:var(--bg)}
+        .audience-cards{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:1.5rem;margin-top:2.5rem;
+        }
+        .audience-card{
+            background:var(--bg2);border-radius:14px;
+            border:1px solid var(--border);padding:2rem;
+            border-left:4px solid var(--gold);
+            transition:all 0.3s;
+        }
+        .audience-card:hover{transform:translateY(-3px);border-color:rgba(201,169,110,0.3)}
+        .audience-card h3{
+            color:var(--gold);font-family:'Cormorant Garamond',serif;
+            font-size:1.3rem;margin-bottom:0.6rem;
+        }
+        .audience-card p{font-size:0.95rem;margin:0}
+
+        /* DEPOIMENTOS */
+        .social-proof{background:var(--bg2)}
+        .testimonials{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:1.5rem;margin-top:3rem;
+        }
+        .testimonial{
+            background:var(--bg);border-radius:14px;
+            border:1px solid var(--border);padding:2rem;
+            position:relative;
+        }
+        .testimonial::before{
+            content:'"';position:absolute;top:0.5rem;right:1.5rem;
+            font-size:4rem;color:rgba(201,169,110,0.08);
+            font-family:'Cormorant Garamond',serif;line-height:1;
+        }
+        .test-stars{color:var(--gold);font-size:0.9rem;margin-bottom:1rem;letter-spacing:2px}
+        .test-text{
+            font-size:1rem;color:var(--white);font-style:italic;
+            margin-bottom:1.5rem;line-height:1.7;
+        }
+        .test-author{display:flex;align-items:center;gap:0.8rem}
+        .test-avatar{
+            width:42px;height:42px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            font-weight:600;font-size:0.85rem;color:var(--bg);
+        }
+        .test-avatar.a1{background:var(--gold)}
+        .test-avatar.a2{background:var(--green)}
+        .test-avatar.a3{background:#7c6fbd}
+        .test-name{font-weight:600;font-size:0.95rem;color:var(--white)}
+        .test-role{font-size:0.85rem;color:var(--muted)}
+        .test-badge{
+            display:inline-block;margin-top:1rem;
+            font-size:0.75rem;color:var(--gold);
+            background:rgba(201,169,110,0.08);
+            padding:0.25rem 0.7rem;border-radius:4px;
+        }
+
+        /* PREÇOS */
+        .pricing{background:var(--bg)}
+        .pricing-grid{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+            gap:1.5rem;margin-top:3rem;
+        }
+        .price-card{
+            background:var(--bg2);border:2px solid var(--border);
+            border-radius:16px;padding:2.5rem 2rem;text-align:center;
+            position:relative;transition:all 0.3s;
+        }
+        .price-card:hover{transform:translateY(-4px)}
+        .price-card.featured{
+            border-color:var(--gold);
+            background:linear-gradient(180deg,rgba(201,169,110,0.04),var(--bg2));
+        }
+        .price-badge{
+            position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            color:var(--bg);padding:0.4rem 1.5rem;border-radius:99px;
+            font-size:0.8rem;font-weight:600;white-space:nowrap;
+        }
+        .price-card h3{
+            color:var(--gold);font-size:1.5rem;margin-bottom:0.5rem;
+        }
+        .price-value{
+            font-size:3rem;font-weight:700;color:var(--white);
+            font-family:'Cormorant Garamond',serif;
+            margin:1rem 0 0.3rem;
+        }
+        .price-value span{font-size:1.2rem;font-weight:400;color:var(--muted)}
+        .price-period{font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem}
+        .price-divider{
+            height:1px;background:var(--border);margin:1.5rem 0;
+        }
+        .price-features{text-align:left;margin-bottom:2rem}
+        .price-feat{
+            padding:0.55rem 0;font-size:0.95rem;color:var(--muted);
+            display:flex;align-items:center;gap:0.6rem;
+        }
+        .price-feat::before{content:'✓';color:var(--green);font-weight:700}
+        .price-card .btn{width:100%}
+
+        .price-guarantee{
+            text-align:center;margin-top:3rem;
+            padding:2rem;background:var(--bg2);border-radius:14px;
+            border:1px solid var(--border);
+        }
+        .price-guarantee p{margin:0;font-size:0.95rem}
+
+        /* FAQ */
+        .faq{background:var(--bg2)}
+        .faq-wrap{max-width:700px;margin:3rem auto 0}
+        .faq-item{
+            background:var(--bg);border:1px solid var(--border);
+            border-radius:10px;margin-bottom:0.7rem;overflow:hidden;
+        }
+        .faq-q{
+            padding:1.2rem 1.5rem;cursor:pointer;
+            display:flex;justify-content:space-between;align-items:center;
+            font-weight:500;color:var(--white);font-size:1rem;
+            transition:background 0.3s;
+        }
+        .faq-q:hover{background:var(--bg3)}
+        .faq-q .arrow{
+            color:var(--gold);font-size:1.3rem;
+            transition:transform 0.3s;flex-shrink:0;margin-left:1rem;
+        }
+        .faq-item.open .arrow{transform:rotate(45deg)}
+        .faq-a{
+            max-height:0;overflow:hidden;transition:max-height 0.35s ease;
+        }
+        .faq-item.open .faq-a{max-height:300px}
+        .faq-a-inner{
+            padding:0 1.5rem 1.2rem;color:var(--muted);
+            font-size:0.95rem;line-height:1.7;
+        }
+
+        /* CTA FINAL */
+        .final-cta{
+            background:
+                radial-gradient(ellipse 700px 400px at 50% 50%,rgba(201,169,110,0.06),transparent),
+                var(--bg);
+            text-align:center;position:relative;
+        }
+        .final-cta h2{margin-bottom:1rem}
+        .final-cta .verse-quote{
+            font-family:'Cormorant Garamond',serif;font-style:italic;
+            font-size:1.2rem;color:var(--gold);margin-bottom:2rem;
+            max-width:550px;margin-left:auto;margin-right:auto;
+        }
+
+        /* FOOTER */
+        footer{
+            background:var(--bg);border-top:1px solid var(--border);
+            padding:2rem 0;text-align:center;
+        }
+        .footer-links{
+            display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;
+            margin-bottom:1rem;
+        }
+        .footer-links a{color:var(--gold);text-decoration:none;font-size:0.9rem}
+        .footer-links a:hover{text-decoration:underline}
+
+        /* STICKY CTA MOBILE */
+        .sticky-bar{
+            display:none;position:fixed;bottom:0;left:0;right:0;z-index:99;
+            background:rgba(248,246,241,0.95);backdrop-filter:blur(16px);
+            border-top:1px solid rgba(201,169,110,0.2);
+            padding:0.8rem 1rem;
+        }
+        .sticky-bar .btn{width:100%;padding:0.85rem;font-size:0.95rem}
+
+        /* SCROLL ANIMATIONS */
+        .reveal{
+            opacity:0;transform:translateY(24px);
+            transition:opacity 0.6s ease,transform 0.6s ease;
+        }
+        .reveal.visible{opacity:1;transform:translateY(0)}
+        .reveal-d1{transition-delay:0.1s}
+        .reveal-d2{transition-delay:0.2s}
+        .reveal-d3{transition-delay:0.3s}
+
+        /* RESPONSIVO */
+        @media(max-width:768px){
+            .hero-ctas{flex-direction:column;align-items:stretch}
+            .hero-ctas .btn{text-align:center}
+            .demo-layout{grid-template-columns:1fr}
+            .transform-grid{grid-template-columns:1fr;gap:1rem}
+            .transform-arrow{transform:rotate(90deg);padding:0.5rem 0}
+            .sticky-bar{display:block}
+            .pain-grid,.steps,.bene-grid,.audience-cards,.testimonials,.pricing-grid{
+                grid-template-columns:1fr;
+            }
+            .phone-frame{max-width:280px}
+        }
+        @media(max-width:480px){
+            .nav-logo{font-size:1.1rem}
+            .hero-proof{flex-direction:column;align-items:flex-start;gap:0.5rem}
+        }
+    </style>
+    <!-- Meta Pixel ID: 705462081984189 -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '705462081984189');
+      fbq('track', 'PageView');
+      fbq('track', 'ViewContent', {
+        content_name: 'Landing Jornada com Deus',
+        content_category: 'devocional'
+      });
+    </script>
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "x1wuzl9dq4");
+    </script>
 </head>
 <body>
-  <header class="top">
-    <div class="logo"><span>✦</span> Jornada com Deus</div>
-    <a class="btn js-checkout" href="#">Começar →</a>
-  </header>
+<noscript>
+  <img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=705462081984189&ev=PageView&noscript=1" />
+</noscript>
 
-  <main class="wrap">
-    <section class="hero">
-      <h1>Seu devocional diário.<br/>Consistência que transforma.</h1>
-      <p>exatamente o que você precisa para começar o dia com Deus.</p>
-      <a class="btn btn--lg js-checkout" href="#">Quero começar →</a>
-      <p class="app-link">Já comprou? <a href="https://jornada-com-deus.pages.dev">Entrar no app</a></p>
-    </section>
-
-    <article class="step">
-      <div class="step-n">1</div>
-      <h3>Abre o app todo dia</h3>
-      <p>Um gesto simples de manhã — antes do celular virar distração — para colocar Deus em primeiro lugar.</p>
-    </article>
-    <article class="step">
-      <div class="step-n">2</div>
-      <h3>Lê seu devocional do dia</h3>
-      <p>Um versículo escolhido para o seu momento + uma reflexão que fala com sua vida real + uma ação prática simples pra levar no coração o dia inteiro.</p>
-    </article>
-    <article class="step">
-      <div class="step-n">3</div>
-      <h3>Marca &ldquo;feito&rdquo; e cresce</h3>
-      <p>Sua sequência de dias cresce. Você vê seu progresso. A comunidade te acompanha. A consistência vira hábito. O hábito vira transformação.</p>
-    </article>
-
-    <section class="checks">
-      <h2>O que você recebe</h2>
-      <div class="check"><span class="check-ico">✓</span><span><strong>Versículo do dia</strong> — relevante para a sua semana</span></div>
-      <div class="check"><span class="check-ico">✓</span><span>Reflexão curta que conecta com sua vida real</span></div>
-      <div class="check"><span class="check-ico">✓</span><span>Ação prática pra levar no coração</span></div>
-      <div class="check"><span class="check-ico">✓</span><span><strong>Dias seguidos</strong> que te motivam a não parar</span></div>
-      <div class="check"><span class="check-ico">✓</span><span>Compartilhe o versículo no WhatsApp com um toque</span></div>
-    </section>
-
-    <h2 class="sec-title">Tudo que você precisa — nada que você não precisa</h2>
-
-    <article class="feat">
-      <div class="feat-ico">📖</div>
-      <h3>Devocional diário único</h3>
-      <p>Cada dia é diferente. Versículo, reflexão e ação prática com base bíblica sólida — feitos para a sua jornada.</p>
-    </article>
-    <article class="feat">
-      <div class="feat-ico">🔥</div>
-      <h3>Dias seguidos que motivam</h3>
-      <p>Veja seus dias acumulando. Aquele &ldquo;não vou quebrar hoje&rdquo; vira força espiritual de verdade.</p>
-    </article>
-    <article class="feat">
-      <div class="feat-ico">📊</div>
-      <h3>Progresso visual</h3>
-      <p>Histórico, desafio semanal e ranking leve para celebrar constância sem competir com ninguém.</p>
-    </article>
-
-    <section class="price-card" id="plano">
-      <div class="tag">Plano Básico</div>
-      <div class="amount">R$ 67,00</div>
-      <p class="sub">vitalício · ou em até 10x</p>
-      <div class="price-list">
-        <div class="check"><span class="check-ico">✓</span><span>Devocional diário personalizado</span></div>
-        <div class="check"><span class="check-ico">✓</span><span>Versículo + reflexão + aplicação prática</span></div>
-        <div class="check"><span class="check-ico">✓</span><span>Marcar dia concluído e ver sua sequência</span></div>
-        <div class="check"><span class="check-ico">✓</span><span>Histórico visual do seu progresso</span></div>
-        <div class="check"><span class="check-ico">✓</span><span>Desafio semanal</span></div>
-        <div class="check"><span class="check-ico">✓</span><span>Compartilhar versículo</span></div>
-      </div>
-      <a class="btn btn--lg js-checkout" href="#">Garantir meu acesso →</a>
-    </section>
-  </main>
-
-  <div class="sticky">
+<!-- NAV -->
+<nav class="nav">
     <div class="wrap">
-      <a class="btn btn--lg js-checkout" href="#">Quero começar — R$ 67,00 vitalício →</a>
+        <a href="#" class="nav-logo">✦ Jornada <span>com Deus</span></a>
+        <a href="https://pay.kiwify.com.br/fDiPMgJ" class="nav-cta" data-cta="navbar">Começar agora</a>
     </div>
-  </div>
+</nav>
 
-  <script>
-    (function () {
-      var params = new URLSearchParams(location.search);
-      var checkout =
-        params.get("checkout") ||
-        "https://pay.kiwify.com.br/fDiPMgJ";
-      document.querySelectorAll(".js-checkout").forEach(function (el) {
-        el.href = checkout;
-        el.target = "_blank";
-        el.rel = "noopener noreferrer";
+<!-- HERO -->
+<section class="hero">
+    <div class="wrap">
+        <div class="hero-inner">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                Mais de 1.200 cristãos já começaram sua jornada
+            </div>
+
+            <h1>E se você <em>nunca mais</em> esquecesse de orar?</h1>
+
+            <p class="hero-sub">
+                Devocional novo a cada dia. Um versículo, uma reflexão e uma ação prática — 
+                em 5 minutos ou menos. Sem app pesado, sem inglês, sem complicação.
+            </p>
+
+            <div class="hero-ctas">
+                <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold btn-lg" data-cta="hero">
+                    Quero começar minha jornada →
+                </a>
+                <a href="#como-funciona" class="btn btn-outline btn-lg">
+                    Ver como funciona
+                </a>
+            </div>
+
+            <div class="hero-proof">
+                <div class="hero-avatars">
+                    <span>MR</span><span>JC</span><span>AL</span><span>FS</span>
+                </div>
+                <span>Nota 4.9 ★ · Acesso imediato · R$ 67,00 vitalício</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- IDENTIFICAÇÃO COM A DOR -->
+<section class="identify section">
+    <div class="wrap">
+        <div class="identify-intro text-center">
+            <h2 class="reveal">Você se identifica com alguma dessas situações?</h2>
+            <p class="reveal reveal-d1">Se a resposta for sim para pelo menos uma, o Jornada foi feito pra você.</p>
+        </div>
+
+        <div class="pain-grid">
+            <div class="pain-card reveal">
+                <span class="pain-emoji">😔</span>
+                <h3>"Começo motivado, mas em 3 dias já esqueci"</h3>
+                <p>A vida atropela. O alarme toca, as crianças chamam, o trabalho consome. No final do dia, a culpa pesa — você queria ter orado, mas não orou.</p>
+            </div>
+            <div class="pain-card reveal reveal-d1">
+                <span class="pain-emoji">😩</span>
+                <h3>"Os apps são em inglês ou muito complicados"</h3>
+                <p>Já baixou 3 apps diferentes. Um era em inglês, outro tinha 50 menus. Você queria algo simples — abrir, ler, orar. Pronto.</p>
+            </div>
+            <div class="pain-card reveal reveal-d2">
+                <span class="pain-emoji">😐</span>
+                <h3>"Leio a Bíblia mas não sei aplicar no meu dia"</h3>
+                <p>Às vezes lê o versículo e pensa: "tá, e agora?". Falta uma ponte entre o texto e a sua segunda-feira real, com boletos e pressão.</p>
+            </div>
+        </div>
+
+        <div class="solution-banner reveal">
+            <h3 class="serif">O Jornada com Deus resolve exatamente isso.</h3>
+            <p>Um devocional novo todo dia que entende seu momento, fala a sua língua e cabe nos seus 5 minutos de silêncio.</p>
+        </div>
+    </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="how section" id="como-funciona">
+    <div class="wrap">
+        <h2 class="text-center reveal">Simples assim: 3 passos, 5 minutos</h2>
+        <p class="text-center reveal reveal-d1" style="max-width:500px;margin:0 auto">Sem cadastros longos. Sem cartão de crédito pra testar. Abriu, leu, orou.</p>
+
+        <div class="steps">
+            <div class="step reveal">
+                <h3>Abre o app no celular</h3>
+                <p>Funciona direto no navegador. Instala em 1 toque na tela inicial — como qualquer app, mas sem baixar da loja. Leve e rápido.</p>
+            </div>
+            <div class="step reveal reveal-d1">
+                <h3>Lê seu devocional do dia</h3>
+                <p>Um versículo novo + uma reflexão que fala com sua vida real + uma ação prática simples pra levar no coração o dia inteiro.</p>
+            </div>
+            <div class="step reveal reveal-d2">
+                <h3>Marca "feito" e cresce</h3>
+                <p>Seu histórico fica registrado. Você vê seu progresso. A comunidade te acompanha. A consistência vira hábito. O hábito vira transformação.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MOCKUP / DEMO -->
+<section class="demo section">
+    <div class="wrap">
+        <div class="demo-layout">
+            <div class="reveal">
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-screen">
+                        <div class="screen-header">
+                            <div class="day">Terça-feira, 3 de junho</div>
+                            <h4>Devocional do Dia</h4>
+                        </div>
+                        <div class="screen-body">
+                            <div class="screen-verse">
+                                "Confiai no Senhor de todo o vosso coração, e não vos apoieis na vossa inteligência."
+                                <cite>Provérbios 3:5</cite>
+                            </div>
+                            <div class="screen-section">
+                                <strong>Reflexão</strong>
+                                <p>A confiança não é sobre entender tudo. É sobre crer em quem controla tudo — mesmo quando o caminho não faz sentido.</p>
+                            </div>
+                            <div class="screen-section">
+                                <strong>Ação prática</strong>
+                                <p>Nomeie uma ansiedade. Diga em voz alta: "Confio que Deus cuida disso." Respire fundo.</p>
+                            </div>
+                            <div class="screen-streak">🔥 12 dias consecutivos</div>
+                            <div class="screen-actions">
+                                <span>✓ Concluído</span>
+                                <span>Compartilhar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-text reveal reveal-d1">
+                <h2>Isso é o que você vê <em class="gold">todo dia</em></h2>
+                <p>Sem menus escondidos. Sem 15 abas. Cada manhã, uma página limpa com exatamente o que você precisa para começar o dia com Deus.</p>
+                <ul class="check-list">
+                    <li>Um versículo novo — sempre relevante pra sua semana</li>
+                    <li>Reflexão curta que conecta com sua vida real</li>
+                    <li>Ação prática pra levar no coração</li>
+                    <li>Seu progresso registrado — te motiva a não parar</li>
+                    <li>Compartilhe o versículo no WhatsApp com um toque</li>
+                </ul>
+                <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold" data-cta="demo">Quero experimentar →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BENEFÍCIOS -->
+<section class="benefits section">
+    <div class="wrap">
+        <h2 class="text-center reveal">Tudo que você precisa — nada que você não precisa</h2>
+
+        <div class="bene-grid">
+            <div class="bene reveal">
+                <div class="bene-icon">✨</div>
+                <div>
+                    <h3>Devocional novo a cada dia</h3>
+                    <p>Cada dia é único. Um versículo diferente com reflexão profunda e ação prática.</p>
+                </div>
+            </div>
+            <div class="bene reveal reveal-d1">
+                <div class="bene-icon">🔥</div>
+                <div>
+                    <h3>Seu progresso visível</h3>
+                    <p>Veja seus dias acumulando. Aquele "não vou quebrar hoje" é o que forma hábitos duradouros.</p>
+                </div>
+            </div>
+            <div class="bene reveal reveal-d2">
+                <div class="bene-icon">📱</div>
+                <div>
+                    <h3>App no celular, sem loja</h3>
+                    <p>PWA: instala em 1 toque, funciona offline, ocupa quase zero de memória. iPhone e Android.</p>
+                </div>
+            </div>
+            <div class="bene reveal">
+                <div class="bene-icon">👥</div>
+                <div>
+                    <h3>Comunidade e ranking</h3>
+                    <p>Você não ora sozinho. Veja o ranking, participe de desafios semanais, cresça com outros irmãos.</p>
+                </div>
+            </div>
+            <div class="bene reveal reveal-d1">
+                <div class="bene-icon">🌓</div>
+                <div>
+                    <h3>Modo claro e escuro</h3>
+                    <p>Ore de madrugada sem queimar os olhos. Ore no almoço com tela clara. Você escolhe.</p>
+                </div>
+            </div>
+            <div class="bene reveal reveal-d2">
+                <div class="bene-icon">💬</div>
+                <div>
+                    <h3>Compartilhe no WhatsApp</h3>
+                    <p>Envie o versículo do dia com um toque. Inspire sua família, célula e amigos todo dia.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ANTES vs DEPOIS -->
+<section class="transform section">
+    <div class="wrap">
+        <h2 class="text-center reveal">A diferença que consistência faz</h2>
+        <p class="text-center reveal reveal-d1" style="max-width:500px;margin:0 auto">Não é sobre perfeição. É sobre mostrar pra Deus que você quer estar presente — todo dia.</p>
+
+        <div class="transform-grid reveal">
+            <div class="transform-col before">
+                <h3>❌ Sem o Jornada</h3>
+                <div class="transform-item"><span class="icon">✕</span> Esquece de orar 4 dias por semana</div>
+                <div class="transform-item"><span class="icon">✕</span> Lê a Bíblia mas não sabe aplicar</div>
+                <div class="transform-item"><span class="icon">✕</span> Se sente culpado e distante de Deus</div>
+                <div class="transform-item"><span class="icon">✕</span> Tenta sozinho, sem suporte</div>
+                <div class="transform-item"><span class="icon">✕</span> Apps em inglês ou confusos demais</div>
+            </div>
+
+            <div class="transform-arrow">→</div>
+
+            <div class="transform-col after">
+                <h3>✓ Com o Jornada</h3>
+                <div class="transform-item"><span class="icon">✓</span> Devocional todo dia em 5 minutos</div>
+                <div class="transform-item"><span class="icon">✓</span> Reflexão + ação prática pro seu dia</div>
+                <div class="transform-item"><span class="icon">✓</span> Paz de quem está caminhando com Deus</div>
+                <div class="transform-item"><span class="icon">✓</span> Comunidade que te acompanha</div>
+                <div class="transform-item"><span class="icon">✓</span> App em português, bonito e simples</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PARA QUEM É -->
+<section class="audience section">
+    <div class="wrap">
+        <h2 class="text-center reveal">Feito pra quem quer orar de verdade</h2>
+        <p class="text-center reveal reveal-d1" style="max-width:520px;margin:0 auto">Não importa onde você está na caminhada. Se você quer consistência com Deus, é pra você.</p>
+
+        <div class="audience-cards">
+            <div class="audience-card reveal">
+                <h3>A mãe que tem 5 minutos de silêncio</h3>
+                <p>Entre a escola e o almoço, entre a louça e a reunião. Seu devocional cabe naquele café da manhã — curto, profundo, seu.</p>
+            </div>
+            <div class="audience-card reveal reveal-d1">
+                <h3>O profissional na correria</h3>
+                <p>Trabalha 10 horas por dia e sente que desconectou de Deus. Quer um jeito simples de orar antes de dormir ou no metrô.</p>
+            </div>
+            <div class="audience-card reveal reveal-d2">
+                <h3>O líder de célula ou grupo</h3>
+                <p>Quer material fresco pra compartilhar com a comunidade. Versículo do dia + reflexão pronta pra mandar no grupo do WhatsApp.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section class="social-proof section" id="testimonials">
+    <div class="wrap">
+        <h2 class="text-center reveal">Quem usa, recomenda</h2>
+
+        <div class="testimonials">
+            <div class="testimonial reveal">
+                <div class="test-stars">★★★★★</div>
+                <p class="test-text">
+                    "Eu já tinha desistido de manter um devocional. Tentei cadernos, apps em inglês, planner… nada funcionava. Com o Jornada, estou no dia 47 sem parar. Pela primeira vez, virou hábito de verdade."
+                </p>
+                <div class="test-author">
+                    <div class="test-avatar a1" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=mariana&scale=80');background-size:cover;background-position:center;"></div>
+                    <div>
+                        <div class="test-name">Mariana O.</div>
+                        <div class="test-role">Advogada, São Paulo</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial reveal reveal-d1">
+                <div class="test-stars">★★★★★</div>
+                <p class="test-text">
+                    "Levei pro grupo da minha célula. Agora todo dia de manhã alguém manda o versículo no WhatsApp. A comunidade ficou mais conectada do que nunca. Até os mais tímidos participam."
+                </p>
+                <div class="test-author">
+                    <div class="test-avatar a2" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=joao&scale=80');background-size:cover;background-position:center;"></div>
+                    <div>
+                        <div class="test-name">Pastor João P.</div>
+                        <div class="test-role">Líder de célula, BH</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial reveal reveal-d2">
+                <div class="test-stars">★★★★★</div>
+                <p class="test-text">
+                    "Sou mãe de 2 e trabalho fora. Meu momento é às 6h da manhã com o café. 5 minutos que mudaram meu dia inteiro. Me sinto mais calma e presente pra minha família."
+                </p>
+                <div class="test-author">
+                    <div class="test-avatar a3" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=renata&scale=80');background-size:cover;background-position:center;"></div>
+                    <div>
+                        <div class="test-name">Renata S.</div>
+                        <div class="test-role">Professora, Curitiba</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- PREÇOS -->
+<section class="pricing section" id="pricing">
+    <div class="wrap">
+        <h2 class="text-center reveal">Invista na sua vida espiritual</h2>
+        <p class="text-center reveal reveal-d1" style="max-width:520px;margin:0 auto">
+            R$ 67 ou R$ 100. Uma única compra, acesso vitalício. Sem planos anuais, sem surpresas.
+        </p>
+
+        <div class="pricing-grid">
+            <div class="price-card reveal">
+                <h3>Básico</h3>
+                <div class="price-value">R$ 67<span>,00</span></div>
+                <p class="price-period">vitalício · ou parcele em até 10x</p>
+                <div class="price-divider"></div>
+                <div class="price-features">
+                    <div class="price-feat">Devocional novo a cada dia</div>
+                    <div class="price-feat">Versículo + reflexão + aplicação prática</div>
+                    <div class="price-feat">Marcar dia concluído + histórico</div>
+                    <div class="price-feat">Histórico visual do seu progresso</div>
+                    <div class="price-feat">Desafio semanal</div>
+                    <div class="price-feat">Compartilhar versículo</div>
+                    <div class="price-feat">Ranking da comunidade</div>
+                </div>
+                <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-outline" data-cta="precos">Começar com Básico →</a>
+            </div>
+
+            <div class="price-card featured reveal reveal-d1">
+                <div class="price-badge">Mais escolhido</div>
+                <h3>Ouro</h3>
+                <div class="price-value">R$ 100<span>,00</span></div>
+                <p class="price-period">vitalício · ou parcele em até 10x</p>
+                <div class="price-divider"></div>
+                <div class="price-features">
+                    <div class="price-feat">Tudo do Básico +</div>
+                    <div class="price-feat">Jornadas temáticas intensas (21 dias de fé)</div>
+                    <div class="price-feat">Protocolos de jejum bíblico guiado</div>
+                    <div class="price-feat">Campanhas e propósitos semanais em comunidade</div>
+                    <div class="price-feat">Tema personalizado do devocional</div>
+                    <div class="price-feat">Download de imagens do versículo pra redes sociais</div>
+                </div>
+                <a href="https://pay.kiwify.com.br/23ZHFIT" class="btn btn-gold" data-cta="precos-ouro">Começar com Ouro →</a>
+            </div>
+        </div>
+
+        <div class="price-guarantee reveal">
+            <p style="font-size:1.1rem;color:var(--white);margin-bottom:0.5rem">
+                <strong>🔒 Compre com segurança.</strong>
+            </p>
+            <p>Acesso imediato após a compra. Cancele a qualquer momento direto no app. Sem email, sem ligação, sem pegadinha.</p>
+        </div>
+
+        <p class="text-center reveal" style="margin-top:1.5rem">
+            <a href="https://jornada-com-deus.pages.dev" style="color:var(--gold);text-decoration:none;font-size:0.95rem">
+                Já é assinante? <strong>Entrar no app →</strong>
+            </a>
+        </p>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq section" id="faq">
+    <div class="wrap">
+        <h2 class="text-center reveal">Perguntas frequentes</h2>
+
+        <div class="faq-wrap">
+            <div class="faq-item reveal">
+                <div class="faq-q">
+                    <span>Funciona no iPhone?</span>
+                    <span class="arrow">+</span>
+                </div>
+                <div class="faq-a">
+                    <div class="faq-a-inner">Sim! O Jornada é um PWA (Progressive Web App) — funciona em qualquer celular: iPhone, Samsung, Motorola, Xiaomi. Você acessa pelo navegador, clica "Adicionar à tela inicial" e pronto. Funciona como um app normal, mas sem precisar da App Store ou Play Store.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-d1">
+                <div class="faq-q">
+                    <span>Preciso instalar alguma coisa?</span>
+                    <span class="arrow">+</span>
+                </div>
+                <div class="faq-a">
+                    <div class="faq-a-inner">Tecnicamente não — ele roda direto no navegador. Mas você pode "instalar" com um toque na tela inicial pra ter ícone, abrir rápido e usar offline. Sem loja de apps, sem download pesado, sem espera.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-d2">
+                <div class="faq-q">
+                    <span>Como cancelo se não gostar?</span>
+                    <span class="arrow">+</span>
+                </div>
+                <div class="faq-a">
+                    <div class="faq-a-inner">Vai em Configurações → Minha Assinatura → Cancelar. Um clique. Sem email chato, sem ligar pra ninguém, sem "falar com um atendente". Você continua usando até o final do período que pagou.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal">
+                <div class="faq-q">
+                    <span>O que é PWA? É seguro?</span>
+                    <span class="arrow">+</span>
+                </div>
+                <div class="faq-a">
+                    <div class="faq-a-inner">PWA é a tecnologia usada pelo Twitter, Starbucks e Pinterest. É um app web que funciona como nativo: rápido, offline, leve (1-2 MB vs 50+ MB de app normal). 100% seguro, atualiza sozinho, sem ocupar espaço no celular.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-d1">
+                <div class="faq-q">
+                    <span>Qual a diferença entre Básico e Ouro?</span>
+                    <span class="arrow">+</span>
+                </div>
+                <div class="faq-a">
+                    <div class="faq-a-inner"><strong>Básico</strong> tem tudo pra você orar todo dia: devocional novo a cada dia, histórico do seu progresso, comunidade, desafios. <strong>Ouro</strong> é pra quem quer ir mais fundo: jornadas temáticas de 21 dias, jejum bíblico guiado, campanhas em comunidade, temas customizáveis e imagens pra compartilhar nas redes. Muita gente escolhe Ouro porque a diferença é pequena.</div>
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-d2">
+                <div class="faq-q">
+                    <span>O devocional é bíblico mesmo? Posso confiar?</span>
+                    <span class="arrow">+</span>
+                </div>
+                <div class="faq-a">
+                    <div class="faq-a-inner">Sim. Cada devocional traz versículos reais da Escritura com reflexões fiéis ao texto. Nada sensacionalista, nada distorcido, nada fora do contexto bíblico. Palavra de Deus aplicada ao seu dia — com respeito e fidelidade. Todos os devocionais passam por revisão teológica antes de ir pro app.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="final-cta section">
+    <div class="wrap">
+        <p class="verse-quote reveal">
+            "Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho."<br>
+            <span style="font-size:0.9rem;color:var(--gold-dark)">— Salmos 119:105</span>
+        </p>
+        <h2 class="reveal">Sua jornada pode começar hoje.</h2>
+        <p class="reveal reveal-d1" style="max-width:520px;margin:0 auto 2rem;font-size:1.1rem">
+            Daqui a 30 dias, você pode estar no dia 30 de consistência — 
+            ou pode estar exatamente onde está agora. A escolha é sua.
+        </p>
+        <div class="reveal reveal-d2" style="display:flex;flex-direction:column;align-items:center;gap:1rem">
+            <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold btn-lg" data-cta="final">
+                Começar minha jornada →
+            </a>
+            <span class="small" style="color:var(--muted)">R$ 67 ou R$ 100 vitalício · Cancele a qualquer momento</span>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="wrap">
+        <div class="footer-links">
+            <a href="https://jornada-com-deus.pages.dev">Acessar App</a>
+            <a href="https://pay.kiwify.com.br/fDiPMgJ" data-cta="footer-basico">Plano Básico</a>
+            <a href="https://pay.kiwify.com.br/23ZHFIT" data-cta="footer-ouro">Plano Ouro</a>
+            <a href="mailto:suporte@jornadacomdeus.com.br">Suporte</a>
+        </div>
+        <p style="font-size:0.85rem;color:var(--muted);margin:0">
+            © 2024 Jornada com Deus · Seus dados protegidos conforme LGPD
+        </p>
+    </div>
+</footer>
+
+<!-- STICKY CTA MOBILE -->
+<div class="sticky-bar" id="sticky">
+    <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold" data-cta="sticky">Começar minha jornada →</a>
+</div>
+
+<script>
+// FAQ
+document.querySelectorAll('.faq-q').forEach(q=>{
+    q.addEventListener('click',()=>{
+        const item=q.parentElement;
+        document.querySelectorAll('.faq-item').forEach(i=>{
+            if(i!==item)i.classList.remove('open')
+        });
+        item.classList.toggle('open');
+    });
+});
+
+// Scroll reveal
+const obs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+        if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}
+    });
+},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Sticky bar visibility
+const sticky=document.getElementById('sticky');
+const hero=document.querySelector('.hero');
+window.addEventListener('scroll',()=>{
+    if(!sticky)return;
+    const heroBot=hero.getBoundingClientRect().bottom;
+    sticky.style.transform=heroBot<0?'translateY(0)':'translateY(100%)';
+},{passive:true});
+if(sticky)sticky.style.transform='translateY(100%)';
+sticky.style.transition='transform 0.3s ease';
+</script>
+
+<script>
+  document.querySelectorAll('[data-cta]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const ctaLocation = this.getAttribute('data-cta');
+      const isOuro = (this.getAttribute('href') || '').includes('23ZHFIT');
+      if (typeof fbq !== 'function') return;
+      fbq('track', 'InitiateCheckout', {
+        value: isOuro ? 100.00 : 67.00,
+        currency: 'BRL',
+        content_name: isOuro ? 'Jornada com Deus Ouro' : 'Jornada com Deus Básico',
+        content_category: ctaLocation
       });
-    })();
-  </script>
+    });
+  });
+</script>
+
+<script>
+// Scroll depth tracking
+let scrollTracked = { 25: false, 50: false, 75: false, 100: false };
+
+window.addEventListener('scroll', function() {
+  const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+  
+  if (scrollPercent >= 25 && !scrollTracked[25]) {
+    fbq('trackCustom', 'Scroll25');
+    scrollTracked[25] = true;
+  }
+  if (scrollPercent >= 50 && !scrollTracked[50]) {
+    fbq('trackCustom', 'Scroll50');
+    scrollTracked[50] = true;
+  }
+  if (scrollPercent >= 75 && !scrollTracked[75]) {
+    fbq('trackCustom', 'Scroll75');
+    scrollTracked[75] = true;
+  }
+  if (scrollPercent >= 100 && !scrollTracked[100]) {
+    fbq('trackCustom', 'Scroll100');
+    scrollTracked[100] = true;
+  }
+});
+
+// Tempo na página
+let timeTracked = { 30: false, 60: false, 180: false };
+
+setTimeout(() => { if(!timeTracked[30]) { fbq('trackCustom', 'Engaged30s'); timeTracked[30] = true; } }, 30000);
+setTimeout(() => { if(!timeTracked[60]) { fbq('trackCustom', 'Engaged60s'); timeTracked[60] = true; } }, 60000);
+setTimeout(() => { if(!timeTracked[180]) { fbq('trackCustom', 'Engaged180s'); timeTracked[180] = true; } }, 180000);
+
+// Visualização de seções importantes
+const observerOptions = { threshold: 0.3 };
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      if (id === 'pricing') fbq('trackCustom', 'ViewPricing');
+      if (id === 'testimonials') fbq('trackCustom', 'ViewTestimonials');
+      if (id === 'faq') fbq('trackCustom', 'ViewFAQ');
+      observer.unobserve(entry.target);
+    }
+  });
+}, observerOptions);
+
+document.getElementById('pricing') && observer.observe(document.getElementById('pricing'));
+document.getElementById('testimonials') && observer.observe(document.getElementById('testimonials'));
+document.getElementById('faq') && observer.observe(document.getElementById('faq'));
+
+// FAQ clicks
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', function() {
+    const question = this.innerText.trim();
+    fbq('trackCustom', 'FAQOpen', { question: question });
+  });
+});
+</script>
+
+<script>
+// Captura e salva UTMs
+function getURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    utm_source: params.get('utm_source') || '',
+    utm_medium: params.get('utm_medium') || '',
+    utm_campaign: params.get('utm_campaign') || '',
+    utm_content: params.get('utm_content') || '',
+    utm_term: params.get('utm_term') || '',
+    fbclid: params.get('fbclid') || ''
+  };
+}
+
+const utmParams = getURLParams();
+if (Object.values(utmParams).some(v => v)) {
+  localStorage.setItem('utm_data', JSON.stringify(utmParams));
+}
+
+// Anexa UTMs nos links de checkout
+document.querySelectorAll('[data-cta]').forEach(link => {
+  link.addEventListener('click', function(e) {
+    const storedUTM = JSON.parse(localStorage.getItem('utm_data') || '{}');
+    let url = this.href;
+    
+    Object.entries(storedUTM).forEach(([key, value]) => {
+      if (value) {
+        url += (url.includes('?') ? '&' : '?') + key + '=' + encodeURIComponent(value);
+      }
+    });
+    
+    this.href = url;
+  });
+});
+</script>
+
 </body>
 </html>
