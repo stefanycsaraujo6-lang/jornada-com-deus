@@ -3,7 +3,7 @@
 // ── TASK: TASK-12 (useCommunity) + TASK-13 (modal push/painel ambiente)
 import { useState, useEffect } from "react";
 import { Stars } from "./components/Stars.jsx";
-import { applyNotificationTags, getNotificationEnvironmentInfo, initOneSignal, isNotificationFeatureEnabled, isOneSignalConfigured, requestPushPermission } from "./services/onesignal.js";
+import { applyNotificationTags, initOneSignal, isNotificationFeatureEnabled, isOneSignalConfigured, requestPushPermission } from "./services/onesignal.js";
 import { getSupabaseSessionSnapshot, watchSupabaseAuthChanges, sendMagicLinkOtp, isMagicLinkFeatureEnabled } from "./services/supabaseAuth.js";
 import { syncJcdUserWithProfiles, bumpLocalProfileEdited } from "./services/profileSync.js";
 import { syncJcdUserWithConvex } from "./services/convexProfileSync.js";
@@ -348,8 +348,6 @@ export default function App() {
   const isToday = !!history[todayKey];
   const days7 = last7();
   const notificationsAvailable = isNotificationFeatureEnabled();
-  const notificationEnv = getNotificationEnvironmentInfo();
-
   useEffect(() => { document.body.style.background = dark ? "#080b18" : "#f7f2eb"; }, [dark]);
 
   useEffect(() => {
@@ -1469,17 +1467,6 @@ export default function App() {
                     Respeitar horário silencioso (22:00 - 07:00)
                   </label>
                 </div>
-              </div>
-
-              <div className="sec" style={{ marginTop: 14 }}>
-                <div className="sec-lbl">⚙️ Ambiente atual</div>
-                <p style={{fontSize:12,color:"var(--muted)",lineHeight:1.6}}>
-                  Modo: <strong style={{color:"var(--txt)"}}>{notificationEnv.mode}</strong><br/>
-                  Flag por ambiente ({notificationEnv.envFlagKey}): <strong style={{color:"var(--txt)"}}>{notificationEnv.envFlagValue}</strong><br/>
-                  Flag global (VITE_NOTIFICATIONS_ENABLED): <strong style={{color:"var(--txt)"}}>{notificationEnv.globalFlagValue}</strong><br/>
-                  OneSignal App ID configurado: <strong style={{color:"var(--txt)"}}>{notificationEnv.hasOneSignalAppId ? "sim" : "não"}</strong><br/>
-                  Resultado final da feature flag: <strong style={{color:"var(--txt)"}}>{notificationEnv.enabledByFlag ? "ativo" : "inativo"}</strong>
-                </p>
               </div>
 
               <button className="plan-cta" onClick={saveNotifSettings}>Salvar preferências</button>
