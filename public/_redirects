@@ -1,3 +1,4 @@
-/vendas /vendas.html 200
-/vendas/ /vendas.html 200
+/vendas.html /vendas/ 301
+/vendas /vendas/ 301
+/assets/* /assets/:splat 200
 /* /index.html 200

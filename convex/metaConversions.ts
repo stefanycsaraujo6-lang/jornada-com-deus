@@ -37,7 +37,7 @@ export const trackPurchase = internalAction({
                 event_name: 'Purchase',
                 event_time: Math.floor(Date.now() / 1000),
                 event_id: args.transactionId,
-                event_source_url: 'https://jornada-com-deus.pages.dev/vendas.html',
+                event_source_url: 'https://jornada-com-deus.pages.dev/vendas/',
                 user_data: {
                   em: hashedEmail,
                 },
