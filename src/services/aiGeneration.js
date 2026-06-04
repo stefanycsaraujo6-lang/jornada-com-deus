@@ -96,8 +96,8 @@ export async function requestUniqueGeneration({
   isSame,
   isSimilar,
   generate,
-  maxRetries = 2,
-  maxRetriesForceNew = 5
+  maxRetries = 1,
+  maxRetriesForceNew = 2
 }) {
   const limit = forceNew ? maxRetriesForceNew : maxRetries;
   let last = normalizeGenerationResult({});

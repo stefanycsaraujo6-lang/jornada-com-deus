@@ -44,8 +44,19 @@ export function isSameDevotional(a, b) {
   return Boolean(verseA && verseB && verseA === verseB && themeA === themeB);
 }
 
-function fallbackDevocional(plan, userName, theme, variant = 0) {
-  const base = FALLBACK_DEVOTIONALS[Math.abs(Number(variant) || 0) % FALLBACK_DEVOTIONALS.length];
+function hashUserSeed(parts) {
+  const text = parts.filter(Boolean).join("|");
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash << 5) - hash + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function fallbackDevocional(plan, userName, theme, variant = 0, userEmail = "", nonce = "") {
+  const seed = hashUserSeed([userName, userEmail, variant, nonce, new Date().toISOString().slice(0, 10)]);
+  const base = FALLBACK_DEVOTIONALS[seed % FALLBACK_DEVOTIONALS.length];
   const selectedTheme = theme || base.theme;
   const isGoldPlan = plan === "gold" || plan === "ouro";
   const reflection = isGoldPlan
@@ -87,12 +98,15 @@ export async function genDevocional(plan, userName, theme, options = {}) {
   const variant = Number.isFinite(options.variant) ? options.variant : 0;
   const nonce = options.nonce || Math.random().toString(36).slice(2, 10);
   const history = Array.isArray(options.history) ? options.history.slice(-6) : [];
-  const style = pickDailyDevotionalStyle({ todayKey, userName, theme, plan, variant, nonce });
+  const userEmail = options.userEmail || "";
+  const style = pickDailyDevotionalStyle({ todayKey, userName, userEmail, theme, plan, variant, nonce });
   const styleCatalog = getStyleLibrary()
     .map((s) => `${s.id}: ${s.identity}`)
     .join(" | ");
   const themeClause = theme ? `O tema obrigatório é: "${theme}".` : "Escolha um tema bíblico relevante e inesperado para hoje (evite repetir temas batidos).";
-  const personClause = userName ? `Personalize sutilmente para ${userName}.` : "";
+  const personClause = userName
+    ? `Personalize de forma única para ${userName}${userEmail ? ` (${userEmail})` : ""}. Este devocional é exclusivo desta pessoa — nunca genérico.`
+    : "";
   const goldPlan = plan === "gold" || plan === "ouro";
   const depth = goldPlan
     ? "5 parágrafos densos, humanos e teologicamente profundos"
@@ -113,7 +127,7 @@ export async function genDevocional(plan, userName, theme, options = {}) {
   try {
     const parsed = await callAI(`Você é um pastor cristão brasileiro com 30 anos de ministério — alguém que já orou no hospital de madrugada, aconselhou casais à beira do divórcio, celebrou batismos em rios e consolou famílias no velório. Você não escreve "conteúdo religioso"; você pastoreia pessoas reais com palavras que vêm de quem já viveu o que fala.
 
-TAREFA: escrever UM devocional diário inédito (ID: ${todayKey}-${variant}-${nonce}).
+TAREFA: escrever UM devocional diário inédito (ID: ${todayKey}-${variant}-${nonce}-${userEmail || userName || "anon"}).
 
 QUEM VAI LER: brasileiros comuns — gente que acorda cansada, lida com boleto, cria filho sozinha, enfrenta ansiedade, duvida de si mesma, quer acreditar em Deus mas às vezes não sente nada. Escreva para essa pessoa, não para um seminário.
 
@@ -148,7 +162,7 @@ Responda APENAS com JSON válido, sem markdown:
     return parsed;
   } catch {
     return {
-      ...fallbackDevocional(plan, userName, theme, variant),
+      ...fallbackDevocional(plan, userName, theme, variant, userEmail, nonce),
       styleId: style.id,
       styleLabel: style.label,
       fromFallback: true

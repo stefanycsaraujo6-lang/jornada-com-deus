@@ -84,14 +84,16 @@ export function pickStyle(seed) {
   return STYLE_LIBRARY[idx];
 }
 
-export function pickDailyDevotionalStyle({ todayKey, userName, theme, plan, variant, nonce }) {
-  return pickStyle(`devotional|${todayKey}|${userName || ""}|${theme || ""}|${plan || ""}|${variant || 0}|${nonce || ""}`);
+export function pickDailyDevotionalStyle({ todayKey, userName, userEmail, theme, plan, variant, nonce }) {
+  return pickStyle(
+    `devotional|${todayKey}|${userName || ""}|${userEmail || ""}|${theme || ""}|${plan || ""}|${variant || 0}|${nonce || ""}`
+  );
 }
 
-export function pickChallengeStyle({ todayKey, variant, userName, nonce }) {
-  return pickStyle(`challenge|${todayKey}|${variant || 0}|${userName || ""}|${nonce || ""}`);
+export function pickChallengeStyle({ todayKey, variant, userName, userEmail, nonce }) {
+  return pickStyle(`challenge|${todayKey}|${variant || 0}|${userName || ""}|${userEmail || ""}|${nonce || ""}`);
 }
 
-export function pickJourneyStyle({ journeyName, variant, userName, nonce }) {
-  return pickStyle(`journey|${journeyName || ""}|${variant || 0}|${userName || ""}|${nonce || ""}`);
+export function pickJourneyStyle({ journeyName, variant, userName, userEmail, nonce }) {
+  return pickStyle(`journey|${journeyName || ""}|${variant || 0}|${userName || ""}|${userEmail || ""}|${nonce || ""}`);
 }

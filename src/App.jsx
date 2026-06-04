@@ -314,7 +314,7 @@ body{font-family:'Lato',sans-serif;color:var(--txt);overflow-x:hidden;transition
 };
 
 export default function App() {
-  const [dark, setDark] = useState(() => ls.get("jcd_dark", true));
+  const [dark, setDark] = useState(() => ls.get("jcd_dark", false));
   const [authReady, setAuthReady] = useState(false);
   const [screen, setScreen] = useState("login");
   const [tab, setTab] = useState("home");
@@ -506,17 +506,19 @@ export default function App() {
     ls,
     plan: legacyPlan,
     userName: user?.name,
+    userEmail: user?.email,
     todayKey,
     dark,
     onToast: showToast
   });
   const {
     challenge, setChallenge, challengeLoading,
-    journey, journeyLoading, loadChallenge, regenerateChallenge, loadJourney, regenerateJourney
+    journey, setJourney, journeyLoading, loadChallenge, regenerateChallenge, loadJourney, regenerateJourney
   } = useJourney({
     ls,
     todayKey,
     userName: user?.name,
+    userEmail: user?.email,
     onToast: showToast
   });
   const {
@@ -678,8 +680,17 @@ export default function App() {
   };
 
   const openJourney = async (name) => {
+    if (!isOuro(userStatus)) {
+      showToast(OURO_REQUIRED_MESSAGE, "err");
+      return;
+    }
+    setTab("journey-detail");
+    setJourney(null);
     const ok = await loadJourney(name);
-    if (ok) setTab("journey-detail");
+    if (!ok) {
+      setTab("journeys");
+      showToast("Não foi possível gerar a jornada. Verifique a conexão e tente de novo.", "err");
+    }
   };
 
   const histDays = () => {
@@ -1102,7 +1113,13 @@ export default function App() {
             {journeyLoading ? "Gerando nova jornada..." : "🔄 Gerar nova jornada"}
           </button>
         </>
-      ) : null}
+      ) : (
+        <div className="sec" style={{ marginTop: 16 }}>
+          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6 }}>
+            Toque em uma jornada acima para gerar sua trilha personalizada.
+          </p>
+        </div>
+      )}
     </>
   );
 

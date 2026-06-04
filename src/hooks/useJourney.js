@@ -38,7 +38,12 @@ function getJourneyVariantKey(journeyName) {
   return `${JOURNEY_VARIANT_PREFIX}_${slugifyId(journeyName)}`;
 }
 
-export function useJourney({ ls, todayKey, userName, onToast }) {
+function journeyCacheId(name, userKey) {
+  const userPart = slugifyId(userKey || "anon").slice(0, 24);
+  return `${slugifyId(name)}__${userPart}`;
+}
+
+export function useJourney({ ls, todayKey, userName, userEmail, onToast }) {
   const [challenge, setChallenge] = useState(null);
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [journey, setJourney] = useState(null);
@@ -107,11 +112,12 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
         previous: previousChallenge,
         isSame: isSameChallenge,
         isSimilar: isSimilarChallenge,
-        maxRetriesForceNew: 6,
+        maxRetriesForceNew: 2,
         generate: (nonce) =>
           genChallenge(userName, {
             todayKey: dayKey,
             variant,
+            userEmail,
             previousChallenge,
             blockedChallenges,
             nonce,
@@ -159,7 +165,7 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
       : null;
 
     const variant = resolveVariant(ls, variantKey, forceNew);
-    const cacheKey = buildVersionedCacheKey(JOURNEY_CACHE_PREFIX, name, variant);
+    const cacheKey = buildVersionedCacheKey(JOURNEY_CACHE_PREFIX, journeyCacheId(name, userEmail || userName), variant);
 
     if (forceNew) setJourney(null);
 
@@ -178,10 +184,12 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
         forceNew,
         previous: previousJourney,
         isSame: isSameJourney,
+        maxRetriesForceNew: 2,
         generate: (nonce) =>
           genJourney(name, userName, {
             variant,
             nonce,
+            userEmail,
             history: readJourneyHistory(),
             previousJourney,
             forceNew
@@ -223,6 +231,7 @@ export function useJourney({ ls, todayKey, userName, onToast }) {
     setChallenge,
     challengeLoading,
     journey,
+    setJourney,
     journeyLoading,
     activeJourneyName,
     loadChallenge,

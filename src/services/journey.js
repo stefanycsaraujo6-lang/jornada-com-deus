@@ -234,8 +234,19 @@ export function isSameJourney(a, b) {
   );
 }
 
-function fallbackJourney(name, variant = 0) {
-  const base = FALLBACK_JOURNEY_TEMPLATES[Math.abs(Number(variant) || 0) % FALLBACK_JOURNEY_TEMPLATES.length];
+function hashUserSeed(parts) {
+  const text = parts.filter(Boolean).join("|");
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash << 5) - hash + text.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function fallbackJourney(name, variant = 0, userName = "", userEmail = "", nonce = "") {
+  const seed = hashUserSeed([name, userName, userEmail, variant, nonce]);
+  const base = FALLBACK_JOURNEY_TEMPLATES[seed % FALLBACK_JOURNEY_TEMPLATES.length];
   return {
     title: name,
     description: base.description,
@@ -259,7 +270,8 @@ export async function genChallenge(userName, options = {}) {
   const nonce = options.nonce || Math.random().toString(36).slice(2, 10);
   const history = Array.isArray(options.history) ? options.history.slice(-8) : [];
   const blockedChallenges = Array.isArray(options.blockedChallenges) ? options.blockedChallenges : [];
-  const style = pickChallengeStyle({ todayKey, variant, userName, nonce });
+  const userEmail = options.userEmail || "";
+  const style = pickChallengeStyle({ todayKey, variant, userName, userEmail, nonce });
   const styleCatalog = getStyleLibrary()
     .map((s) => `${s.id}: ${s.identity}`)
     .join(" | ");
@@ -328,7 +340,8 @@ export async function genJourney(name, userName, options = {}) {
   const variant = Number.isFinite(options.variant) ? options.variant : 0;
   const nonce = options.nonce || Math.random().toString(36).slice(2, 10);
   const history = Array.isArray(options.history) ? options.history.slice(-5) : [];
-  const style = pickJourneyStyle({ journeyName: name, variant, userName, nonce });
+  const userEmail = options.userEmail || "";
+  const style = pickJourneyStyle({ journeyName: name, variant, userName, userEmail, nonce });
   const styleCatalog = getStyleLibrary()
     .map((s) => `${s.id}: ${s.identity}`)
     .join(" | ");
@@ -342,7 +355,9 @@ export async function genJourney(name, userName, options = {}) {
   const historyBlock = history.length
     ? `\nHISTORICO RECENTE (NAO REPETIR angulos, estruturas nem frases centrais):\n${history.map((h, i) => `- ${i + 1}. jornada="${h.journeyName || ""}", etapa1="${h.firstStepTitle || ""}"`).join("\n")}`
     : "";
-  const personClause = userName ? `Personalize sutilmente para ${userName}.` : "";
+  const personClause = userName
+    ? `Personalize profundamente para ${userName}${userEmail ? ` (${userEmail})` : ""}. Jornada exclusiva desta pessoa.`
+    : "";
   const catalog = getJourneyByTitle(name);
   const catalogBlock = catalog
     ? `
@@ -387,7 +402,7 @@ Responda APENAS com JSON válido:
     return parsed;
   } catch {
     return {
-      ...fallbackJourney(name, variant),
+      ...fallbackJourney(name, variant, userName, userEmail, nonce),
       styleId: style.id,
       styleLabel: style.label,
       fromFallback: true

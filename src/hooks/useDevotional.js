@@ -6,7 +6,8 @@ import {
   buildVersionedCacheKey,
   readVariant,
   requestUniqueGeneration,
-  resolveVariant
+  resolveVariant,
+  slugifyId
 } from "../services/aiGeneration.js";
 import { getFriendlyAIErrorMessage } from "../services/gemini.js";
 import { buildShareText, genDevocional, genVerseImage, isSameDevotional, shareVerseImage } from "../services/devotional.js";
@@ -16,15 +17,16 @@ const DEV_HISTORY_MAX = 6;
 const DEV_CACHE_PREFIX = "jcd_dev_v2";
 const DEV_VARIANT_PREFIX = "jcd_dev_variant_v2";
 
-function getDevotionalCacheId(todayKey, plan, themeSlice) {
-  return `${todayKey}_${plan}${themeSlice ? `_${themeSlice}` : ""}`;
+function getDevotionalCacheId(todayKey, plan, themeSlice, userKey) {
+  const userPart = userKey ? slugifyId(userKey).slice(0, 32) : "anon";
+  return `${todayKey}_${plan}_${userPart}${themeSlice ? `_${themeSlice}` : ""}`;
 }
 
 function getVariantKey(dateKey, themeKey) {
   return `${DEV_VARIANT_PREFIX}_${dateKey}_${themeKey || "default"}`;
 }
 
-export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
+export function useDevotional({ ls, plan, userName, userEmail, todayKey, dark, onToast }) {
   const [dev, setDev] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadMsg, setLoadMsg] = useState("Conectando na rede eterna...");
@@ -50,7 +52,7 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
     if (loading) return false;
 
     const themeSlice = theme ? theme.slice(0, 10) : "";
-    const cacheId = getDevotionalCacheId(todayKey, plan, themeSlice);
+    const cacheId = getDevotionalCacheId(todayKey, plan, themeSlice, userEmail || userName);
     const variantKey = getVariantKey(todayKey, themeSlice);
     const currentVariant = readVariant(ls, variantKey);
     const previousDevotional = forceNew
@@ -101,12 +103,13 @@ export function useDevotional({ ls, plan, userName, todayKey, dark, onToast }) {
         forceNew,
         previous: previousDevotional,
         isSame: isSameDevotional,
-        maxRetriesForceNew: 6,
+        maxRetriesForceNew: 2,
         generate: (nonce) =>
           genDevocional(plan, userName, theme, {
             todayKey,
             variant,
             nonce,
+            userEmail,
             history: readHistory(),
             previousDevotional,
             forceNew
