@@ -27,7 +27,11 @@ Build (aba Configuracoes → Build):
 | Diretorio de saida | `dist` |
 | Preset | **Nenhum** ou **Vite** (site estatico, nao Worker full-stack) |
 
-Se o erro for `Error parsing vite.config.js` na etapa final, confirme preset **Nenhum** + saida `dist` + arquivo `wrangler.jsonc` na raiz do repo (ja incluso).
+Se o erro for `Error parsing vite.config.js` na etapa final:
+- Em **Configuracoes → Build**, preset **Nenhum** (nao "Worker" / full-stack)
+- Comando `npm run build`, saida `dist`
+- Remova bindings `ai` do `wrangler.jsonc` (so `pages_build_output_dir`)
+- Reimplante apos `git push`
 
 Se o erro for `Could not resolve ... convex/_generated/api.js`, o repo precisa ter a pasta `convex/_generated/` commitada (rode `npm run convex:codegen` local e de push).
 

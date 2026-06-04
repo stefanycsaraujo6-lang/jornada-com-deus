@@ -74,7 +74,7 @@ export default defineConfig(({ mode }) => {
       },
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png'],
+        includeAssets: ['favicon.svg', 'icons.svg'],
         manifest: {
           name: 'Jornada com Deus',
           short_name: 'Jornada',
@@ -85,12 +85,16 @@ export default defineConfig(({ mode }) => {
           orientation: 'portrait',
           start_url: '/',
           icons: [
-            { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-            { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+            { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+            { src: '/icons.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' }
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+          navigateFallback: '/index.html',
+          cleanupOutdatedCaches: true,
+          skipWaiting: true,
+          clientsClaim: true,
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

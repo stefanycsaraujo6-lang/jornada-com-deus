@@ -12,8 +12,22 @@ function parseEnvFlag(value) {
 export function isNotificationFeatureEnabled() {
   const envSpecificFlag = parseEnvFlag(import.meta.env[`VITE_NOTIFICATIONS_ENABLED_${APP_ENV.toUpperCase()}`]);
   const globalFlag = parseEnvFlag(import.meta.env.VITE_NOTIFICATIONS_ENABLED);
-  const fallback = APP_ENV === "production";
+  const fallback = false;
   return envSpecificFlag ?? globalFlag ?? fallback;
+}
+
+function loadOneSignalScript() {
+  if (typeof document === "undefined") return Promise.resolve();
+  if (document.getElementById("onesignal-sdk")) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.id = "onesignal-sdk";
+    script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Falha ao carregar OneSignal"));
+    document.head.appendChild(script);
+  });
 }
 
 export function getNotificationEnvironmentInfo() {
@@ -33,9 +47,13 @@ export function isOneSignalConfigured() {
 }
 
 export function initOneSignal(user) {
-  if (!ONE_SIGNAL_APP_ID || typeof window === "undefined") return;
+  if (!ONE_SIGNAL_APP_ID || !isNotificationFeatureEnabled() || typeof window === "undefined") return;
   if (window.__jcdOneSignalInit) return;
   if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
+
+  void loadOneSignalScript().catch((err) => {
+    console.warn("[onesignal]", err?.message || err);
+  });
 
   window.OneSignalDeferred.push(async (OneSignal) => {
     await OneSignal.init({
