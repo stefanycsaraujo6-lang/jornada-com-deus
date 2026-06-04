@@ -8,8 +8,10 @@ import { promisify } from "node:util";
 import {
   extractPaymentStatus,
   isApprovedPaymentStatus,
+  defaultOrderValueForAction,
   pickEmail,
   pickName,
+  pickOrderAmount,
   pickOrderId,
   pickProductId,
   resolveStatusByProductId,
@@ -143,14 +145,32 @@ export const handleWebhook = internalAction({
         await sendWelcomeEmail(email, pickName(payload, email), tempPassword);
       }
 
-      if (result.action === "activated_basico_new" && email) {
-        const customerEmail = email;
-        const orderId = pickOrderId(payload) || eventId;
-        await ctx.runAction(internal.metaConversions.trackPurchase, {
-          email: customerEmail,
-          value: 67.0,
-          transactionId: orderId,
+      const metaByAction: Record<
+        string,
+        { value: number; productName: string }
+      > = {
+        activated_basico_new: {
+          value: 67,
           productName: "Jornada com Deus Básico",
+        },
+        upgraded_to_ouro: {
+          value: 100,
+          productName: "Jornada com Deus Ouro",
+        },
+      };
+
+      const metaConfig = metaByAction[result.action];
+      if (email && metaConfig) {
+        const orderId = pickOrderId(payload) || eventId;
+        const orderValue =
+          pickOrderAmount(payload) ??
+          defaultOrderValueForAction(result.action) ??
+          metaConfig.value;
+        await ctx.runAction(internal.metaConversions.trackPurchase, {
+          email,
+          value: orderValue,
+          transactionId: orderId,
+          productName: metaConfig.productName,
         });
       }
 

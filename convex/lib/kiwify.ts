@@ -98,7 +98,7 @@ export function pickOrderAmount(payload: Record<string, unknown>): number | null
 }
 
 export function defaultOrderValueForAction(action: string): number {
-  if (action === "upgraded_to_ouro") return 33;
+  if (action === "upgraded_to_ouro") return 100;
   if (action === "activated_basico_new") return 67;
   return 67;
 }
