@@ -405,13 +405,12 @@
         }
         .test-author{display:flex;align-items:center;gap:0.8rem}
         .test-avatar{
-            width:42px;height:42px;border-radius:50%;
-            display:flex;align-items:center;justify-content:center;
-            font-weight:600;font-size:0.85rem;color:var(--bg);
+            width:48px;height:48px;border-radius:50%;
+            flex-shrink:0;
+            background-size:cover;background-position:center top;
+            border:2px solid rgba(201,169,110,0.35);
+            box-shadow:0 2px 8px rgba(8,11,24,0.08);
         }
-        .test-avatar.a1{background:var(--gold)}
-        .test-avatar.a2{background:var(--green)}
-        .test-avatar.a3{background:#7c6fbd}
         .test-name{font-weight:600;font-size:0.95rem;color:var(--white)}
         .test-role{font-size:0.85rem;color:var(--muted)}
         .test-badge{
@@ -598,7 +597,7 @@
 <nav class="nav">
     <div class="wrap">
         <a href="#" class="nav-logo">✦ Jornada <span>com Deus</span></a>
-        <a href="https://pay.kiwify.com.br/fDiPMgJ" class="nav-cta" data-cta="navbar">Começar agora</a>
+        <a href="#cta-final" class="nav-cta" data-cta="navbar">Começar agora</a>
     </div>
 </nav>
 
@@ -619,7 +618,7 @@
             </p>
 
             <div class="hero-ctas">
-                <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold btn-lg" data-cta="hero">
+                <a href="#cta-final" class="btn btn-gold btn-lg" data-cta="hero">
                     Quero começar minha jornada →
                 </a>
                 <a href="#como-funciona" class="btn btn-outline btn-lg">
@@ -738,7 +737,7 @@
                     <li>Seu progresso registrado — te motiva a não parar</li>
                     <li>Compartilhe o versículo no WhatsApp com um toque</li>
                 </ul>
-                <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold" data-cta="demo">Quero experimentar →</a>
+                <a href="#cta-final" class="btn btn-gold" data-cta="demo">Quero experimentar →</a>
             </div>
         </div>
     </div>
@@ -861,7 +860,7 @@
                     "Eu já tinha desistido de manter um devocional. Tentei cadernos, apps em inglês, planner… nada funcionava. Com o Jornada, estou no dia 47 sem parar. Pela primeira vez, virou hábito de verdade."
                 </p>
                 <div class="test-author">
-                    <div class="test-avatar a1" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=mariana&scale=80');background-size:cover;background-position:center;"></div>
+                    <div class="test-avatar" style="background-image:url('/vendas/avatars/avatar-mariana.webp')" role="img" aria-label="Foto de Mariana O."></div>
                     <div>
                         <div class="test-name">Mariana O.</div>
                         <div class="test-role">Advogada, São Paulo</div>
@@ -875,7 +874,7 @@
                     "Levei pro grupo da minha célula. Agora todo dia de manhã alguém manda o versículo no WhatsApp. A comunidade ficou mais conectada do que nunca. Até os mais tímidos participam."
                 </p>
                 <div class="test-author">
-                    <div class="test-avatar a2" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=joao&scale=80');background-size:cover;background-position:center;"></div>
+                    <div class="test-avatar" style="background-image:url('/vendas/avatars/avatar-joao.webp')" role="img" aria-label="Foto de Pastor João P."></div>
                     <div>
                         <div class="test-name">Pastor João P.</div>
                         <div class="test-role">Líder de célula, BH</div>
@@ -889,7 +888,7 @@
                     "Sou mãe de 2 e trabalho fora. Meu momento é às 6h da manhã com o café. 5 minutos que mudaram meu dia inteiro. Me sinto mais calma e presente pra minha família."
                 </p>
                 <div class="test-author">
-                    <div class="test-avatar a3" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=renata&scale=80');background-size:cover;background-position:center;"></div>
+                    <div class="test-avatar" style="background-image:url('/vendas/avatars/avatar-renata.webp')" role="img" aria-label="Foto de Renata S."></div>
                     <div>
                         <div class="test-name">Renata S.</div>
                         <div class="test-role">Professora, Curitiba</div>
@@ -900,7 +899,7 @@
     </div>
 </section>
 <!-- PREÇOS -->
-<section class="pricing section" id="pricing">
+<section class="pricing section" id="oferta">
     <div class="wrap">
         <h2 class="text-center reveal">Invista na sua vida espiritual</h2>
         <p class="text-center reveal reveal-d1" style="max-width:520px;margin:0 auto">
@@ -922,7 +921,7 @@
                     <div class="price-feat">Compartilhar versículo</div>
                     <div class="price-feat">Ranking da comunidade</div>
                 </div>
-                <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-outline" data-cta="precos">Começar com Básico →</a>
+                <a href="#cta-final" class="btn btn-outline" data-cta="precos">Começar com Básico →</a>
             </div>
 
             <div class="price-card featured reveal reveal-d1">
@@ -939,7 +938,7 @@
                     <div class="price-feat">Tema personalizado do devocional</div>
                     <div class="price-feat">Download de imagens do versículo pra redes sociais</div>
                 </div>
-                <a href="https://pay.kiwify.com.br/23ZHFIT" class="btn btn-gold" data-cta="precos-ouro">Começar com Ouro →</a>
+                <a href="#cta-final" class="btn btn-gold" data-cta="precos-ouro">Começar com Ouro →</a>
             </div>
         </div>
 
@@ -1023,7 +1022,7 @@
 </section>
 
 <!-- CTA FINAL -->
-<section class="final-cta section">
+<section class="final-cta section" id="cta-final">
     <div class="wrap">
         <p class="verse-quote reveal">
             "Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho."<br>
@@ -1048,8 +1047,8 @@
     <div class="wrap">
         <div class="footer-links">
             <a href="https://jornada-com-deus.pages.dev">Acessar App</a>
-            <a href="https://pay.kiwify.com.br/fDiPMgJ" data-cta="footer-basico">Plano Básico</a>
-            <a href="https://pay.kiwify.com.br/23ZHFIT" data-cta="footer-ouro">Plano Ouro</a>
+            <a href="#cta-final" data-cta="footer-basico">Plano Básico</a>
+            <a href="#cta-final" data-cta="footer-ouro">Plano Ouro</a>
             <a href="mailto:suporte@jornadacomdeus.com.br">Suporte</a>
         </div>
         <p style="font-size:0.85rem;color:var(--muted);margin:0">
@@ -1060,7 +1059,7 @@
 
 <!-- STICKY CTA MOBILE -->
 <div class="sticky-bar" id="sticky">
-    <a href="https://pay.kiwify.com.br/fDiPMgJ" class="btn btn-gold" data-cta="sticky">Começar minha jornada →</a>
+    <a href="#cta-final" class="btn btn-gold" data-cta="sticky">Começar minha jornada →</a>
 </div>
 
 <script>
@@ -1098,9 +1097,14 @@ sticky.style.transition='transform 0.3s ease';
 <script>
   document.querySelectorAll('[data-cta]').forEach(btn => {
     btn.addEventListener('click', function() {
+      const href = this.getAttribute('href') || '';
       const ctaLocation = this.getAttribute('data-cta');
-      const isOuro = (this.getAttribute('href') || '').includes('23ZHFIT');
       if (typeof fbq !== 'function') return;
+      if (href.startsWith('#')) {
+        fbq('trackCustom', 'ScrollToFinalCTA', { content_category: ctaLocation });
+        return;
+      }
+      const isOuro = href.includes('23ZHFIT');
       fbq('track', 'InitiateCheckout', {
         value: isOuro ? 100.00 : 67.00,
         currency: 'BRL',
@@ -1149,7 +1153,7 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       const id = entry.target.id;
-      if (id === 'pricing') fbq('trackCustom', 'ViewPricing');
+      if (id === 'oferta') fbq('trackCustom', 'ViewPricing');
       if (id === 'testimonials') fbq('trackCustom', 'ViewTestimonials');
       if (id === 'faq') fbq('trackCustom', 'ViewFAQ');
       observer.unobserve(entry.target);
@@ -1157,7 +1161,7 @@ const observer = new IntersectionObserver(entries => {
   });
 }, observerOptions);
 
-document.getElementById('pricing') && observer.observe(document.getElementById('pricing'));
+document.getElementById('oferta') && observer.observe(document.getElementById('oferta'));
 document.getElementById('testimonials') && observer.observe(document.getElementById('testimonials'));
 document.getElementById('faq') && observer.observe(document.getElementById('faq'));
 
@@ -1191,16 +1195,19 @@ if (Object.values(utmParams).some(v => v)) {
 
 // Anexa UTMs nos links de checkout
 document.querySelectorAll('[data-cta]').forEach(link => {
-  link.addEventListener('click', function(e) {
+  link.addEventListener('click', function() {
+    const rawHref = this.getAttribute('href') || '';
+    if (!rawHref.startsWith('http')) return;
+
     const storedUTM = JSON.parse(localStorage.getItem('utm_data') || '{}');
-    let url = this.href;
-    
+    let url = rawHref;
+
     Object.entries(storedUTM).forEach(([key, value]) => {
       if (value) {
         url += (url.includes('?') ? '&' : '?') + key + '=' + encodeURIComponent(value);
       }
     });
-    
+
     this.href = url;
   });
 });
